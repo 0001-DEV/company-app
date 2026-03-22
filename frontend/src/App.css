@@ -145,7 +145,11 @@ input:focus {
 }
 
 /* Send button hover effect */
+<<<<<<< HEAD
 button:hover:not(:disabled):not(.no-hover) {
+=======
+button:hover:not(:disabled) {
+>>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
 }
@@ -199,6 +203,7 @@ button:disabled {
 }
 
 
+<<<<<<< HEAD
 /* Admin Logout Button */
 .admin-logout-btn {
   background: rgba(239, 68, 68, 0.1) !important;
@@ -222,6 +227,8 @@ button:disabled {
   transform: scale(1.05) !important;
 }
 
+=======
+>>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
 /* Birthday notification animation */
 @keyframes slideIn {
   from {
@@ -233,6 +240,7 @@ button:disabled {
     opacity: 1;
   }
 }
+<<<<<<< HEAD
 
 
 /* ═══════════════════════════════════════════
@@ -406,3 +414,5 @@ button:disabled {
   from { opacity: 0; transform: translateX(40px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+=======
+>>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
