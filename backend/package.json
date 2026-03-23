@@ -9,14 +9,10 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.3",
-<<<<<<< HEAD
     "multer": "^2.0.2",
     "nodemailer": "^8.0.3",
     "twilio": "^5.13.0",
     "xlsx": "^0.18.5"
-=======
-    "multer": "^2.0.2"
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
   },
   "scripts": {
     "start": "node server.js",

@@ -11,7 +11,6 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-<<<<<<< HEAD
 
 :root {
   --bg-main: #f0f4f8;
@@ -37,5 +36,3 @@ html.dark-theme {
   background-color: var(--bg-main);
   color: var(--text-main);
 }
-=======
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00

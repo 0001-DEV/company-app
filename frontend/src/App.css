@@ -145,11 +145,7 @@ input:focus {
 }
 
 /* Send button hover effect */
-<<<<<<< HEAD
 button:hover:not(:disabled):not(.no-hover) {
-=======
-button:hover:not(:disabled) {
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
 }
@@ -203,7 +199,6 @@ button:disabled {
 }
 
 
-<<<<<<< HEAD
 /* Admin Logout Button */
 .admin-logout-btn {
   background: rgba(239, 68, 68, 0.1) !important;
@@ -211,8 +206,7 @@ button:disabled {
   border-radius: 8px !important;
   width: 32px !important;
   height: 32px !important;
-  display: flex !important;
-  align-items: center !important;
+  display: flex !important; align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
   font-size: 16px !important;
@@ -227,8 +221,6 @@ button:disabled {
   transform: scale(1.05) !important;
 }
 
-=======
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
 /* Birthday notification animation */
 @keyframes slideIn {
   from {
@@ -240,7 +232,6 @@ button:disabled {
     opacity: 1;
   }
 }
-<<<<<<< HEAD
 
 
 /* ═══════════════════════════════════════════
@@ -386,7 +377,7 @@ button:disabled {
 
   /* Uploaded works sidebar becomes top bar */
   .uploaded-works-body { flex-direction: column !important; }
-  .uploaded-works-sidebar { width: 100% !important; max-height: 200px !important; border-right: none !important; border-bottom: '1px solid #334155' !important; }
+  .uploaded-works-sidebar { width: 100% !important; max-height: 200px !important; border-right: none !important; border-bottom: 1px solid #334155 !important; }
 
   /* Chatbox body stacks */
   .chatbox-body { flex-direction: column !important; }
@@ -414,5 +405,3 @@ button:disabled {
   from { opacity: 0; transform: translateX(40px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-=======
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00

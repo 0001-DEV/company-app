@@ -541,8 +541,6 @@ function Home() {
   );
 }
 
-export default Home;
-
 /* ─────────────── STYLES ─────────────── */
 const styles = {
   container: { display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI', Arial, sans-serif", background: 'var(--bg-main, #f0f4f8)' },
