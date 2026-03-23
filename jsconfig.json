@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
     "compilerOptions": {
         "module": "ESNext",
@@ -15,25 +14,3 @@
         "**/node_modules/*"
     ]
 }
-
-
-=======
-{
-    "compilerOptions": {
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "target": "ES2024",
-        "jsx": "react-jsx",
-        "allowImportingTsExtensions": true,
-        "strictNullChecks": true,
-        "strictFunctionTypes": true,
-        "strict": true
-    },
-    "exclude": [
-        "node_modules",
-        "**/node_modules/*"
-    ]
-}
-
-
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00

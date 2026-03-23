@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const mongoose = require('mongoose');
 
 const departmentSchema = new mongoose.Schema({
@@ -16,13 +15,3 @@ const departmentSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Department', departmentSchema);
-=======
-const mongoose = require('mongoose');
-
-const departmentSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
-  description: { type: String }
-});
-
-module.exports = mongoose.model('Department', departmentSchema);
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00

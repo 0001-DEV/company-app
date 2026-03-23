@@ -7,10 +7,7 @@ import LoginSelector from "./pages/LoginSelector";
 import StaffLogin from './pages/StaffLogin';
 import StaffDetails from './pages/admin/StaffDetails';
 import Department from './pages/Department';
-<<<<<<< HEAD
 import DepartmentDetail from './pages/DepartmentDetail';
-=======
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
 import Home from "./pages/Home";
 import Chatbox from './pages/Chatbox';
 import StaffDashboard from './pages/StaffDashboard';
@@ -18,7 +15,6 @@ import UploadedWorks from './pages/UploadedWorks';
 import ManagePermissions from './pages/ManagePermissions';
 import AllStaffWorks from './pages/AllStaffWorks';
 import RecycleBin from './pages/RecycleBin';
-<<<<<<< HEAD
 import StaffCredentials from './pages/StaffCredentials';
 import CardSamples from './pages/CardSamples';
 import Announcements from './pages/Announcements';
@@ -74,27 +70,6 @@ function App() {
       </Routes>
       <Footer />
     </>
-=======
-
-function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<LoginSelector />} />
-      <Route path="/admin-login" element={<AdminLogin />} />
-      <Route path="/admin-dashboard" element={<Home />} />
-      <Route path="/home" element={<Home />} />
-      <Route path="/all-staff" element={<AllStaff />} />
-      <Route path="/staff-login" element={<StaffLogin />} />
-      <Route path="/staff-dashboard" element={<StaffDashboard />} />
-      <Route path="/admin/staff/:id" element={<StaffDetails />} />
-      <Route path="/department" element={<Department />} />
-      <Route path="/chat" element={<Chatbox />} />
-      <Route path="/uploaded-works" element={<UploadedWorks />} />
-      <Route path="/manage-permissions" element={<ManagePermissions />} />
-      <Route path="/all-staff-works" element={<AllStaffWorks />} />
-      <Route path="/recycle-bin" element={<RecycleBin />} />
-    </Routes>
->>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
   );
 }
 
