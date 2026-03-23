@@ -546,7 +546,25 @@ const styles = {
   container: { display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI', Arial, sans-serif", background: 'var(--bg-main, #f0f4f8)' },
 
   /* Sidebar */
-  sidebar: { width: "240px", background: "linear-gradient(180deg, #0f172a 0%, #1e293b 100%)", color: "white", display: "flex", flexDirection: "column", padding: "0", boxShadow: "4px 0 20px rgba(0,0,0,0.3)", flexShrink: 0, position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100, overflowY: "auto" },
+  sidebar: { 
+    width: "240px", 
+    background: "rgba(15, 23, 42, 0.8)", 
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    color: "white", 
+    display: "flex", 
+    flexDirection: "column", 
+    padding: "0", 
+    boxShadow: "4px 0 30px rgba(0,0,0,0.4)", 
+    flexShrink: 0, 
+    position: "fixed", 
+    top: 0, 
+    left: 0, 
+    bottom: 0, 
+    zIndex: 100, 
+    overflowY: "auto",
+    borderRight: "1px solid rgba(255,255,255,0.1)"
+  },
   brand: { display: "flex", alignItems: "center", gap: "12px", padding: "24px 20px 20px" },
   brandIcon: { width: "42px", height: "42px", borderRadius: "12px", background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "20px", flexShrink: 0 },
   brandName: { fontSize: "14px", fontWeight: "700", color: "white", letterSpacing: "0.3px" },
@@ -568,7 +586,24 @@ const styles = {
   main: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", marginLeft: "240px" },
 
   /* Topbar */
-  topbar: { height: "70px", background: 'var(--bg-card, white)', display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 28px", boxShadow: "0 1px 10px rgba(0,0,0,0.08)", flexShrink: 0, position: "fixed", top: 0, left: "240px", right: 0, zIndex: 99 },
+  topbar: { 
+    height: "70px", 
+    background: 'rgba(255, 255, 255, 0.7)', 
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    display: "flex", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    padding: "0 28px", 
+    boxShadow: "0 8px 32px rgba(31, 38, 135, 0.07)", 
+    flexShrink: 0, 
+    position: "fixed", 
+    top: 0, 
+    left: "240px", 
+    right: 0, 
+    zIndex: 99,
+    borderBottom: "1px solid rgba(255, 255, 255, 0.18)"
+  },
   topbarLeft: {},
   pageTitle: { fontSize: "18px", fontWeight: "700", color: 'var(--text-main, #0f172a)' },
   pageCrumb: { fontSize: "12px", color: 'var(--text-lighter, #94a3b8)', marginTop: "2px" },

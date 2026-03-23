@@ -13,6 +13,7 @@ const StaffDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [clientProjects, setClientProjects] = useState([]);
   const [staffUsageProject, setStaffUsageProject] = useState(null);
+  const [usageMode, setUsageProjectMode] = useState('deduct'); // 'deduct' or 'add'
   const [staffUsageCards, setStaffUsageCards] = useState('');
   const [staffUsageNote, setStaffUsageNote] = useState('');
   const [staffHistoryOpen, setStaffHistoryOpen] = useState({});
@@ -496,10 +497,16 @@ const StaffDashboard = () => {
                                 Remaining: {cardsLeft} of {proj.totalCardsPaid}
                               </div>
                             )}
-                            <button onClick={() => setStaffUsageProject(proj)}
-                              style={{ background: 'white', border: '1px solid #e2e8f0', color: '#000', padding: '8px', borderRadius: '6px', fontWeight: '600', fontSize: '12px', cursor: 'pointer' }}>
-                              📉 Record Deduction
-                            </button>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => setStaffUsageProject(proj)}
+                                style={{ background: 'white', border: '1px solid #e2e8f0', color: '#000', padding: '8px', borderRadius: '6px', fontWeight: '600', fontSize: '12px', cursor: 'pointer', flex: 1 }}>
+                                📉 Record Deduction
+                              </button>
+                              <button onClick={() => { setStaffUsageProject(proj); setUsageProjectMode('add'); }}
+                                style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '8px', borderRadius: '6px', fontWeight: '600', fontSize: '12px', cursor: 'pointer', flex: 1 }}>
+                                💳 Add Paid
+                              </button>
+                            </div>
                           </div>
 
                           {/* Deduction History - Applicable to All */}
@@ -538,22 +545,60 @@ const StaffDashboard = () => {
                                           -{log.amount} Cards
                                         </div>
                                       </div>
-                                      <div style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>
-                                        🏷️ {log.note || 'Deduction'}
-                                      </div>
-                                      <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                                        By: {log.performedBy || 'Staff'}
+                                      <div style={{ fontSize: '12px', color: '#0f172a', fontWeight: '500' }}>{log.note || 'General deduction'}</div>
+                                      <div style={{ fontSize: '10px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        👤 <span style={{ fontWeight: '600' }}>{log.performedBy || 'System'}</span>
                                       </div>
                                     </div>
                                   ))
                                 ) : (
-                                  <div style={{ padding: '20px', textAlign: 'center', fontSize: '12px', color: '#94a3b8' }}>
-                                    No deductions recorded yet.
-                                  </div>
+                                  <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '12px' }}>No usage recorded yet</div>
                                 )}
                               </div>
                             )}
                           </div>
+
+                          {/* Payment History - For Monitors */}
+                          {isRetain && (
+                            <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', background: '#f8fafc' }}>
+                              <div 
+                                onClick={() => setStaffHistoryOpen(prev => ({ ...prev, [`pay_${proj._id}`]: !staffHistoryOpen[`pay_${proj._id}`] }))}
+                                style={{ padding: '12px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: staffHistoryOpen[`pay_${proj._id}`] ? '#f1f5f9' : 'transparent' }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontSize: '14px' }}>💳</span>
+                                  <strong style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    Payment Log ({proj.paymentHistory?.length || 0})
+                                  </strong>
+                                </div>
+                                <span style={{ fontSize: '10px', color: '#64748b' }}>{staffHistoryOpen[`pay_${proj._id}`] ? '▲ Close' : '▼ View'}</span>
+                              </div>
+
+                              {staffHistoryOpen[`pay_${proj._id}`] && (
+                                <div style={{ maxHeight: '250px', overflowY: 'auto', borderTop: '1px solid #e2e8f0', background: 'white' }}>
+                                  {proj.paymentHistory && proj.paymentHistory.length > 0 ? (
+                                    [...proj.paymentHistory].reverse().map((log, idx) => (
+                                      <div key={idx} style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                          <div style={{ fontSize: '11px', fontWeight: '700', color: '#10b981' }}>
+                                            {new Date(log.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                          </div>
+                                          <div style={{ fontSize: '12px', fontWeight: '800', color: '#10b981' }}>
+                                            +{log.amount} Cards
+                                          </div>
+                                        </div>
+                                        <div style={{ fontSize: '10px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                          👤 <span style={{ fontWeight: '600' }}>{log.performedBy || 'Admin'}</span>
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '12px' }}>No payments recorded yet</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -594,39 +639,49 @@ const StaffDashboard = () => {
                 e.preventDefault();
                 if (!staffUsageProject?._id) { alert('Project ID missing'); return; }
                 const token = localStorage.getItem('token');
+                
+                const payload = usageMode === 'add' 
+                  ? { addTotalCardsPaid: Number(staffUsageCards) } 
+                  : { addCardsUsed: Number(staffUsageCards), deductionNote: staffUsageNote };
+
                 try {
                   const res = await fetch(`http://localhost:5000/api/staff/my-client-project/${staffUsageProject._id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ addCardsUsed: Number(staffUsageCards), deductionNote: staffUsageNote })
+                    body: JSON.stringify(payload)
                   });
                   const data = await res.json();
                   if (res.ok) {
                     setClientProjects(prev => prev.map(p => p._id === staffUsageProject._id ? data : p));
-                    setStaffHistoryOpen(prev => ({ ...prev, [staffUsageProject._id]: true }));
-                    setStaffUsageProject(null); setStaffUsageCards(''); setStaffUsageNote('');
+                    const historyKey = usageMode === 'add' ? `pay_${staffUsageProject._id}` : staffUsageProject._id;
+                    setStaffHistoryOpen(prev => ({ ...prev, [historyKey]: true }));
+                    setStaffUsageProject(null); setStaffUsageCards(''); setStaffUsageNote(''); setUsageProjectMode('deduct');
                   } else {
                     alert(`Update failed: ${data.message || 'Unknown error'}`);
                   }
                 } catch (err) { alert(`Error: ${err.message}`); }
               }} style={{ background: 'var(--bg-card, white)', borderRadius: '16px', padding: '28px', width: '90%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.25)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <strong style={{ fontSize: '16px', color: 'var(--text-main, #0f172a)' }}>Deduct Cards: {staffUsageProject.companyName}</strong>
-                  <button type="button" onClick={() => setStaffUsageProject(null)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#94a3b8' }}>✕</button>
+                  <strong style={{ fontSize: '16px', color: 'var(--text-main, #0f172a)' }}>{usageMode === 'add' ? 'Add Paid Cards' : 'Deduct Cards'}: {staffUsageProject.companyName}</strong>
+                  <button type="button" onClick={() => { setStaffUsageProject(null); setUsageProjectMode('deduct'); }} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#94a3b8' }}>✕</button>
                 </div>
                 <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main, #0f172a)' }}>Cards Used Today</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main, #0f172a)' }}>{usageMode === 'add' ? 'New Cards Paid For' : 'Cards Used Today'}</label>
                   <input type="number" min="1" required value={staffUsageCards} onChange={e => setStaffUsageCards(e.target.value)}
                     placeholder="e.g. 50" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: '8px', border: '1.5 solid #e5e7eb', fontSize: '14px', outline: 'none' }} />
                 </div>
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main, #0f172a)' }}>Note (optional)</label>
-                  <input type="text" value={staffUsageNote} onChange={e => setStaffUsageNote(e.target.value)}
-                    placeholder="e.g. Batch 2, replacement run..." style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: '8px', border: '1.5 solid #e5e7eb', fontSize: '14px', outline: 'none' }} />
-                </div>
+                {usageMode === 'deduct' && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main, #0f172a)' }}>Note (optional)</label>
+                    <input type="text" value={staffUsageNote} onChange={e => setStaffUsageNote(e.target.value)}
+                      placeholder="e.g. Batch 2, replacement run..." style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: '8px', border: '1.5 solid #e5e7eb', fontSize: '14px', outline: 'none' }} />
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                  <button type="button" onClick={() => setStaffUsageProject(null)} style={{ padding: '10px 18px', background: '#f1f5f9', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
-                  <button type="submit" style={{ padding: '10px 22px', background: 'linear-gradient(135deg,#10b981,#059669)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>💾 Save Deduction</button>
+                  <button type="button" onClick={() => { setStaffUsageProject(null); setUsageProjectMode('deduct'); }} style={{ padding: '10px 18px', background: '#f1f5f9', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
+                  <button type="submit" style={{ padding: '10px 22px', background: usageMode === 'add' ? 'linear-gradient(135deg,#3b82f6,#2563eb)' : 'linear-gradient(135deg,#10b981,#059669)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>
+                    💾 {usageMode === 'add' ? 'Add Cards' : 'Save Deduction'}
+                  </button>
                 </div>
               </form>
             </div>

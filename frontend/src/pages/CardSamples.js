@@ -38,6 +38,13 @@ import bamboo2 from '../assets/cards/BAMBOO CARD.jpeg';
 import lanyard0 from '../assets/cards/LANYARD.0.jpeg';
 import activities0 from '../assets/cards/STAFF ACTIVITIES.0.jpeg';
 
+// Video Assets
+import videoHowToUse from '../assets/Videos/HOW TO USE OUR SMART CARDS.mp4';
+import videoClassicLustre from '../assets/Videos/classic-lustre.mp4';
+import videoEggShell from '../assets/Videos/Egg-Shell.mp4';
+import videoTranslux from '../assets/Videos/translux.mp4';
+import videoNubix from '../assets/Videos/nubis.mp4';
+
 const materials = [
   { id:'eggshell',      group:'plastic', name:'Eggshell',       tagline:'Subtle texture, premium feel',      photo:matEggshell,    accent:'#c8a97e', badge:'Eggshell',       badgeBg:'#fdf6ee', badgeColor:'#92400e', description:'A lightly textured plastic finish that mimics the natural feel of an eggshell surface. Soft to the touch, it gives cards a refined, understated luxury that stands out without being loud.', specs:['Textured PVC surface','Matte-like tactile feel','Full-color print support','Durable & water-resistant','Standard CR80 card size'], bestFor:['Executive business cards','Premium ID cards','Corporate branding'] },
   { id:'nubis',         group:'plastic', name:'Nubis',          tagline:'Velvety soft-touch luxury',         photo:matNubis,       accent:'#a78bfa', badge:'Nubis',          badgeBg:'#1a1a1a', badgeColor:'#ffffff', description:'Nubis is our premium soft-touch plastic finish — a velvety, suede-like coating that feels as luxurious as it looks. Dark, rich, and sophisticated. The card that makes people ask "what is this made of?"', specs:['Soft-touch velvet coating','Anti-fingerprint surface','Spot UV compatible','Deep color saturation','Premium weight PVC'], bestFor:['Luxury business cards','VIP membership cards','High-end brand identity'] },
@@ -89,7 +96,7 @@ const faqs = [
   { q:'What materials are available?', a:'We offer 4 plastic finishes (Eggshell, Nubis, Translux, Classic Lustre), stainless steel metal cards, and real bamboo veneer cards.' },
 ];
 
-const TABS = ['Overview', 'Materials', 'Our Work', 'Why Us', 'Process', 'FAQ'];
+const TABS = ['Overview', 'Materials', 'Our Work', 'Why Us', 'Process', 'How to Use', 'FAQ'];
 const TAG_COLORS = { Business:'#6366f1', NFC:'#0ea5e9', Maintenance:'#f59e0b', COD:'#10b981' };
 
 export default function CardSamples() {
@@ -213,7 +220,7 @@ export default function CardSamples() {
           <div>
             <div style={S.sectionLabel}>Our Portfolio</div>
             <div style={S.filterRow}>
-              {tags.map(t => (
+              {['All', 'Business', 'NFC', 'Maintenance', 'COD'].map(t => (
                 <button key={t} style={{ ...S.filterBtn, ...(tagFilter === t ? { ...S.filterBtnActive, background: TAG_COLORS[t] || '#6366f1' } : {}) }}
                   onClick={() => setTagFilter(t)}>{t}</button>
               ))}
@@ -221,25 +228,40 @@ export default function CardSamples() {
 
             {/* Featured Section for Duplex */}
             {tagFilter === 'All' && (
-              <div style={{ marginBottom: 40 }}>
-                <div style={{ fontSize: 24, fontWeight: 800, color: '#f9fafb', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ width: 4, height: 24, background: '#6366f1', borderRadius: 2 }} />
-                  Duplex Card Showcase
+              <div style={{ marginBottom: 60 }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#f9fafb', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ width: 4, height: 28, background: '#6366f1', borderRadius: 2 }} />
+                  Premium Duplex Showcase
                 </div>
-                <div style={{ ...S.samplesGrid, gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                  {samples.filter(s => s.isDuplex).map(s => (
-                    <div key={s.id} style={{ ...S.sampleCard, border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.02)' }} onClick={() => setSampleModal(s)}>
-                      <div style={{ ...S.sampleImgWrap, height: 200 }}>
-                        <img src={s.image} alt={s.title} style={S.sampleImg} />
-                        <div style={S.sampleOverlay}>
-                          <span style={S.sampleZoom}>🔍 Explore Duplex Views</span>
+                <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.6, marginBottom: 24, maxWidth: 800 }}>
+                  A <strong>Duplex Card</strong> is the perfect combination of both an <strong>ID card</strong> and a <strong>Business card</strong>. 
+                  Designed for modern professionals, it features your official identity on one side and your premium networking details on the other — 
+                  all crafted with our signature luxury finishes.
+                </p>
+                
+                <div style={{ ...S.samplesGrid, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
+                  {[
+                    { name: 'Classic Lustre', video: videoClassicLustre, desc: 'High-gloss vibrant finish' },
+                    { name: 'Egg Shell', video: videoEggShell, desc: 'Subtle textured premium feel' },
+                    { name: 'Translux', video: videoTranslux, desc: 'Transparent see-through elegance' },
+                    { name: 'Nubix', video: videoNubix, desc: 'Velvety soft-touch luxury' },
+                  ].map(v => (
+                    <div key={v.name} style={{ ...S.sampleCard, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', borderRadius: 20, overflow: 'hidden' }}>
+                      <div style={{ height: 200, background: '#000', position: 'relative' }}>
+                        <video 
+                          autoPlay muted loop playsInline 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
+                        >
+                          <source src={v.video} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                        <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, color: 'white' }}>
+                          {v.name} Finish
                         </div>
-                        <div style={{ position: 'absolute', top: 12, right: 12, background: '#6366f1', color: 'white', fontSize: 10, fontWeight: 900, padding: '4px 8px', borderRadius: 4, textTransform: 'uppercase' }}>Featured</div>
                       </div>
-                      <div style={S.sampleInfo}>
-                        <div style={{ ...S.sampleTitle, fontSize: 18 }}>{s.title}</div>
-                        <div style={S.sampleSub}>{s.subtitle}</div>
-                        <div style={{ marginTop: 12, fontSize: 12, color: '#6366f1', fontWeight: 700 }}>Tap to see all 4 views →</div>
+                      <div style={{ padding: 20 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#f9fafb', marginBottom: 4 }}>Duplex: {v.name} Edition</div>
+                        <div style={{ fontSize: 13, color: '#6b7280' }}>{v.desc}</div>
                       </div>
                     </div>
                   ))}
@@ -300,6 +322,79 @@ export default function CardSamples() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── HOW TO USE ── */}
+        {activeTab === 'How to Use' && (
+          <div style={{ animation: 'fadeUp 0.4s ease-out' }}>
+            <div style={S.sectionLabel}>Tutorial & Features</div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 40, alignItems: 'start' }}>
+              {/* Video Section */}
+              <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+                <div style={{ padding: '24px 28px', borderBottom: '1px solid #1f2937', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#f9fafb' }}>How to Use Our Cards</div>
+                  <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>A quick guide to sharing your digital profile</div>
+                </div>
+                <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
+                  <video 
+                    controls 
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                  >
+                    <source src={videoHowToUse} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                <div style={{ padding: 24 }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📱</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#f9fafb' }}>Works with iPhone & Android</div>
+                  </div>
+                  <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6 }}>
+                    Our smart cards are designed for instant connectivity. Watch the video to see how seamless networking can be with Xtreme Cardz.
+                  </p>
+                </div>
+              </div>
+
+              {/* Explanations Section */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {/* NFC Feature */}
+                <div style={{ background: 'rgba(99,102,241,0.03)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20, padding: 28 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 32 }}>📡</div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: 1 }}>Contactless Sharing</div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: '#f9fafb' }}>Tap and Share (NFC)</div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7 }}>
+                    <strong>NFC</strong> stands for <strong>Near Field Communication</strong>. It is a specialized wireless technology that allows two devices to communicate when they are close together.
+                  </p>
+                  <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, marginTop: 12 }}>
+                    Every Xtreme Card is embedded with a high-performance NFC chip. Simply tap your card against the back of any NFC-enabled smartphone to instantly share your digital profile, contact details, and social links. 
+                    <strong> No apps or downloads required.</strong>
+                  </p>
+                </div>
+
+                {/* QR Feature */}
+                <div style={{ background: 'rgba(16,185,129,0.03)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 20, padding: 28 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 32 }}>🔍</div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#10b981', textTransform: 'uppercase', letterSpacing: 1 }}>Universal Compatibility</div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: '#f9fafb' }}>QR Code Scanning</div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7 }}>
+                    <strong>QR</strong> stands for <strong>Quick Response</strong>. For older devices or in situations where tapping isn't preferred, every card features a unique, high-resolution QR code.
+                  </p>
+                  <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, marginTop: 12 }}>
+                    Anyone can open their smartphone camera, point it at the QR code on your card, and instantly be redirected to your digital profile. It's a foolproof way to ensure you can connect with 100% of the people you meet.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
