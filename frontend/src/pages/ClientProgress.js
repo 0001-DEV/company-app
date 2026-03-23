@@ -177,6 +177,7 @@ function ClientProgress() {
   const [usageMode, setUsageProjectMode] = useState('deduct'); // 'deduct' or 'add'
   const [historyOpen, setHistoryOpen] = useState({});
   const [paymentHistoryOpen, setPaymentHistoryOpen] = useState({});
+  const [userRole, setUserRole] = useState(null);
 
   // Navigation States
   const [searchQuery, setSearchQuery] = useState('');
@@ -188,8 +189,11 @@ function ClientProgress() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
+      // Determine which endpoint to use based on user role
+      const projectsEndpoint = userRole === 'admin' ? '/api/admin/client-projects' : '/api/admin/client-projects/staff/assigned';
+      
       const [projRes, staffRes] = await Promise.all([
-        fetch('/api/admin/client-projects', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(projectsEndpoint, { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/admin/all-staff', { headers: { Authorization: `Bearer ${token}` } })
       ]);
       if (projRes.ok) setProjects(await projRes.json());
@@ -201,7 +205,24 @@ function ClientProgress() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  // Get user role from token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(window.atob(base64));
+        setUserRole(payload.role);
+      } catch (err) {
+        console.error('Error decoding token:', err);
+      }
+    }
+  }, []);
+
+  useEffect(() => { 
+    if (userRole) fetchData(); 
+  }, [userRole]);
 
   const handleCreateOrEdit = async (data) => {
     const token = localStorage.getItem('token');
@@ -350,9 +371,11 @@ function ClientProgress() {
             <button style={{ ...s.btnPrimary, background: '#f1f5f9', color: '#475569', boxShadow: 'none' }} onClick={fetchData}>
               🔄 Refresh
             </button>
-            <button style={s.btnPrimary} onClick={() => { setEditingProject(null); setShowProjectModal(true); }}>
-              ➕ New Project
-            </button>
+            {userRole === 'admin' && (
+              <button style={s.btnPrimary} onClick={() => { setEditingProject(null); setShowProjectModal(true); }}>
+                ➕ New Project
+              </button>
+            )}
           </div>
         </div>
 
@@ -605,14 +628,14 @@ export default ClientProgress;
 const s = {
   container: { background: 'var(--bg-main)', minHeight: '100vh', display: 'flex', flexDirection: 'column' },
   main: { flex: 1, padding: '24px 32px' },
-  toolbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: 'var(--bg-card)', padding: '16px 24px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' },
-  btnPrimary: { background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', transition: 'box-shadow 0.2s' },
+  toolbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', padding: '16px 24px', borderRadius: '16px', boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)', border: '1px solid rgba(255, 255, 255, 0.2)' },
+  btnPrimary: { background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)' },
   
-  inputSearch: { padding: '10px 14px', borderRadius: '8px', border: '1.5px solid var(--border-color)', outline: 'none', background: 'var(--bg-light)', color: 'var(--text-main)', fontSize: '14px', width: '200px' },
-  sortSelect: { padding: '10px 14px', borderRadius: '8px', border: '1.5px solid var(--border-color)', outline: 'none', background: 'var(--bg-light)', color: 'var(--text-main)', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
+  inputSearch: { padding: '10px 14px', borderRadius: '12px', border: '1.5px solid rgba(255, 255, 255, 0.2)', outline: 'none', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', color: 'var(--text-main)', fontSize: '14px', width: '200px', transition: 'all 0.3s ease' },
+  sortSelect: { padding: '10px 14px', borderRadius: '12px', border: '1.5px solid rgba(255, 255, 255, 0.2)', outline: 'none', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', color: 'var(--text-main)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease' },
   
-  pagination: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '32px', padding: '20px', borderTop: '1px solid var(--border-light)' },
-  pageBtn: { padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '13px' },
+  pagination: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '32px', padding: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' },
+  pageBtn: { padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.2)', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', fontWeight: '600', cursor: 'pointer', fontSize: '13px', transition: 'all 0.3s ease' },
   pageNumber: { width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
 
   layout: { display: 'grid', gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 3fr)', gap: '24px', alignItems: 'start' },
@@ -620,46 +643,46 @@ const s = {
   projectsPane: { display: 'flex', flexDirection: 'column', gap: '16px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' },
 
-  card: { background: 'var(--bg-card)', borderRadius: '14px', padding: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column' },
+  card: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', borderRadius: '16px', padding: '20px', boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)', border: '1px solid rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' },
   companyName: { fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', margin: 0, lineHeight: 1.2 },
   actions: { display: 'flex', gap: '4px' },
-  iconBtn: { background: 'var(--bg-light)', border: 'none', borderRadius: '6px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '13px', transition: 'background 0.2s' },
+  iconBtn: { background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '8px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s ease', backdropFilter: 'blur(8px)' },
 
   tagsRow: { display: 'flex', gap: '8px', marginBottom: '16px' },
-  tag: { padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  tag: { padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)' },
 
-  gridData: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', color: 'var(--text-main)', marginBottom: '16px', background: 'var(--bg-light)', padding: '10px', borderRadius: '8px' },
+  gridData: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', color: 'var(--text-main)', marginBottom: '16px', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' },
   dataLabel: { color: 'var(--text-muted)', fontWeight: '600', display: 'block', fontSize: '11px', textTransform: 'uppercase', marginBottom: '2px' },
 
-  retainArea: { background: 'var(--bg-light)', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px', border: '1px solid var(--border-color)' },
+  retainArea: { background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', padding: '14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px', border: '1px solid rgba(255, 255, 255, 0.15)' },
   statValue: { fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' },
   statLabel: { fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' },
-  btnUpdateUsage: { background: 'white', border: '1px solid var(--border-color)', color: '#000000', padding: '8px', borderRadius: '6px', fontWeight: '600', fontSize: '12px', cursor: 'pointer' },
+  btnUpdateUsage: { background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#000000', padding: '8px', borderRadius: '8px', fontWeight: '600', fontSize: '12px', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' },
 
-  monitorsArea: { marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-light)' },
+  monitorsArea: { marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' },
   monitorsList: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' },
-  monitorBadge: { background: 'var(--bg-main)', border: '1px solid var(--border-color)', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '500', color: 'var(--text-main)' },
+  monitorBadge: { background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '500', color: 'var(--text-main)', backdropFilter: 'blur(8px)' },
 
   promoPane: { position: 'sticky', top: '24px' },
-  promoCard: { background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', borderRadius: '16px', padding: '32px', color: 'white', boxShadow: '0 10px 30px rgba(15,23,42,0.3)' },
+  promoCard: { background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(10px)', borderRadius: '16px', padding: '32px', color: 'white', boxShadow: '0 8px 32px rgba(31, 38, 135, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)' },
   promoIcon: { fontSize: '48px', marginBottom: '16px' },
   promoTitle: { fontSize: '22px', fontWeight: '800', margin: '0 0 16px 0', letterSpacing: '0.5px' },
   promoLine: { height: '3px', width: '40px', background: '#3b82f6', marginBottom: '20px', borderRadius: '2px' },
   promoText: { fontSize: '14px', lineHeight: 1.6, color: '#cbd5e1', margin: '0 0 20px 0' },
-  promoBox: { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'flex-start', fontSize: '13px', lineHeight: 1.5, marginBottom: '20px', color: '#f8fafc' },
+  promoBox: { background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'flex-start', fontSize: '13px', lineHeight: 1.5, marginBottom: '20px', color: '#f8fafc', backdropFilter: 'blur(8px)' },
 };
 
 const mStyles = {
   overlay: { position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
-  modal: { background: 'var(--bg-card)', width: '100%', maxWidth: '600px', borderRadius: '16px', padding: '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
-  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '12px', position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 10, marginTop: '-20px', paddingTop: '20px' },
+  modal: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', width: '100%', maxWidth: '600px', borderRadius: '16px', padding: '20px', boxShadow: '0 8px 32px rgba(31, 38, 135, 0.2)', border: '1px solid rgba(255, 255, 255, 0.2)', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '12px', position: 'sticky', top: 0, background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', zIndex: 10, marginTop: '-20px', paddingTop: '20px' },
   modalTitle: { margin: 0, fontSize: '17px', fontWeight: '700', color: 'var(--text-main)' },
   modalClose: { background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-muted)' },
   field: { marginBottom: '14px' },
   label: { display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' },
-  input: { width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '8px', border: '1.5px solid var(--border-color)', outline: 'none', background: 'var(--bg-light)', color: 'var(--text-main)', fontSize: '13px' },
-  modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px', paddingTop: '12px', borderTop: '1px solid var(--border-light)', position: 'sticky', bottom: 0, background: 'var(--bg-card)', zIndex: 10, marginBottom: '-20px', paddingBottom: '20px' },
-  saveBtn: { background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' },
-  cancelBtn: { background: 'var(--bg-light)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }
+  input: { width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '8px', border: '1.5px solid rgba(255, 255, 255, 0.2)', outline: 'none', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', color: 'var(--text-main)', fontSize: '13px', transition: 'all 0.3s ease' },
+  modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px', paddingTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', position: 'sticky', bottom: 0, background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', zIndex: 10, marginBottom: '-20px', paddingBottom: '20px' },
+  saveBtn: { background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)', transition: 'all 0.3s ease' },
+  cancelBtn: { background: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-main)', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.3s ease' }
 };

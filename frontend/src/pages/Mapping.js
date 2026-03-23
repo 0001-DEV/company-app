@@ -132,8 +132,8 @@ const MappingModal = ({ onClose, onSubmit, initialData, staffList, userRole }) =
       <form onSubmit={handleSubmit} style={mStyles.modal}>
         <div style={mStyles.modalHeader}>
           <div>
-            <h2 style={mStyles.modalTitle}>{initialData ? 'Edit Company' : 'New Company Registration'}</h2>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>Fill in the details to track progress.</p>
+            <h2 style={mStyles.modalTitle}>{initialData ? '✏️ Edit Company' : '🏢 New Company Registration'}</h2>
+            <p style={{ margin: '6px 0 0', fontSize: '14px', color: '#cbd5e1', fontWeight: '500' }}>Fill in the details to track progress.</p>
           </div>
           <button type="button" onClick={onClose} style={mStyles.modalClose}>✕</button>
         </div>
@@ -860,18 +860,18 @@ const styles = {
 
 const mStyles = {
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)', padding: '20px' },
-  modal: { background: '#1e293b', padding: '30px', borderRadius: '24px', width: '540px', maxWidth: '95%', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
-  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', position: 'sticky', top: 0, background: '#1e293b', zIndex: 10, marginTop: '-30px', paddingTop: '30px' },
-  modalTitle: { margin: 0, fontSize: '22px', fontWeight: '900', color: '#f8fafc' },
-  modalClose: { background: '#334155', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94a3b8' },
-  field: { marginBottom: '20px' },
-  label: { display: 'block', fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' },
-  input: { width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #334155', background: '#0f172a', color: 'white', outline: 'none', fontSize: '14px' },
-  staffList: { maxHeight: '150px', overflowY: 'auto', border: '1px solid #334155', borderRadius: '12px', padding: '12px', background: '#0f172a', display: 'flex', flexDirection: 'column', gap: '8px' },
-  staffItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', borderRadius: '10px', border: '1px solid', cursor: 'pointer', transition: '0.2s' },
-  modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '30px', position: 'sticky', bottom: 0, background: '#1e293b', zIndex: 10, marginBottom: '-30px', paddingBottom: '30px', borderTop: '1px solid #334155', paddingTop: '20px' },
-  cancelBtn: { padding: '14px 24px', borderRadius: '12px', border: 'none', background: 'transparent', color: '#94a3b8', fontWeight: '700', cursor: 'pointer' },
-  submitBtn: { padding: '14px 28px', borderRadius: '12px', border: 'none', background: '#3b82f6', color: 'white', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }
+  modal: { background: 'rgba(30, 41, 59, 0.98)', backdropFilter: 'blur(10px)', padding: '32px', borderRadius: '24px', width: '580px', maxWidth: '95%', border: '1px solid rgba(255, 255, 255, 0.15)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', position: 'sticky', top: 0, background: 'rgba(30, 41, 59, 0.98)', backdropFilter: 'blur(10px)', zIndex: 10, marginTop: '-32px', paddingTop: '32px', paddingBottom: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' },
+  modalTitle: { margin: 0, fontSize: '24px', fontWeight: '900', color: '#f8fafc', letterSpacing: '-0.5px' },
+  modalClose: { background: 'rgba(255, 255, 255, 0.1)', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#cbd5e1', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease', fontSize: '18px', fontWeight: '700' },
+  field: { marginBottom: '24px' },
+  label: { display: 'block', fontSize: '12px', fontWeight: '800', color: '#e2e8f0', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.08em', textShadow: '0 1px 2px rgba(0,0,0,0.2)' },
+  input: { width: '100%', padding: '14px 16px', borderRadius: '12px', border: '1.5px solid rgba(255, 255, 255, 0.25)', background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)', color: '#f8fafc', outline: 'none', fontSize: '15px', fontWeight: '500', transition: 'all 0.2s ease', boxSizing: 'border-box' },
+  staffList: { maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '12px', background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', gap: '8px' },
+  staffItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '10px', border: '1px solid', cursor: 'pointer', transition: '0.2s' },
+  modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '32px', position: 'sticky', bottom: 0, background: 'rgba(30, 41, 59, 0.98)', backdropFilter: 'blur(10px)', zIndex: 10, marginBottom: '-32px', paddingBottom: '32px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '24px' },
+  cancelBtn: { padding: '12px 28px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.15)', background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1', fontWeight: '700', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease', fontSize: '14px' },
+  submitBtn: { padding: '12px 32px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.4)', transition: 'all 0.2s ease', fontSize: '14px' }
 };
 
 export default Mapping;

@@ -647,16 +647,16 @@ const styles = {
 
   /* Info cards */
   infoGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "32px" },
-  infoCard: { background: 'var(--bg-card, white)', padding: "24px", borderRadius: "16px", boxShadow: "0 4px 16px rgba(0,0,0,0.07)", cursor: "pointer", transition: "all 0.3s", border: '1px solid var(--border-light, #f1f5f9)' },
+  infoCard: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', padding: "24px", borderRadius: "16px", boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)", cursor: "pointer", transition: "all 0.3s", border: '1px solid rgba(255, 255, 255, 0.2)' },
   infoCardIcon: { fontSize: "32px", marginBottom: "12px" },
   infoCardTitle: { margin: "0 0 8px 0", fontSize: "15px", fontWeight: "700", color: 'var(--text-main, #0f172a)' },
   infoCardText: { margin: 0, fontSize: "13px", color: 'var(--text-muted, #64748b)', lineHeight: "1.6" },
   infoCardFull: { margin: 0, fontSize: "13px", color: 'var(--text-muted, #475569)', lineHeight: "1.7" },
 
   /* Chart / Analytics */
-  chartBox: { background: 'var(--bg-card, white)', borderRadius: "16px", padding: "20px 24px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: '1px solid var(--border-light, #f1f5f9)', marginBottom: "32px" },
+  chartBox: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', borderRadius: "16px", padding: "20px 24px", boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)", border: '1px solid rgba(255, 255, 255, 0.2)', marginBottom: "32px" },
   chartTabs: { display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" },
-  chartTab: { padding: "7px 16px", borderRadius: "50px", border: '1.5px solid var(--border-color, #e2e8f0)', background: 'var(--bg-light, #f8fafc)', color: 'var(--text-muted, #64748b)', cursor: "pointer", fontSize: "13px", fontWeight: "600", transition: "all 0.2s" },
+  chartTab: { padding: "7px 16px", borderRadius: "50px", border: '1.5px solid rgba(255, 255, 255, 0.2)', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', color: 'var(--text-muted, #64748b)', cursor: "pointer", fontSize: "13px", fontWeight: "600", transition: "all 0.2s" },
   chartTabActive: { background: "linear-gradient(135deg,#3b82f6,#6366f1)", color: "white", border: "1.5px solid transparent", boxShadow: "0 4px 12px rgba(59,130,246,0.35)" },
   chartArea: { minHeight: "180px" },
   chartEmpty: { textAlign: "center", color: 'var(--text-lighter, #94a3b8)', padding: "40px", fontSize: "14px" },
@@ -664,18 +664,18 @@ const styles = {
   barChart: { display: "flex", alignItems: "flex-end", gap: "10px", height: "160px", padding: "0 4px" },
   barGroup: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%" },
   barCountLabel: { fontSize: "11px", fontWeight: "700", color: 'var(--text-main, #0f172a)', minHeight: "16px" },
-  barTrack: { flex: 1, width: "100%", background: "#f1f5f9", borderRadius: "6px 6px 0 0", display: "flex", alignItems: "flex-end", overflow: "hidden" },
+  barTrack: { flex: 1, width: "100%", background: "rgba(255, 255, 255, 0.1)", borderRadius: "6px 6px 0 0", display: "flex", alignItems: "flex-end", overflow: "hidden", backdropFilter: 'blur(4px)' },
   barFill: { width: "100%", borderRadius: "6px 6px 0 0", transition: "height 0.6s ease", minHeight: "2px" },
   barLabel: { fontSize: "10px", color: 'var(--text-muted, #64748b)', textAlign: "center", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
 
-  chartLegend: { display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" },
+  chartLegend: { display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.1)" },
   legendItem: { display: "flex", alignItems: "center", gap: "6px" },
   legendDot: { width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0 },
   legendText: { fontSize: "12px", color: 'var(--text-muted, #475569)' },
 
   activityGrid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px" },
-  activityCard: { background: 'var(--bg-light, #f8fafc)', borderRadius: "12px", padding: "18px 16px", textAlign: "center" },
-  progressBar: { height: "6px", background: "#e2e8f0", borderRadius: "3px", marginTop: "10px", overflow: "hidden" },
+  activityCard: { background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', borderRadius: "12px", padding: "18px 16px", textAlign: "center", border: '1px solid rgba(255, 255, 255, 0.1)' },
+  progressBar: { height: "6px", background: "rgba(255, 255, 255, 0.1)", borderRadius: "3px", marginTop: "10px", overflow: "hidden" },
   progressFill: { height: "100%", borderRadius: "3px", transition: "width 0.6s ease" },
 };
 

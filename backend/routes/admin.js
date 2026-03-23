@@ -1067,6 +1067,23 @@ router.get('/client-projects', adminAuth, async (req, res) => {
   }
 });
 
+// GET client projects for assigned staff (monitors)
+router.get('/client-projects/staff/assigned', verifyUser, async (req, res) => {
+  try {
+    // If admin, return all projects
+    if (req.user.role === 'admin') {
+      const projects = await ClientProject.find().populate('monitors', 'name email').sort({ createdAt: -1 });
+      return res.json(projects);
+    }
+
+    // If staff, return only projects they're assigned to
+    const projects = await ClientProject.find({ monitors: req.user.id }).populate('monitors', 'name email').sort({ createdAt: -1 });
+    res.json(projects);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // POST create new client project
 router.post('/client-project', adminAuth, async (req, res) => {
   try {
@@ -1159,7 +1176,7 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
     if (cardsUsed !== undefined && (isAdmin || isMonitor)) project.cardsUsed = cardsUsed;
 
     // Logic for adding cards (Staff/Monitor can do this)
-    if (addTotalCardsPaid) {
+    if (addTotalCardsPaid && (isAdmin || isMonitor)) {
       const amount = Number(addTotalCardsPaid);
       if (!isNaN(amount) && amount > 0) {
         project.totalCardsPaid = (project.totalCardsPaid || 0) + amount;
@@ -1173,10 +1190,14 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
         };
         project.paymentHistory.push(paymentLog);
         project.markModified('paymentHistory');
+        
+        const savedProject = await project.save();
+        await savedProject.populate('monitors', 'name email');
+        return res.json(savedProject);
       }
     }
 
-    if (addCardsUsed) {
+    if (addCardsUsed && (isAdmin || isMonitor)) {
       const amount = Number(addCardsUsed);
       if (!isNaN(amount) && amount !== 0) {
         const newLog = {
