@@ -1131,12 +1131,19 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
       dateReceived, dateStarted, status, monitors, cardMaterials 
     } = req.body;
     
+    console.log('PUT /client-project/:id called');
+    console.log('User:', req.user);
+    console.log('Payload:', { addTotalCardsPaid, addCardsUsed, deductionNote });
+    
     const project = await ClientProject.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Client project not found' });
 
     // Check permissions: Admin or assigned monitor
     const isAdmin = req.user.role === 'admin';
     const isMonitor = project.monitors.some(m => m.toString() === req.user.id);
+
+    console.log('isAdmin:', isAdmin, 'isMonitor:', isMonitor);
+    console.log('Project monitors:', project.monitors);
 
     if (!isAdmin && !isMonitor) {
       return res.status(403).json({ message: 'Access denied. You are not assigned to monitor this client.' });
@@ -1178,8 +1185,11 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
     // Logic for adding cards (Staff/Monitor can do this)
     if (addTotalCardsPaid && (isAdmin || isMonitor)) {
       const amount = Number(addTotalCardsPaid);
+      console.log('Adding cards - amount:', amount, 'isNaN:', isNaN(amount));
       if (!isNaN(amount) && amount > 0) {
+        console.log('Before update - totalCardsPaid:', project.totalCardsPaid);
         project.totalCardsPaid = (project.totalCardsPaid || 0) + amount;
+        console.log('After update - totalCardsPaid:', project.totalCardsPaid);
         
         // Log payment history
         const paymentLog = {
@@ -1188,10 +1198,13 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
           performedBy: isAdmin ? 'Admin' : req.user.name,
           _id: new mongoose.Types.ObjectId()
         };
+        console.log('Payment log:', paymentLog);
         project.paymentHistory.push(paymentLog);
         project.markModified('paymentHistory');
         
+        console.log('Saving project...');
         const savedProject = await project.save();
+        console.log('Project saved, payment history:', savedProject.paymentHistory);
         await savedProject.populate('monitors', 'name email');
         return res.json(savedProject);
       }
