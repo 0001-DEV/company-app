@@ -409,11 +409,11 @@ router.get('/my-client-projects', staffAuth, async (req, res) => {
 });
 
 // ----------------------
-// Staff updates an assigned client project (deduct cards, update status)
+// Staff updates an assigned client project (deduct cards, add paid, update status)
 // ----------------------
 router.put('/my-client-project/:id', staffAuth, async (req, res) => {
   try {
-    const { addCardsUsed, deductionNote, status } = req.body;
+    const { addCardsUsed, addTotalCardsPaid, deductionNote, status } = req.body;
     
     const project = await ClientProject.findOne({ _id: req.params.id, monitors: req.staff._id });
     if (!project) {
@@ -422,6 +422,32 @@ router.put('/my-client-project/:id', staffAuth, async (req, res) => {
 
     if (status) project.status = status;
 
+    // Handle adding paid cards (Monitors can do this)
+    if (addTotalCardsPaid) {
+      const amount = Number(addTotalCardsPaid);
+      if (!isNaN(amount) && amount > 0) {
+        const paymentLog = {
+          amount,
+          date: new Date(),
+          performedBy: req.staff.name || 'Staff (Monitor)',
+          _id: new mongoose.Types.ObjectId()
+        };
+
+        await ClientProject.collection.updateOne(
+          { _id: project._id },
+          { 
+            $inc: { totalCardsPaid: amount },
+            $push: { paymentHistory: paymentLog },
+            $set: { updatedAt: new Date() }
+          }
+        );
+        
+        const refreshed = await ClientProject.findById(project._id).populate('monitors', 'name email');
+        return res.json(refreshed);
+      }
+    }
+
+    // Handle deducting cards
     if (addCardsUsed) {
       const amount = Number(addCardsUsed);
       if (!isNaN(amount) && amount !== 0) {
