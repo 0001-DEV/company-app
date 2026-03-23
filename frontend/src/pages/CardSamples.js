@@ -37,10 +37,12 @@ import bamboo2 from '../assets/cards/BAMBOO CARD.jpeg';
 // Other assets
 import lanyard0 from '../assets/cards/LANYARD.0.jpeg';
 import activities0 from '../assets/cards/STAFF ACTIVITIES.0.jpeg';
+import activities1 from '../assets/cards/STAFF ACTIVITIES.1.jpeg';
+import activitiesMain from '../assets/cards/STAFF ACTIVITIES.jpeg';
 
 // Video Assets
 import videoHowToUse from '../assets/Videos/HOW TO USE OUR SMART CARDS.mp4';
-// import videoQRCode from '../assets/Videos/qrcode card.mp4'; // Uncomment when file exists
+import videoQRCode from '../assets/Videos/qrcode card.mp4';
 import videoClassicLustre from '../assets/Videos/classic-lustre.mp4';
 import videoEggShell from '../assets/Videos/Egg-Shell.mp4';
 import videoTranslux from '../assets/Videos/translux.mp4';
@@ -68,7 +70,6 @@ const samples = [
   { id:10, image:cod0,       title:'COD Card',         subtitle:'Translux transparent',  material:'translux',       type:'COD Card',         tag:'COD' },
   { id:11, image:cod1,       title:'COD Card',         subtitle:'Eggshell texture',      material:'eggshell',       type:'COD Card',         tag:'COD' },
   { id:12, image:lanyard0,   title:'Branded Lanyard',  subtitle:'Premium weave',         material:'lanyard',        type:'Accessory',        tag:'Maintenance' },
-  { id:13, image:activities0,title:'Staff Activity',    subtitle:'Workshop view',         material:'workshop',       type:'Activity',         tag:'Business' },
 ];
 
 const whyUs = [
@@ -97,7 +98,7 @@ const faqs = [
   { q:'What materials are available?', a:'We offer 4 plastic finishes (Eggshell, Nubis, Translux, Classic Lustre), stainless steel metal cards, and real bamboo veneer cards.' },
 ];
 
-const TABS = ['Overview', 'Materials', 'Our Work', 'Why Us', 'Process', 'How to Use', 'FAQ'];
+const TABS = ['Overview', 'Materials', 'Our Work', 'Why Us', 'Process', 'Staff Activity', 'How to Use', 'FAQ'];
 const TAG_COLORS = { Business:'#6366f1', NFC:'#0ea5e9', Maintenance:'#f59e0b', COD:'#10b981' };
 
 export default function CardSamples() {
@@ -345,6 +346,30 @@ export default function CardSamples() {
           </div>
         )}
 
+        {/* ── STAFF ACTIVITY ── */}
+        {activeTab === 'Staff Activity' && (
+          <div style={{ animation: 'fadeUp 0.4s ease-out' }}>
+            <div style={S.sectionLabel}>Team Moments & Celebrations</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
+              {[
+                { img: activitiesMain, title: 'Team Celebration', desc: 'Sharing joy and success together.' },
+                { img: activities0, title: 'Workshop Session', desc: 'Collaborating on new creative ideas.' },
+                { img: activities1, title: 'Staff Birthday', desc: 'Celebrating our amazing team members.' },
+              ].map((act, i) => (
+                <div key={i} style={{ ...S.sampleCard, cursor: 'default' }}>
+                  <div style={{ ...S.sampleImgWrap, height: 240 }}>
+                    <img src={act.img} alt={act.title} style={S.sampleImg} />
+                  </div>
+                  <div style={S.sampleInfo}>
+                    <div style={{ ...S.sampleTitle, fontSize: 18 }}>{act.title}</div>
+                    <div style={S.sampleSub}>{act.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── HOW TO USE ── */}
         {activeTab === 'How to Use' && (
           <div style={{ animation: 'fadeUp 0.4s ease-out' }}>
@@ -382,10 +407,19 @@ export default function CardSamples() {
                       <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Sharing via camera scan</div>
                     </div>
                     <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
-                      {/* Replace with videoQRCode when imported */}
-                      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
-                        QR Code Tutorial Video (qrcode card.mp4)
-                      </div>
+                      {videoQRCode ? (
+                        <video 
+                          controls 
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                        >
+                          <source src={videoQRCode} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                          QR Code Tutorial Video not available
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
