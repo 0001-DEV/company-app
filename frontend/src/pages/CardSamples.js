@@ -40,6 +40,7 @@ import activities0 from '../assets/cards/STAFF ACTIVITIES.0.jpeg';
 
 // Video Assets
 import videoHowToUse from '../assets/Videos/HOW TO USE OUR SMART CARDS.mp4';
+// import videoQRCode from '../assets/Videos/qrcode card.mp4'; // Uncomment when file exists
 import videoClassicLustre from '../assets/Videos/classic-lustre.mp4';
 import videoEggShell from '../assets/Videos/Egg-Shell.mp4';
 import videoTranslux from '../assets/Videos/translux.mp4';
@@ -350,37 +351,44 @@ export default function CardSamples() {
             <div style={S.sectionLabel}>Tutorial & Features</div>
             
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 40, alignItems: 'start' }}>
-              {/* Video Section */}
-              <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
-                <div style={{ padding: '24px 28px', borderBottom: '1px solid #1f2937', background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#f9fafb' }}>How to Use Our Cards</div>
-                  <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>A quick guide to sharing your digital profile</div>
-                </div>
-                <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
-                  {videoHowToUse ? (
-                    <video 
-                      controls 
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                    >
-                      <source src={videoHowToUse} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
-                      Video tutorial not available
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  {/* NFC Video Section */}
+                  <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+                    <div style={{ padding: '24px 28px', borderBottom: '1px solid #1f2937', background: 'rgba(255,255,255,0.02)' }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#f9fafb' }}>How to Use: NFC Feature</div>
+                      <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>A quick guide to sharing via tap</div>
                     </div>
-                  )}
-                </div>
-                <div style={{ padding: 24 }}>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📱</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#f9fafb' }}>Works with iPhone & Android</div>
+                    <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
+                      {videoHowToUse ? (
+                        <video 
+                          controls 
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                        >
+                          <source src={videoHowToUse} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                          NFC Tutorial Video not available
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6 }}>
-                    Our smart cards are designed for instant connectivity. Watch the video to see how seamless networking can be with Xtreme Cardz.
-                  </p>
+
+                  {/* QR Code Video Section */}
+                  <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+                    <div style={{ padding: '24px 28px', borderBottom: '1px solid #1f2937', background: 'rgba(255,255,255,0.02)' }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#f9fafb' }}>How to Use: QR Code Scanning</div>
+                      <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Sharing via camera scan</div>
+                    </div>
+                    <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
+                      {/* Replace with videoQRCode when imported */}
+                      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                        QR Code Tutorial Video (qrcode card.mp4)
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
               {/* Explanations Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -397,7 +405,7 @@ export default function CardSamples() {
                     <strong>NFC</strong> stands for <strong>Near Field Communication</strong>. It is a specialized wireless technology that allows two devices to communicate when they are close together.
                   </p>
                   <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, marginTop: 12 }}>
-                    Every Xtreme Card is embedded with a high-performance NFC chip. Simply tap your card against the back of any NFC-enabled smartphone to instantly share your digital profile, contact details, and social links. 
+                    Simply tap your card against the back of any NFC-enabled smartphone to instantly share your digital profile, contact details, and social links. 
                     <strong> No apps or downloads required.</strong>
                   </p>
                 </div>
