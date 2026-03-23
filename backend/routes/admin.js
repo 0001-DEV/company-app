@@ -1138,7 +1138,7 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
     if (status) project.status = status;
     if (cardMaterials) project.cardMaterials = cardMaterials;
     
-    if (totalCardsPaid !== undefined && isAdmin) {
+    if (totalCardsPaid !== undefined && (isAdmin || isMonitor)) {
       const newTotal = Number(totalCardsPaid);
       const oldTotal = project.totalCardsPaid || 0;
       if (newTotal !== oldTotal) {
@@ -1148,7 +1148,7 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
           project.paymentHistory.push({
             amount: newTotal - oldTotal,
             date: new Date(),
-            performedBy: 'Admin (Update)',
+            performedBy: isAdmin ? 'Admin' : req.user.name,
             _id: new mongoose.Types.ObjectId()
           });
           project.markModified('paymentHistory');
@@ -1156,7 +1156,7 @@ router.put('/client-project/:id', verifyUser, async (req, res) => {
       }
     }
 
-    if (cardsUsed !== undefined && isAdmin) project.cardsUsed = cardsUsed;
+    if (cardsUsed !== undefined && (isAdmin || isMonitor)) project.cardsUsed = cardsUsed;
 
     // Logic for adding cards (Staff/Monitor can do this)
     if (addTotalCardsPaid) {
