@@ -42,7 +42,7 @@ import activitiesMain from '../assets/cards/STAFF ACTIVITIES.jpeg';
 
 // Video Assets
 import videoHowToUse from '../assets/Videos/HOW TO USE OUR SMART CARDS.mp4';
-import videoQRCode from '../assets/Videos/qrcode card.mp4';
+import videoQRCode from '../assets/Videos/Qrcode card.mp4';
 import videoClassicLustre from '../assets/Videos/classic-lustre.mp4';
 import videoEggShell from '../assets/Videos/Egg-Shell.mp4';
 import videoTranslux from '../assets/Videos/translux.mp4';
