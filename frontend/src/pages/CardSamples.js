@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import card0 from '../assets/cards/CARD 0.jpeg';
@@ -107,6 +107,14 @@ export default function CardSamples() {
   const [sampleModal, setSampleModal] = useState(null);
   const [openFaq, setOpenFaq] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const tags = ['All', ...Object.keys(TAG_COLORS)];
   const filteredSamples = tagFilter === 'All' ? samples : samples.filter(s => s.tag === tagFilter);
@@ -239,7 +247,7 @@ export default function CardSamples() {
                   all crafted with our signature luxury finishes.
                 </p>
                 
-                <div style={{ ...S.samplesGrid, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
+                <div style={{ ...S.samplesGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
                   {[
                     { name: 'Classic Lustre', video: videoClassicLustre, desc: 'High-gloss vibrant finish' },
                     { name: 'Egg Shell', video: videoEggShell, desc: 'Subtle textured premium feel' },
@@ -247,14 +255,24 @@ export default function CardSamples() {
                     { name: 'Nubix', video: videoNubix, desc: 'Velvety soft-touch luxury' },
                   ].map(v => (
                     <div key={v.name} style={{ ...S.sampleCard, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', borderRadius: 20, overflow: 'hidden' }}>
-                      <div style={{ height: 200, background: '#000', position: 'relative' }}>
-                        <video 
-                          autoPlay muted loop playsInline 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
-                        >
-                          <source src={v.video} type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
+                      <div style={{ height: 200, background: '#000', position: 'relative', overflow: 'hidden' }}>
+                        {v.video ? (
+                          <video 
+                            key={v.video}
+                            autoPlay 
+                            muted 
+                            loop 
+                            playsInline 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, display: 'block' }}
+                          >
+                            <source src={v.video} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: 12 }}>
+                            Video not available
+                          </div>
+                        )}
                         <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, color: 'white' }}>
                           {v.name} Finish
                         </div>
@@ -339,13 +357,19 @@ export default function CardSamples() {
                   <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>A quick guide to sharing your digital profile</div>
                 </div>
                 <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
-                  <video 
-                    controls 
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                  >
-                    <source src={videoHowToUse} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
+                  {videoHowToUse ? (
+                    <video 
+                      controls 
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                    >
+                      <source src={videoHowToUse} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                      Video tutorial not available
+                    </div>
+                  )}
                 </div>
                 <div style={{ padding: 24 }}>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
