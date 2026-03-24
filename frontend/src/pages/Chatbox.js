@@ -695,9 +695,42 @@ const ChatBox = () => {
     } catch (_) {}
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+      recorder.ondataavailable = e => audioChunksRef.current.push(e.data);
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const file = new File([blob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+        setSelectedFiles(prev => [...prev, file]);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      recorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } catch (_) {}
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      clearInterval(recordingTimerRef.current);
+    }
+  };
+
   const handleMessageClick = (msg, e) => {
     e.stopPropagation();
-    setContextMenu({ msg, x: e.clientX, y: e.clientY });
+    e.preventDefault();
+    setContextMenu({ 
+      msg, 
+      x: e.clientX,
+      y: e.clientY
+    });
   };
 
   const loadGroupInfo = async (dept) => {
@@ -790,30 +823,264 @@ const ChatBox = () => {
                   <div style={{ fontWeight: 600, color: "#e9edef" }}>
                     {selectedDepartment ? selectedDepartment.name : viewMode === "all" ? "Team Chat" : staffList.find(s => s._id === selectedUser)?.name}
                   </div>
+                  {typingNames.length > 0 && <div style={{ fontSize: 11, color: "#8888aa", fontStyle: "italic" }}>{typingNames.join(", ")} typing...</div>}
                 </div>
               </div>
+              {showSearch && (
+                <input type="text" placeholder="Search messages..." value={msgSearchQuery} onChange={e => setMsgSearchQuery(e.target.value)} style={{ padding: "6px 12px", background: "#35354f", border: "1px solid #35354f", borderRadius: 6, color: "#e9edef", outline: "none", width: 200 }} />
+              )}
               <div style={S.chatHeaderActions}>
+                <button style={S.headerBtn} onClick={() => setShowSearch(!showSearch)}>🔍</button>
+                <button style={S.headerBtn} onClick={() => setShowStarred(!showStarred)}>⭐</button>
+                {selectedDepartment && <button style={S.headerBtn} onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
+                <button style={S.headerBtn} onClick={() => setShowMuteMenu(!showMuteMenu)}>🔔</button>
+                <button style={S.headerBtn} onClick={() => setShowScheduleModal(!showScheduleModal)}>⏰</button>
                 <button style={S.headerBtn} onClick={() => startCall("voice")}>📞</button>
                 <button style={S.headerBtn} onClick={() => startCall("video")}>📹</button>
               </div>
             </div>
+            {pinnedMessages.length > 0 && (
+              <div style={{ background: "rgba(251,146,60,0.1)", padding: "12px 16px", borderBottom: "1px solid rgba(251,146,60,0.3)", display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 14 }}>📌</span>
+                <div style={{ flex: 1, fontSize: 13, color: "#cbd5e1" }}>
+                  {pinnedMessages.length} pinned message{pinnedMessages.length > 1 ? 's' : ''}
+                </div>
+                <button onClick={() => setPinnedMessages([])} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>✕</button>
+              </div>
+            )}
             <div style={S.messagesList} ref={messagesContainerRef}>
-              {messages.map((msg, idx) => {
+              {messages.filter(msg => !msgSearchQuery || msg.text.toLowerCase().includes(msgSearchQuery.toLowerCase())).map((msg, idx) => {
                 const isOwn = msg.senderId?.toString() === currentUser?.id?.toString();
                 return (
-                  <div key={msg._id || idx} style={{ ...S.msgRow, justifyContent: isOwn ? "flex-end" : "flex-start" }}>
-                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther) }} onClick={e => handleMessageClick(msg, e)}>
+                  <div key={msg._id || idx} style={{ ...S.msgRow, justifyContent: isOwn ? "flex-end" : "flex-start", position: "relative" }}>
+                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative" }} onContextMenu={e => { e.preventDefault(); handleMessageClick(msg, e); }}>
                       {!isOwn && <div style={S.msgSenderName}>{msg.senderName}</div>}
                       <div style={S.msgText}>{renderMentions(msg.text, currentUser?.name, staffList)}</div>
-                      <div style={S.msgMeta}><span style={S.msgTime}>{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></div>
+                      {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                        <div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
+                          {Object.entries(msg.reactions).map(([emoji, count]) => (
+                            <button key={emoji} onClick={() => handleReact(msg._id, emoji)} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "2px 8px", fontSize: 12, cursor: "pointer", color: "#cbd5e1" }}>
+                              {emoji} {count}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div style={S.msgMeta}>
+                        <span style={S.msgTime}>{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        {isOwn && msg.readBy && <span style={{ marginLeft: 8, fontSize: 10 }}>✓✓</span>}
+                      </div>
                     </div>
+                    {contextMenu?.msg._id === msg._id && (
+                      <div style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 300, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 160 }}>
+                        <div style={{ padding: "8px 10px", display: "flex", gap: 4, flexWrap: "wrap", borderBottom: "1px solid #35354f" }}>
+                          {QUICK_REACTIONS.map(emoji => (
+                            <button key={emoji} onClick={() => { handleReact(msg._id, emoji); setContextMenu(null); }} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", padding: "3px", borderRadius: 8, lineHeight: 1 }}>
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                        <button onClick={() => { handleStar(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>⭐ Star</button>
+                        <button onClick={() => { handlePin(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>📌 Pin</button>
+                        <button onClick={() => { setForwardMsg(msg); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>↗️ Forward</button>
+                        <button onClick={() => { handleReadBy(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>👁️ Read by</button>
+                        {isOwn && <button onClick={() => { handleDelete(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#ef4444", cursor: "pointer", textAlign: "left", fontSize: 13 }}>🗑️ Delete</button>}
+                      </div>
+                    )}
                   </div>
                 );
               })}
+              {typingNames.length > 0 && <div style={{ fontSize: 12, color: "#8888aa", fontStyle: "italic" }}>{typingNames.join(", ")} typing...</div>}
               <div ref={messagesEndRef} />
             </div>
+            {replyingTo && (
+              <div style={{ padding: "12px 16px", background: "rgba(99,102,241,0.1)", borderLeft: "3px solid #6366f1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontSize: 13, color: "#cbd5e1" }}>Replying to <strong>{replyingTo.senderName}</strong></div>
+                <button onClick={() => setReplyingTo(null)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
+              </div>
+            )}
+            {selectedFiles.length > 0 && (
+              <div style={{ padding: "12px 16px", background: "rgba(59,130,246,0.1)", display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                {selectedFiles.map((f, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.08)", padding: "6px 10px", borderRadius: 8 }}>
+                    <span style={{ fontSize: 12, color: "#cbd5e1" }}>{f.name.substring(0, 20)}</span>
+                    <button onClick={() => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showStarred && (
+              <div style={{ position: "fixed", top: 0, right: 0, width: 360, height: "100vh", background: "#1e1e2e", borderLeft: "1px solid #35354f", zIndex: 250, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "16px", borderBottom: "1px solid #35354f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontWeight: 600, color: "#e9edef" }}>⭐ Starred Messages</div>
+                  <button onClick={() => setShowStarred(false)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+                  {starredMessages.length === 0 ? (
+                    <div style={{ textAlign: "center", color: "#8888aa", padding: "40px 20px" }}>No starred messages</div>
+                  ) : (
+                    starredMessages.map((msg, idx) => (
+                      <div key={idx} style={{ background: "#2a2a3e", padding: "12px", borderRadius: 8, marginBottom: 8, fontSize: 13, color: "#cbd5e1" }}>
+                        <div style={{ fontWeight: 600, color: "#a5b4fc", marginBottom: 4 }}>{msg.senderName}</div>
+                        <div>{msg.text}</div>
+                        <div style={{ fontSize: 11, color: "#8888aa", marginTop: 4 }}>{new Date(msg.createdAt).toLocaleString()}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+            {showGroupInfo && selectedDepartment && (
+              <div style={{ position: "fixed", top: 0, right: 0, width: 360, height: "100vh", background: "#1e1e2e", borderLeft: "1px solid #35354f", zIndex: 250, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "16px", borderBottom: "1px solid #35354f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontWeight: 600, color: "#e9edef" }}>ℹ️ Group Info</div>
+                  <button onClick={() => setShowGroupInfo(false)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
+                </div>
+                <div style={{ display: "flex", gap: 8, padding: "12px", borderBottom: "1px solid #35354f" }}>
+                  <button onClick={() => setGroupInfoTab("members")} style={{ flex: 1, padding: "8px", background: groupInfoTab === "members" ? "#6366f1" : "#35354f", border: "none", color: "#e9edef", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Members</button>
+                  <button onClick={() => setGroupInfoTab("media")} style={{ flex: 1, padding: "8px", background: groupInfoTab === "media" ? "#6366f1" : "#35354f", border: "none", color: "#e9edef", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Media</button>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+                  {groupInfoTab === "members" ? (
+                    <>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#8888aa", marginBottom: 8 }}>Admins ({groupAdmins.length})</div>
+                      {groupAdmins.map((admin, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "#2a2a3e", borderRadius: 6, marginBottom: 6 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>{getInitials(admin.name)}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, color: "#e9edef", fontWeight: 600 }}>{admin.name}</div>
+                            <div style={{ fontSize: 11, color: "#8888aa" }}>Admin</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#8888aa", marginBottom: 8, marginTop: 16 }}>Members ({groupMembers.length})</div>
+                      {groupMembers.map((member, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "#2a2a3e", borderRadius: 6, marginBottom: 6 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>{getInitials(member.name)}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, color: "#e9edef", fontWeight: 600 }}>{member.name}</div>
+                            <div style={{ fontSize: 11, color: "#8888aa" }}>{onlineStatus[member._id]?.online ? "🟢 Online" : "⚫ Offline"}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div>
+                      {mediaMessages.length === 0 ? (
+                        <div style={{ textAlign: "center", color: "#8888aa", padding: "40px 20px" }}>No media shared</div>
+                      ) : (
+                        mediaMessages.map((msg, idx) => (
+                          <div key={idx} style={{ marginBottom: 12 }}>
+                            {isImageFile(msg.fileName) && <img src={`http://localhost:5000/uploads/${msg.fileName}`} alt="media" style={{ width: "100%", borderRadius: 8 }} />}
+                            {isVideoFile(msg.fileName) && <video src={`http://localhost:5000/uploads/${msg.fileName}`} style={{ width: "100%", borderRadius: 8 }} controls />}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {showMuteMenu && (
+              <div style={{ position: "absolute", top: 60, right: 16, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 200, boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
+                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, 0)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔔 Unmute</button>
+                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, 1)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 1h</button>
+                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, 8)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 8h</button>
+                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, -1)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13 }}>🔕 Mute Always</button>
+              </div>
+            )}
+            {showScheduleModal && (
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 400 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, color: "#e9edef", fontSize: 16 }}>⏰ Schedule Message</div>
+                  <button onClick={() => setShowScheduleModal(false)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
+                </div>
+                <textarea value={scheduleText} onChange={e => setScheduleText(e.target.value)} placeholder="Message text..." style={{ width: "100%", padding: "10px", background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, color: "#e9edef", marginBottom: 12, resize: "none", minHeight: 80 }} />
+                <input type="datetime-local" value={scheduleAt} onChange={e => setScheduleAt(e.target.value)} style={{ width: "100%", padding: "10px", background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, color: "#e9edef", marginBottom: 12 }} />
+                <button onClick={async () => {
+                  if (!scheduleText.trim() || !scheduleAt) return;
+                  try {
+                    const token = localStorage.getItem("token");
+                    let receiverId = "all";
+                    if (viewMode === "private" && selectedUser) receiverId = selectedUser;
+                    else if (viewMode === "department" && selectedDepartment) receiverId = `department:${selectedDepartment._id}`;
+                    await fetch("http://localhost:5000/api/chat/schedule", {
+                      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ text: scheduleText, receiverId, scheduledAt: new Date(scheduleAt).toISOString() })
+                    });
+                    setScheduleText(""); setScheduleAt(""); setShowScheduleModal(false);
+                  } catch (_) {}
+                }} style={{ width: "100%", padding: "10px", background: "#6366f1", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontWeight: 600 }}>Schedule</button>
+              </div>
+            )}
+            {forwardMsg && (
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 400 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, color: "#e9edef", fontSize: 16 }}>↗️ Forward Message</div>
+                  <button onClick={() => setForwardMsg(null)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
+                </div>
+                <div style={{ background: "#2a2a3e", padding: "12px", borderRadius: 8, marginBottom: 16, fontSize: 13, color: "#cbd5e1" }}>
+                  <div style={{ fontWeight: 600, color: "#a5b4fc", marginBottom: 4 }}>{forwardMsg.senderName}</div>
+                  <div>{forwardMsg.text}</div>
+                </div>
+                <div style={{ maxHeight: 300, overflowY: "auto", marginBottom: 16 }}>
+                  {currentUser?.role === "admin" && (
+                    <button onClick={() => { handleForward("all"); setForwardMsg(null); }} style={{ display: "block", width: "100%", padding: "10px", background: "#35354f", border: "none", color: "#cbd5e1", borderRadius: 6, cursor: "pointer", marginBottom: 8, textAlign: "left" }}>🏢 Team Chat</button>
+                  )}
+                  {departments.map(dept => (
+                    <button key={dept._id} onClick={() => { handleForward(`department:${dept._id}`); setForwardMsg(null); }} style={{ display: "block", width: "100%", padding: "10px", background: "#35354f", border: "none", color: "#cbd5e1", borderRadius: 6, cursor: "pointer", marginBottom: 8, textAlign: "left" }}>📁 {dept.name}</button>
+                  ))}
+                  {staffList.map(staff => (
+                    <button key={staff._id} onClick={() => { handleForward(staff._id); setForwardMsg(null); }} style={{ display: "block", width: "100%", padding: "10px", background: "#35354f", border: "none", color: "#cbd5e1", borderRadius: 6, cursor: "pointer", marginBottom: 8, textAlign: "left" }}>👤 {staff.name}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {readByPopup && (
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 300 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, color: "#e9edef", fontSize: 16 }}>👁️ Read by</div>
+                  <button onClick={() => setReadByPopup(null)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
+                </div>
+                <div>
+                  {readByPopup.names.length === 0 ? (
+                    <div style={{ color: "#8888aa", fontSize: 13 }}>No one has read this message</div>
+                  ) : (
+                    readByPopup.names.map((name, idx) => (
+                      <div key={idx} style={{ padding: "8px", color: "#cbd5e1", fontSize: 13, borderBottom: "1px solid #35354f" }}>✓ {name}</div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+            {missedCallToast && (
+              <div style={{ position: "fixed", bottom: 20, left: 20, background: "#ef4444", color: "#fff", padding: "12px 16px", borderRadius: 8, zIndex: 200, fontSize: 13 }}>
+                📞 Missed {missedCallToast.callType} call from {missedCallToast.callerName}
+              </div>
+            )}
+            {activeCall && (
+              <div style={{ position: "fixed", bottom: 20, right: 20, background: "#22c55e", color: "#fff", padding: "12px 16px", borderRadius: 8, zIndex: 200, fontSize: 13, display: "flex", gap: 12, alignItems: "center" }}>
+                <div>📞 Calling {activeCall.receiverName}...</div>
+                <button onClick={endCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>End</button>
+              </div>
+            )}
+            {incomingCall && (
+              <div style={{ position: "fixed", bottom: 20, right: 20, background: "#3b82f6", color: "#fff", padding: "16px", borderRadius: 8, zIndex: 200, fontSize: 13, display: "flex", gap: 12, alignItems: "center" }}>
+                <div>📞 {incomingCall.callerName} calling ({incomingCall.callType})...</div>
+                <button onClick={acceptCall} style={{ background: "#22c55e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Accept</button>
+                <button onClick={declineCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Decline</button>
+              </div>
+            )}
             <div style={S.inputBar}>
-              <textarea style={S.textInput} value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} />
+              <input type="file" multiple onChange={e => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} style={{ display: "none" }} id="fileInput" />
+              <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.headerBtn, fontSize: 18 }}>📎</button>
+              <button onClick={isRecording ? stopRecording : startRecording} style={{ ...S.headerBtn, fontSize: 18, background: isRecording ? "#ef4444" : "transparent" }}>
+                {isRecording ? `⏹️ ${recordingTime}s` : "🎤"}
+              </button>
+              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.headerBtn, fontSize: 18, position: "relative" }}>
+                😊
+                {showEmojiPicker && <EmojiPicker onSelect={e => { setText(text + e); setShowEmojiPicker(false); }} onClose={() => setShowEmojiPicker(false)} />}
+              </button>
+              <textarea ref={inputRef} style={S.textInput} value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} placeholder="Type a message..." />
               <button style={S.sendBtn} onClick={sendMessage}>➤</button>
             </div>
           </>
@@ -847,43 +1114,43 @@ const S = {
   root: { display: "flex", height: "100vh", background: WA_CHAT_BG, fontFamily: "sans-serif", overflow: "hidden" },
   center: { display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: WA_CHAT_BG },
   spinner: { width: 40, height: 40, border: "4px solid #35354f", borderTop: "4px solid #9090c0", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-  sidebar: { width: 360, background: "rgba(255, 255, 255, 0.08)", backdropFilter: "blur(10px)", borderRight: `1px solid rgba(255, 255, 255, 0.1)`, flexDirection: "column" },
-  sidebarHeader: { background: "rgba(255, 255, 255, 0.06)", backdropFilter: "blur(8px)", padding: "10px 16px", display: "flex", flexDirection: "column", gap: 8, borderBottom: "1px solid rgba(255, 255, 255, 0.1)" },
+  sidebar: { width: 360, background: WA_SIDEBAR_BG, borderRight: `1px solid ${WA_DIVIDER}`, flexDirection: "column" },
+  sidebarHeader: { background: WA_SIDEBAR_HDR, padding: "10px 16px", display: "flex", flexDirection: "column", gap: 8 },
   sidebarTitle: { display: "flex", alignItems: "center" },
-  searchInput: { width: "100%", padding: "8px 12px", borderRadius: 12, border: "1px solid rgba(255, 255, 255, 0.2)", background: "rgba(255, 255, 255, 0.08)", backdropFilter: "blur(8px)", color: WA_TEXT, outline: "none", transition: "all 0.3s ease" },
+  searchInput: { width: "100%", padding: "8px 12px", borderRadius: 8, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none" },
   searchWrap: { position: "relative" },
   searchIcon: { position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: WA_TEXT_SUB },
   sidebarList: { flex: 1, overflowY: "auto" },
-  sidebarItem: { display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", cursor: "pointer", borderBottom: `1px solid rgba(255, 255, 255, 0.05)`, transition: "all 0.2s ease" },
-  sidebarItemActive: { background: "rgba(99, 102, 241, 0.2)", backdropFilter: "blur(8px)" },
-  sectionHeader: { padding: "10px 16px", cursor: "pointer", background: "rgba(255, 255, 255, 0.06)", backdropFilter: "blur(8px)", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" },
+  sidebarItem: { display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", cursor: "pointer", borderBottom: `1px solid ${WA_DIVIDER}` },
+  sidebarItemActive: { background: WA_SIDEBAR_ACT },
+  sectionHeader: { padding: "10px 16px", cursor: "pointer", background: WA_SIDEBAR_HDR },
   sidebarItemInfo: { flex: 1 },
   sidebarItemName: { fontSize: 15, color: WA_TEXT },
-  badge: { background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", borderRadius: 10, padding: "2px 7px", fontSize: 11, boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)" },
+  badge: { background: "#6366f1", color: "#fff", borderRadius: 10, padding: "2px 7px", fontSize: 11 },
   avatarWrap: { position: "relative" },
   onlineDot: { position: "absolute", bottom: 0, right: 0, width: 10, height: 10, borderRadius: "50%", border: "2px solid #1e1e2e" },
   avatar: { width: 46, height: 46, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" },
   main: { flex: 1, flexDirection: "column", background: WA_CHAT_BG },
   welcome: { flex: 1, alignItems: "center", justifyContent: "center" },
-  chatHeader: { display: "flex", alignItems: "center", padding: "10px 16px", background: "rgba(255, 255, 255, 0.08)", backdropFilter: "blur(10px)", borderBottom: `1px solid rgba(255, 255, 255, 0.1)` },
+  chatHeader: { display: "flex", alignItems: "center", padding: "10px 16px", background: WA_HEADER_BG, borderBottom: `1px solid ${WA_DIVIDER}` },
   chatHeaderInfo: { display: "flex", alignItems: "center", gap: 12, flex: 1 },
   chatHeaderActions: { display: "flex", gap: 8 },
-  headerBtn: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: WA_TEXT_SUB, transition: "all 0.2s ease" },
+  headerBtn: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: WA_TEXT_SUB },
   messagesList: { flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 12 },
   msgRow: { display: "flex" },
   msgSenderName: { fontSize: 12, fontWeight: 700, color: "#a5b4fc", marginBottom: 4 },
-  bubble: { padding: "8px 12px", borderRadius: 12, maxWidth: "70%", backdropFilter: "blur(8px)" },
-  bubbleOwn: { background: "rgba(99, 102, 241, 0.2)", color: WA_TEXT, border: "1px solid rgba(99, 102, 241, 0.3)" },
-  bubbleOther: { background: "rgba(255, 255, 255, 0.1)", color: WA_TEXT, border: "1px solid rgba(255, 255, 255, 0.15)" },
+  bubble: { padding: "8px 12px", borderRadius: 8, maxWidth: "70%" },
+  bubbleOwn: { background: WA_BUBBLE_OUT, color: WA_TEXT },
+  bubbleOther: { background: WA_BUBBLE_IN, color: WA_TEXT },
   msgText: { fontSize: 14 },
   msgMeta: { textAlign: "right", marginTop: 4 },
   msgTime: { fontSize: 11, color: WA_TEXT_SUB },
-  inputBar: { display: "flex", padding: "16px", background: "rgba(255, 255, 255, 0.06)", backdropFilter: "blur(10px)", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.1)" },
-  textInput: { flex: 1, padding: "10px", borderRadius: 12, border: "1px solid rgba(255, 255, 255, 0.2)", background: "rgba(255, 255, 255, 0.08)", backdropFilter: "blur(8px)", color: WA_TEXT, outline: "none", resize: "none", transition: "all 0.3s ease" },
-  sendBtn: { background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", border: "none", borderRadius: "50%", width: 40, height: 40, cursor: "pointer", boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)", transition: "all 0.2s ease" },
-  jitsiOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", zIndex: 1000 },
+  inputBar: { display: "flex", padding: "16px", background: WA_HEADER_BG, gap: 12 },
+  textInput: { flex: 1, padding: "10px", borderRadius: 8, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none", resize: "none" },
+  sendBtn: { background: "#6366f1", color: "#fff", border: "none", borderRadius: "50%", width: 40, height: 40, cursor: "pointer" },
+  jitsiOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.8)", zIndex: 1000 },
   jitsiContainer: { position: "relative", width: "90%", height: "90%", margin: "2% auto" },
-  jitsiEndBtn: { position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", padding: "10px 20px", background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)", transition: "all 0.2s ease" }
+  jitsiEndBtn: { position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", padding: "10px 20px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }
 };
 
 export default ChatBox;

@@ -445,6 +445,7 @@ router.put('/my-client-project/:id', staffAuth, async (req, res) => {
         const refreshed = await ClientProject.findById(project._id).populate('monitors', 'name email');
         return res.json(refreshed);
       }
+      return res.status(400).json({ message: 'Invalid amount for payment' });
     }
 
     // Handle deducting cards
