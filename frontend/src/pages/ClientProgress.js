@@ -170,9 +170,19 @@ const ExportModal = ({ onClose, onExport, projects }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedCardTypes, setSelectedCardTypes] = useState([]);
+  const [selectedCompanies, setSelectedCompanies] = useState([]);
   
-  // Get unique card types from all projects
+  // Get unique companies and card types from all projects
+  const allCompanies = [...new Set(projects.map(p => p.companyName))].sort();
   const allCardTypes = [...new Set(projects.flatMap(p => p.cardMaterials))];
+  
+  const handleCompanyToggle = (company) => {
+    setSelectedCompanies(prev => 
+      prev.includes(company) 
+        ? prev.filter(c => c !== company)
+        : [...prev, company]
+    );
+  };
   
   const handleCardTypeToggle = (cardType) => {
     setSelectedCardTypes(prev => 
@@ -183,15 +193,31 @@ const ExportModal = ({ onClose, onExport, projects }) => {
   };
   
   const handleExport = () => {
-    onExport(startDate, endDate, selectedCardTypes);
+    onExport(startDate, endDate, selectedCardTypes, selectedCompanies);
   };
   
   return (
     <div style={mStyles.overlay}>
-      <div style={{ ...mStyles.modal, maxWidth: '500px' }}>
+      <div style={{ ...mStyles.modal, maxWidth: '550px' }}>
         <div style={mStyles.modalHeader}>
           <h2 style={mStyles.modalTitle}>📊 Export to Excel</h2>
           <button type="button" onClick={onClose} style={mStyles.modalClose}>✕</button>
+        </div>
+        
+        <div style={mStyles.field}>
+          <label style={mStyles.label}>Companies (Select to filter, or leave empty for all)</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px', background: 'var(--bg-light)', borderRadius: '10px', border: '1.5px solid var(--border-color)', maxHeight: '150px', overflowY: 'auto' }}>
+            {allCompanies.length > 0 ? (
+              allCompanies.map(company => (
+                <label key={company} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', padding: '6px 12px', borderRadius: '20px', background: selectedCompanies.includes(company) ? '#3b82f622' : 'white', border: `1px solid ${selectedCompanies.includes(company) ? '#3b82f6' : '#e2e8f0'}`, color: selectedCompanies.includes(company) ? '#3b82f6' : '#64748b', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                  <input type="checkbox" checked={selectedCompanies.includes(company)} onChange={() => handleCompanyToggle(company)} style={{ display: 'none' }} />
+                  {company}
+                </label>
+              ))
+            ) : (
+              <span style={{ fontSize: '12px', color: 'gray' }}>No companies found</span>
+            )}
+          </div>
         </div>
         
         <div style={mStyles.field}>
@@ -216,8 +242,28 @@ const ExportModal = ({ onClose, onExport, projects }) => {
         
         <div style={mStyles.field}>
           <label style={mStyles.label}>Card Types (Select to filter, or leave empty for all)</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px', background: 'var(--bg-light)', borderRadius: '10px', border: '1.5px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px', background: 'var(--bg-light)', borderRadius: '10px', border: '1.5px solid var(--border-color)', maxHeight: '120px', overflowY: 'auto' }}>
             {allCardTypes.length > 0 ? (
+              allCardTypes.map(cardType => (
+                <label key={cardType} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', padding: '6px 12px', borderRadius: '20px', background: selectedCardTypes.includes(cardType) ? '#10b98122' : 'white', border: `1px solid ${selectedCardTypes.includes(cardType) ? '#10b981' : '#e2e8f0'}`, color: selectedCardTypes.includes(cardType) ? '#10b981' : '#64748b', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                  <input type="checkbox" checked={selectedCardTypes.includes(cardType)} onChange={() => handleCardTypeToggle(cardType)} style={{ display: 'none' }} />
+                  {cardType}
+                </label>
+              ))
+            ) : (
+              <span style={{ fontSize: '12px', color: 'gray' }}>No card types found</span>
+            )}
+          </div>
+        </div>
+        
+        <div style={mStyles.modalFooter}>
+          <button type="button" onClick={handleExport} style={mStyles.saveBtn}>📥 Export</button>
+          <button type="button" onClick={onClose} style={mStyles.cancelBtn}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+};
               allCardTypes.map(cardType => (
                 <label key={cardType} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', padding: '6px 12px', borderRadius: '20px', background: selectedCardTypes.includes(cardType) ? '#3b82f622' : 'white', border: `1px solid ${selectedCardTypes.includes(cardType) ? '#3b82f6' : '#e2e8f0'}`, color: selectedCardTypes.includes(cardType) ? '#3b82f6' : '#64748b', fontWeight: '600' }}>
                   <input type="checkbox" checked={selectedCardTypes.includes(cardType)} onChange={() => handleCardTypeToggle(cardType)} style={{ display: 'none' }} />
@@ -378,13 +424,14 @@ function ClientProgress() {
     } catch (err) { setToast({ message: err.message, type: 'error' }); }
   };
 
-  const handleExport = async (startDate, endDate, cardTypes) => {
+  const handleExport = async (startDate, endDate, cardTypes, companies) => {
     const token = localStorage.getItem('token');
     try {
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
       if (cardTypes.length > 0) params.append('cardTypes', cardTypes.join(','));
+      if (companies.length > 0) params.append('companies', companies.join(','));
       
       const url = `/api/admin/export-client-projects?${params.toString()}`;
       const res = await fetch(url, {

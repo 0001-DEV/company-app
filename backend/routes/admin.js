@@ -1260,18 +1260,19 @@ router.delete('/client-project/:id', adminAuth, async (req, res) => {
 });
 
 // ── EXPORT CLIENT PROJECTS TO EXCEL ──
-// GET /api/admin/export-client-projects?startDate=2024-01-01&endDate=2024-12-31&cardTypes=Business cards,Smart ID Card
+// GET /api/admin/export-client-projects?startDate=2024-01-01&endDate=2024-12-31&cardTypes=Business cards,Smart ID Card&companies=Company A,Company B
 router.get('/export-client-projects', verifyUser, async (req, res) => {
   try {
-    const { startDate, endDate, cardTypes } = req.query;
+    const { startDate, endDate, cardTypes, companies } = req.query;
     
     // Parse dates
     const start = startDate ? new Date(startDate) : new Date('2000-01-01');
     const end = endDate ? new Date(endDate) : new Date();
     end.setHours(23, 59, 59, 999);
     
-    // Parse card types filter
+    // Parse filters
     const cardTypeFilter = cardTypes ? cardTypes.split(',').map(t => t.trim()) : [];
+    const companyFilter = companies ? companies.split(',').map(c => c.trim()) : [];
     
     // Get all projects (admin sees all, staff sees only assigned)
     let projects;
@@ -1281,15 +1282,20 @@ router.get('/export-client-projects', verifyUser, async (req, res) => {
       projects = await ClientProject.find({ monitors: req.user.id }).populate('monitors', 'name email');
     }
     
-    // Filter by date range and card types
+    // Filter by company, date range, and card types
     const filtered = projects.filter(p => {
+      // Filter by company
+      const hasCompany = companyFilter.length === 0 || companyFilter.includes(p.companyName);
+      
+      // Filter by date range
       const hasDateRange = p.deductionHistory.some(d => new Date(d.date) >= start && new Date(d.date) <= end) ||
                           p.paymentHistory.some(d => new Date(d.date) >= start && new Date(d.date) <= end);
       
+      // Filter by card type
       const hasCardType = cardTypeFilter.length === 0 || 
                          p.cardMaterials.some(m => cardTypeFilter.includes(m));
       
-      return hasDateRange && hasCardType;
+      return hasCompany && hasDateRange && hasCardType;
     });
     
     // Build Excel data
