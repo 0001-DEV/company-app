@@ -739,12 +739,20 @@ const ChatBox = () => {
       const res = await fetch(`http://localhost:5000/api/admin/department-members/${dept._id}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const d = await res.json();
-        setGroupMembers(d.members);
-        setGroupAdmins(d.groupAdmins);
+        setGroupMembers(d.members || []);
+        setGroupAdmins(d.groupAdmins || []);
         setOnlyAdminsCanSend(d.onlyAdminsCanSend || false);
         setDisappearAfterDays(d.disappearAfterDays || 0);
+      } else {
+        console.error("Failed to load group info:", res.status);
+        setGroupMembers([]);
+        setGroupAdmins([]);
       }
-    } catch (_) {}
+    } catch (err) {
+      console.error("Error loading group info:", err);
+      setGroupMembers([]);
+      setGroupAdmins([]);
+    }
   };
 
   const muteChat = (key, duration) => {
@@ -833,7 +841,9 @@ const ChatBox = () => {
                 <button style={S.headerBtn} onClick={() => setShowSearch(!showSearch)}>🔍</button>
                 <button style={S.headerBtn} onClick={() => setShowStarred(!showStarred)}>⭐</button>
                 {selectedDepartment && <button style={S.headerBtn} onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
-                <button style={S.headerBtn} onClick={() => setShowMuteMenu(!showMuteMenu)}>🔔</button>
+                <button style={S.headerBtn} onClick={() => setShowMuteMenu(!showMuteMenu)}>
+                  {isChatMuted(selectedUser || (selectedDepartment ? `department:${selectedDepartment._id}` : "all")) ? "🔕" : "🔔"}
+                </button>
                 <button style={S.headerBtn} onClick={() => setShowScheduleModal(!showScheduleModal)}>⏰</button>
                 <button style={S.headerBtn} onClick={() => startCall("voice")}>📞</button>
                 <button style={S.headerBtn} onClick={() => startCall("video")}>📹</button>
@@ -856,6 +866,28 @@ const ChatBox = () => {
                     <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative" }} onContextMenu={e => { e.preventDefault(); handleMessageClick(msg, e); }}>
                       {!isOwn && <div style={S.msgSenderName}>{msg.senderName}</div>}
                       <div style={S.msgText}>{renderMentions(msg.text, currentUser?.name, staffList)}</div>
+                      {msg.files && msg.files.length > 0 && (
+                        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+                          {msg.files.map((file, fidx) => {
+                            const isAudio = isAudioFile(file.originalName || file.path);
+                            const isVideo = isVideoFile(file.originalName || file.path);
+                            const isImage = isImageFile(file.originalName || file.path);
+                            const fileUrl = `http://localhost:5000/uploads/${file.path || file.originalName}`;
+                            return (
+                              <div key={fidx}>
+                                {isAudio && <audio controls style={{ width: "100%", maxWidth: 300, borderRadius: 6 }} src={fileUrl} />}
+                                {isVideo && <video controls style={{ width: "100%", maxWidth: 300, borderRadius: 6 }} src={fileUrl} />}
+                                {isImage && <img src={fileUrl} alt="shared" style={{ maxWidth: 300, borderRadius: 6, cursor: "pointer" }} />}
+                                {!isAudio && !isVideo && !isImage && (
+                                  <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#60a5fa", textDecoration: "underline", fontSize: 13 }}>
+                                    📎 {file.originalName || file.path}
+                                  </a>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                       {msg.reactions && Object.keys(msg.reactions).length > 0 && (
                         <div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
                           {Object.entries(msg.reactions).map(([emoji, count]) => (
@@ -1058,16 +1090,20 @@ const ChatBox = () => {
               </div>
             )}
             {activeCall && (
-              <div style={{ position: "fixed", bottom: 20, right: 20, background: "#22c55e", color: "#fff", padding: "12px 16px", borderRadius: 8, zIndex: 200, fontSize: 13, display: "flex", gap: 12, alignItems: "center" }}>
-                <div>📞 Calling {activeCall.receiverName}...</div>
-                <button onClick={endCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>End</button>
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#22c55e", color: "#fff", padding: "20px 24px", borderRadius: 12, zIndex: 200, fontSize: 14, display: "flex", gap: 16, alignItems: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
+                <div style={{ fontSize: 24 }}>📞</div>
+                <div>Calling {activeCall.receiverName}...</div>
+                <button onClick={endCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "8px 16px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>End Call</button>
               </div>
             )}
             {incomingCall && (
-              <div style={{ position: "fixed", bottom: 20, right: 20, background: "#3b82f6", color: "#fff", padding: "16px", borderRadius: 8, zIndex: 200, fontSize: 13, display: "flex", gap: 12, alignItems: "center" }}>
-                <div>📞 {incomingCall.callerName} calling ({incomingCall.callType})...</div>
-                <button onClick={acceptCall} style={{ background: "#22c55e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Accept</button>
-                <button onClick={declineCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Decline</button>
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#3b82f6", color: "#fff", padding: "24px", borderRadius: 12, zIndex: 200, fontSize: 14, display: "flex", flexDirection: "column", gap: 16, alignItems: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", minWidth: 300 }}>
+                <div style={{ fontSize: 32 }}>📞</div>
+                <div style={{ textAlign: "center", fontWeight: 600 }}>{incomingCall.callerName} calling ({incomingCall.callType})</div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button onClick={acceptCall} style={{ background: "#22c55e", border: "none", color: "#fff", padding: "10px 20px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Accept</button>
+                  <button onClick={declineCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "10px 20px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Decline</button>
+                </div>
               </div>
             )}
             <div style={S.inputBar}>
