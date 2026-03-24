@@ -264,26 +264,6 @@ const ExportModal = ({ onClose, onExport, projects }) => {
     </div>
   );
 };
-              allCardTypes.map(cardType => (
-                <label key={cardType} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', padding: '6px 12px', borderRadius: '20px', background: selectedCardTypes.includes(cardType) ? '#3b82f622' : 'white', border: `1px solid ${selectedCardTypes.includes(cardType) ? '#3b82f6' : '#e2e8f0'}`, color: selectedCardTypes.includes(cardType) ? '#3b82f6' : '#64748b', fontWeight: '600' }}>
-                  <input type="checkbox" checked={selectedCardTypes.includes(cardType)} onChange={() => handleCardTypeToggle(cardType)} style={{ display: 'none' }} />
-                  {cardType}
-                </label>
-              ))
-            ) : (
-              <span style={{ fontSize: '12px', color: 'gray' }}>No card types found</span>
-            )}
-          </div>
-        </div>
-        
-        <div style={mStyles.modalFooter}>
-          <button type="button" onClick={handleExport} style={mStyles.saveBtn}>📥 Export</button>
-          <button type="button" onClick={onClose} style={mStyles.cancelBtn}>Cancel</button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function ClientProgress() {
   const [projects, setProjects] = useState([]);
