@@ -166,6 +166,79 @@ const UsageModal = ({ onClose, onSubmit, projectName, mode = 'deduct' }) => {
   );
 };
 
+const ExportModal = ({ onClose, onExport, projects }) => {
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedCardTypes, setSelectedCardTypes] = useState([]);
+  
+  // Get unique card types from all projects
+  const allCardTypes = [...new Set(projects.flatMap(p => p.cardMaterials))];
+  
+  const handleCardTypeToggle = (cardType) => {
+    setSelectedCardTypes(prev => 
+      prev.includes(cardType) 
+        ? prev.filter(t => t !== cardType)
+        : [...prev, cardType]
+    );
+  };
+  
+  const handleExport = () => {
+    onExport(startDate, endDate, selectedCardTypes);
+  };
+  
+  return (
+    <div style={mStyles.overlay}>
+      <div style={{ ...mStyles.modal, maxWidth: '500px' }}>
+        <div style={mStyles.modalHeader}>
+          <h2 style={mStyles.modalTitle}>📊 Export to Excel</h2>
+          <button type="button" onClick={onClose} style={mStyles.modalClose}>✕</button>
+        </div>
+        
+        <div style={mStyles.field}>
+          <label style={mStyles.label}>Start Date</label>
+          <input 
+            type="date" 
+            value={startDate} 
+            onChange={e => setStartDate(e.target.value)} 
+            style={mStyles.input} 
+          />
+        </div>
+        
+        <div style={mStyles.field}>
+          <label style={mStyles.label}>End Date</label>
+          <input 
+            type="date" 
+            value={endDate} 
+            onChange={e => setEndDate(e.target.value)} 
+            style={mStyles.input} 
+          />
+        </div>
+        
+        <div style={mStyles.field}>
+          <label style={mStyles.label}>Card Types (Select to filter, or leave empty for all)</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px', background: 'var(--bg-light)', borderRadius: '10px', border: '1.5px solid var(--border-color)' }}>
+            {allCardTypes.length > 0 ? (
+              allCardTypes.map(cardType => (
+                <label key={cardType} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', padding: '6px 12px', borderRadius: '20px', background: selectedCardTypes.includes(cardType) ? '#3b82f622' : 'white', border: `1px solid ${selectedCardTypes.includes(cardType) ? '#3b82f6' : '#e2e8f0'}`, color: selectedCardTypes.includes(cardType) ? '#3b82f6' : '#64748b', fontWeight: '600' }}>
+                  <input type="checkbox" checked={selectedCardTypes.includes(cardType)} onChange={() => handleCardTypeToggle(cardType)} style={{ display: 'none' }} />
+                  {cardType}
+                </label>
+              ))
+            ) : (
+              <span style={{ fontSize: '12px', color: 'gray' }}>No card types found</span>
+            )}
+          </div>
+        </div>
+        
+        <div style={mStyles.modalFooter}>
+          <button type="button" onClick={handleExport} style={mStyles.saveBtn}>📥 Export</button>
+          <button type="button" onClick={onClose} style={mStyles.cancelBtn}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function ClientProgress() {
   const [projects, setProjects] = useState([]);
   const [staffList, setStaffList] = useState([]);
@@ -178,6 +251,10 @@ function ClientProgress() {
   const [historyOpen, setHistoryOpen] = useState({});
   const [paymentHistoryOpen, setPaymentHistoryOpen] = useState({});
   const [userRole, setUserRole] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
+  const [exportCardTypes, setExportCardTypes] = useState([]);
 
   // Navigation States
   const [searchQuery, setSearchQuery] = useState('');
@@ -301,6 +378,39 @@ function ClientProgress() {
     } catch (err) { setToast({ message: err.message, type: 'error' }); }
   };
 
+  const handleExport = async (startDate, endDate, cardTypes) => {
+    const token = localStorage.getItem('token');
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (cardTypes.length > 0) params.append('cardTypes', cardTypes.join(','));
+      
+      const url = `/api/admin/export-client-projects?${params.toString()}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error('Export failed');
+      
+      // Download the file
+      const blob = await res.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Client_Projects_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      setShowExportModal(false);
+      setToast({ message: 'Export successful!', type: 'success' });
+    } catch (err) { 
+      setToast({ message: err.message, type: 'error' }); 
+    }
+  };
+
   // --- Search, Sort & Pagination Logic ---
   const filteredProjects = projects.filter(p => 
     p.companyName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -370,6 +480,9 @@ function ClientProgress() {
 
             <button style={{ ...s.btnPrimary, background: '#f1f5f9', color: '#475569', boxShadow: 'none' }} onClick={fetchData}>
               🔄 Refresh
+            </button>
+            <button style={{ ...s.btnPrimary, background: '#10b981', color: 'white' }} onClick={() => setShowExportModal(true)}>
+              📊 Export to Excel
             </button>
             {userRole === 'admin' && (
               <button style={s.btnPrimary} onClick={() => { setEditingProject(null); setShowProjectModal(true); }}>
@@ -619,6 +732,7 @@ function ClientProgress() {
 
       {showProjectModal && <ProjectModal staffList={staffList} initialData={editingProject} onClose={() => { setShowProjectModal(false); setEditingProject(null); }} onSubmit={handleCreateOrEdit} />}
       {usageProject && <UsageModal projectName={usageProject.companyName} mode={usageMode} onClose={() => setUsageProject(null)} onSubmit={handleUpdateUsage} />}
+      {showExportModal && <ExportModal projects={projects} onClose={() => setShowExportModal(false)} onExport={handleExport} />}
     </div>
   );
 }

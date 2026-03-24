@@ -1259,4 +1259,122 @@ router.delete('/client-project/:id', adminAuth, async (req, res) => {
   }
 });
 
+// ── EXPORT CLIENT PROJECTS TO EXCEL ──
+// GET /api/admin/export-client-projects?startDate=2024-01-01&endDate=2024-12-31&cardTypes=Business cards,Smart ID Card
+router.get('/export-client-projects', verifyUser, async (req, res) => {
+  try {
+    const { startDate, endDate, cardTypes } = req.query;
+    
+    // Parse dates
+    const start = startDate ? new Date(startDate) : new Date('2000-01-01');
+    const end = endDate ? new Date(endDate) : new Date();
+    end.setHours(23, 59, 59, 999);
+    
+    // Parse card types filter
+    const cardTypeFilter = cardTypes ? cardTypes.split(',').map(t => t.trim()) : [];
+    
+    // Get all projects (admin sees all, staff sees only assigned)
+    let projects;
+    if (req.user.role === 'admin') {
+      projects = await ClientProject.find().populate('monitors', 'name email');
+    } else {
+      projects = await ClientProject.find({ monitors: req.user.id }).populate('monitors', 'name email');
+    }
+    
+    // Filter by date range and card types
+    const filtered = projects.filter(p => {
+      const hasDateRange = p.deductionHistory.some(d => new Date(d.date) >= start && new Date(d.date) <= end) ||
+                          p.paymentHistory.some(d => new Date(d.date) >= start && new Date(d.date) <= end);
+      
+      const hasCardType = cardTypeFilter.length === 0 || 
+                         p.cardMaterials.some(m => cardTypeFilter.includes(m));
+      
+      return hasDateRange && hasCardType;
+    });
+    
+    // Build Excel data
+    const excelData = [];
+    
+    filtered.forEach(project => {
+      // Filter history by date range
+      const deductions = project.deductionHistory.filter(d => {
+        const d_date = new Date(d.date);
+        return d_date >= start && d_date <= end;
+      });
+      
+      const payments = project.paymentHistory.filter(d => {
+        const d_date = new Date(d.date);
+        return d_date >= start && d_date <= end;
+      });
+      
+      // Group deductions by card type (if available in note)
+      const cardTypeUsage = {};
+      deductions.forEach(d => {
+        const cardType = d.note || 'General';
+        if (!cardTypeUsage[cardType]) {
+          cardTypeUsage[cardType] = 0;
+        }
+        cardTypeUsage[cardType] += d.amount;
+      });
+      
+      // Create row for each card type
+      const cardTypes = project.cardMaterials.length > 0 ? project.cardMaterials : ['General'];
+      
+      cardTypes.forEach(cardType => {
+        const cardsUsed = cardTypeUsage[cardType] || 0;
+        const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+        
+        excelData.push({
+          'Company Name': project.companyName,
+          'Card Type': cardType,
+          'Plan Type': project.planType,
+          'Cards Paid': totalPaid,
+          'Cards Used': cardsUsed,
+          'Cards Remaining': Math.max(0, totalPaid - cardsUsed),
+          'Status': project.status,
+          'Date Started': new Date(project.dateStarted).toLocaleDateString('en-GB'),
+          'Date Received': new Date(project.dateReceived).toLocaleDateString('en-GB'),
+          'Monitors': project.monitors.map(m => m.name).join(', ')
+        });
+      });
+    });
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    
+    // Set column widths
+    const colWidths = [
+      { wch: 25 }, // Company Name
+      { wch: 18 }, // Card Type
+      { wch: 15 }, // Plan Type
+      { wch: 12 }, // Cards Paid
+      { wch: 12 }, // Cards Used
+      { wch: 15 }, // Cards Remaining
+      { wch: 12 }, // Status
+      { wch: 15 }, // Date Started
+      { wch: 15 }, // Date Received
+      { wch: 20 }  // Monitors
+    ];
+    worksheet['!cols'] = colWidths;
+    
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Client Projects');
+    
+    // Generate file
+    const fileName = `Client_Projects_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filePath = `uploads/${fileName}`;
+    
+    XLSX.writeFile(workbook, filePath);
+    
+    // Send file
+    res.download(filePath, fileName, (err) => {
+      if (err) console.error('Download error:', err);
+    });
+    
+  } catch (err) {
+    console.error('Export error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
  module.exports = router;
