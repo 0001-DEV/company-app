@@ -888,13 +888,20 @@ const ChatBox = () => {
                           })}
                         </div>
                       )}
-                      {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                      {msg.reactions && msg.reactions.length > 0 && (
                         <div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
-                          {Object.entries(msg.reactions).map(([emoji, count]) => (
-                            <button key={emoji} onClick={() => handleReact(msg._id, emoji)} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "2px 8px", fontSize: 12, cursor: "pointer", color: "#cbd5e1" }}>
-                              {emoji} {count}
-                            </button>
-                          ))}
+                          {(() => {
+                            const grouped = {};
+                            msg.reactions.forEach(r => {
+                              if (!grouped[r.emoji]) grouped[r.emoji] = 0;
+                              grouped[r.emoji]++;
+                            });
+                            return Object.entries(grouped).map(([emoji, count]) => (
+                              <button key={emoji} onClick={() => handleReact(msg._id, emoji)} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "2px 8px", fontSize: 12, cursor: "pointer", color: "#cbd5e1" }}>
+                                {emoji} {count}
+                              </button>
+                            ));
+                          })()}
                         </div>
                       )}
                       <div style={S.msgMeta}>
