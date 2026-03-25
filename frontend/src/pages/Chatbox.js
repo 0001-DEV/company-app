@@ -705,6 +705,8 @@ const ChatBox = () => {
       recorder.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const file = new File([blob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+        // Attach duration metadata to file
+        file.duration = recordingTime;
         setSelectedFiles(prev => [...prev, file]);
         stream.getTracks().forEach(t => t.stop());
       };
@@ -721,6 +723,13 @@ const ChatBox = () => {
       setIsRecording(false);
       clearInterval(recordingTimerRef.current);
     }
+  };
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleMessageClick = (msg, e) => {
@@ -875,7 +884,13 @@ const ChatBox = () => {
                             const fileUrl = `http://localhost:5000/uploads/${file.path || file.originalName}`;
                             return (
                               <div key={fidx}>
-                                {isAudio && <audio controls style={{ width: "100%", maxWidth: 300, borderRadius: 6 }} src={fileUrl} />}
+                                {isAudio && (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", padding: "8px 12px", borderRadius: 20, width: "fit-content" }}>
+                                    <span style={{ fontSize: 20 }}>🎤</span>
+                                    <audio controls style={{ width: 200, height: 24 }} src={fileUrl} />
+                                    {file.duration && <span style={{ fontSize: 12, color: "#cbd5e1", minWidth: 35 }}>{formatDuration(file.duration)}</span>}
+                                  </div>
+                                )}
                                 {isVideo && <video controls style={{ width: "100%", maxWidth: 300, borderRadius: 6 }} src={fileUrl} />}
                                 {isImage && <img src={fileUrl} alt="shared" style={{ maxWidth: 300, borderRadius: 6, cursor: "pointer" }} />}
                                 {!isAudio && !isVideo && !isImage && (
@@ -941,7 +956,9 @@ const ChatBox = () => {
               <div style={{ padding: "12px 16px", background: "rgba(59,130,246,0.1)", display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                 {selectedFiles.map((f, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.08)", padding: "6px 10px", borderRadius: 8 }}>
-                    <span style={{ fontSize: 12, color: "#cbd5e1" }}>{f.name.substring(0, 20)}</span>
+                    <span style={{ fontSize: 12, color: "#cbd5e1" }}>
+                      {isAudioFile(f.name) ? `🎤 ${formatDuration(f.duration)}` : f.name.substring(0, 20)}
+                    </span>
                     <button onClick={() => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>✕</button>
                   </div>
                 ))}
