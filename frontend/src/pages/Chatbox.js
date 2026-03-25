@@ -872,7 +872,7 @@ const ChatBox = () => {
                 const isOwn = msg.senderId?.toString() === currentUser?.id?.toString();
                 return (
                   <div key={msg._id || idx} style={{ ...S.msgRow, justifyContent: isOwn ? "flex-end" : "flex-start", position: "relative" }}>
-                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative" }} onContextMenu={e => { e.preventDefault(); handleMessageClick(msg, e); }}>
+                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative", cursor: "pointer" }} onClick={e => handleMessageClick(msg, e)} onContextMenu={e => { e.preventDefault(); handleMessageClick(msg, e); }}>
                       {!isOwn && <div style={S.msgSenderName}>{msg.senderName}</div>}
                       <div style={S.msgText}>{renderMentions(msg.text, currentUser?.name, staffList)}</div>
                       {msg.files && msg.files.length > 0 && (
@@ -883,7 +883,7 @@ const ChatBox = () => {
                             const isImage = isImageFile(file.originalName || file.path);
                             const fileUrl = `http://localhost:5000/uploads/${file.path || file.originalName}`;
                             return (
-                              <div key={fidx}>
+                              <div key={fidx} onClick={e => e.stopPropagation()}>
                                 {isAudio && (
                                   <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", padding: "8px 12px", borderRadius: 20, width: "fit-content" }}>
                                     <span style={{ fontSize: 20 }}>🎤</span>
