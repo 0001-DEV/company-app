@@ -44,6 +44,18 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Get all staff (for admin to assign)
+router.get('/all', async (req, res) => {
+  try {
+    const staff = await User.find({ role: 'staff' }).select('_id name email').sort({ name: 1 });
+    res.json(staff);
+  } catch (err) {
+    console.error('Error fetching staff:', err);
+    res.status(500).json({ message: 'Error fetching staff' });
+  }
+});
+
 // ----------------------
 // Configure file upload (support multiple files)
 // ----------------------

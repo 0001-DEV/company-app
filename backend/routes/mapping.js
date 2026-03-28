@@ -68,6 +68,40 @@ router.post('/', verifyUser, async (req, res) => {
   }
 });
 
+// Create a new company (simple endpoint for client documentation)
+router.post('/create', verifyUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Company name is required' });
+    }
+
+    // Check if company already exists
+    const existing = await CompanyMapping.findOne({ companyName: name.trim() });
+    if (existing) {
+      return res.status(400).json({ message: 'Company already exists' });
+    }
+
+    const newMapping = new CompanyMapping({
+      companyName: name.trim(),
+      companyType: '',
+      cardType: '',
+      cardsProduced: 0,
+      assignedStaff: [req.user.id]
+    });
+    await newMapping.save();
+    const populated = await CompanyMapping.findById(newMapping._id).populate('assignedStaff', 'name email');
+    
+    console.log('✅ New company created:', populated);
+    res.status(201).json(populated);
+  } catch (err) {
+    console.error('Error creating company:', err);
+    res.status(500).json({ message: 'Error creating company: ' + err.message });
+  }
+});
+
 // 👑 Admin only routes
 
 // Get all company mappings (Admin)
@@ -77,6 +111,110 @@ router.get('/', adminAuth, async (req, res) => {
     res.json(mappings);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching mappings' });
+  }
+});
+
+// Get all companies (for dropdowns - admin only)
+router.get('/all', verifyUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    // Include companies where isDeleted is false OR isDeleted doesn't exist (backward compatibility)
+    const companies = await CompanyMapping.find({ 
+      $or: [
+        { isDeleted: false },
+        { isDeleted: { $exists: false } }
+      ]
+    }).select('_id companyName').sort({ companyName: 1 });
+    console.log('🏢 Fetching all companies:', companies.length, 'companies');
+    res.json(companies);
+  } catch (err) {
+    console.error('Error fetching companies:', err);
+    res.status(500).json({ message: 'Error fetching companies' });
+  }
+});
+
+// Get all companies including deleted (for admin view)
+router.get('/all-with-deleted', verifyUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const companies = await CompanyMapping.find().select('_id companyName isDeleted').sort({ companyName: 1 });
+    const active = companies.filter(c => !c.isDeleted && c.isDeleted !== undefined).length + companies.filter(c => !c.isDeleted && c.isDeleted === undefined).length;
+    const deleted = companies.filter(c => c.isDeleted === true).length;
+    console.log('📊 Total companies in DB:', companies.length, '| Active:', active, '| Deleted:', deleted);
+    res.json(companies);
+  } catch (err) {
+    console.error('Error fetching all companies:', err);
+    res.status(500).json({ message: 'Error fetching all companies' });
+  }
+});
+
+// Get deleted companies (recycle bin)
+router.get('/recycle-bin/all', verifyUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const companies = await CompanyMapping.find({ isDeleted: true }).sort({ deletedAt: -1 });
+    res.json(companies);
+  } catch (err) {
+    console.error('Error fetching deleted companies:', err);
+    res.status(500).json({ message: 'Error fetching deleted companies' });
+  }
+});
+
+// Delete a company (soft delete)
+router.delete('/:companyId', verifyUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    
+    const company = await CompanyMapping.findByIdAndUpdate(
+      req.params.companyId,
+      {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: req.user.id,
+        deletedByName: req.user.name
+      },
+      { new: true }
+    );
+    
+    res.json({ message: 'Company moved to recycle bin', company });
+  } catch (err) {
+    console.error('Error deleting company:', err);
+    res.status(500).json({ message: 'Error deleting company' });
+  }
+});
+
+// Restore a company from recycle bin
+router.put('/:companyId/restore', verifyUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    
+    const company = await CompanyMapping.findByIdAndUpdate(
+      req.params.companyId,
+      {
+        isDeleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        deletedByName: null
+      },
+      { new: true }
+    );
+    
+    res.json({ message: 'Company restored', company });
+  } catch (err) {
+    console.error('Error restoring company:', err);
+    res.status(500).json({ message: 'Error restoring company' });
+  }
+});
+
+// Permanently delete a company
+router.delete('/:companyId/permanent', verifyUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    await CompanyMapping.findByIdAndDelete(req.params.companyId);
+    res.json({ message: 'Company permanently deleted' });
+  } catch (err) {
+    console.error('Error permanently deleting company:', err);
+    res.status(500).json({ message: 'Error permanently deleting company' });
   }
 });
 
@@ -126,6 +264,35 @@ router.get('/my-mappings', verifyUser, async (req, res) => {
     res.json(mappings);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching assigned mappings' });
+  }
+});
+
+// Get companies assigned to current staff (for Client Documentation)
+router.get('/my-companies', verifyUser, async (req, res) => {
+  try {
+    let companies;
+    if (req.user.role === 'admin') {
+      // Admins see all active companies
+      companies = await CompanyMapping.find({ 
+        $or: [
+          { isDeleted: false },
+          { isDeleted: { $exists: false } }
+        ]
+      }).select('_id companyName').sort({ companyName: 1 });
+    } else {
+      // Staff see only companies they're assigned to
+      companies = await CompanyMapping.find({ 
+        assignedStaff: req.user.id,
+        $or: [
+          { isDeleted: false },
+          { isDeleted: { $exists: false } }
+        ]
+      }).select('_id companyName').sort({ companyName: 1 });
+    }
+    res.json(companies);
+  } catch (err) {
+    console.error('Error fetching assigned companies:', err);
+    res.status(500).json({ message: 'Error fetching assigned companies' });
   }
 });
 

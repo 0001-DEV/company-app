@@ -23,7 +23,13 @@ const companyMappingSchema = new mongoose.Schema({
   monthUploaded: { type: String, default: () => new Date().toLocaleString('en-US', { month: 'long' }) },
   fullDateUploaded: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+  
+  // Soft delete
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
+  deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  deletedByName: { type: String }
 });
 
 companyMappingSchema.pre('save', function (next) {

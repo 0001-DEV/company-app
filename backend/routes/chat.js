@@ -223,7 +223,7 @@ router.post("/message", verifyUser, upload.array('files', 10), async (req, res) 
       senderName: req.user.name,
       senderRole: req.user.role,
       receiverId: receiverId,
-      text: text || (files.length > 0 ? `Sent ${files.length} file(s)` : ''),
+      text: text || '',
       files: files,
       replyTo: replyTo || undefined,
       forwardedFrom: req.body.forwardedFrom || null,

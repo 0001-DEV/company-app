@@ -42,6 +42,15 @@ app.use('/api/features', featuresRoutes);
 const extrasRoutes = require('./routes/extras');
 app.use('/api/extras', extrasRoutes);
 
+const stockRoutes = require('./routes/stock');
+app.use('/api/stock', stockRoutes);
+
+const clientDocumentRoutes = require('./routes/clientDocuments');
+app.use('/api/client-documents', clientDocumentRoutes);
+
+const companyStaffRoutes = require('./routes/companyStaff');
+app.use('/api/company-staff', companyStaffRoutes);
+
 // ── Scheduled message dispatcher (runs every 30s) ──
 setInterval(async () => {
   try {

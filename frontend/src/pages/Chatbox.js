@@ -28,20 +28,20 @@ const EmojiPicker = ({ onSelect, onClose }) => {
     ? EMOJI_CATEGORIES.flatMap(c => c.emojis).filter(e => e.includes(search))
     : EMOJI_CATEGORIES[activeCategory].emojis;
   return (
-    <div ref={ref} style={EP.wrap}>
+    <div ref={ref} style={EP.wrap} onMouseDown={e => e.stopPropagation()}>
       <div style={EP.searchRow}>
-        <input autoFocus placeholder="Search emoji..." value={search} onChange={e => setSearch(e.target.value)} style={EP.searchInput} />
+        <input autoFocus placeholder="Search emoji..." value={search} onChange={e => setSearch(e.target.value)} style={EP.searchInput} onMouseDown={e => e.stopPropagation()} />
       </div>
       <div style={EP.catRow}>
         {EMOJI_CATEGORIES.map((c, i) => (
           <button key={i} title={c.name} style={{ ...EP.catBtn, ...(activeCategory === i && !search ? EP.catBtnActive : {}) }}
-            onClick={() => { setActiveCategory(i); setSearch(""); }}>{c.label}</button>
+            onClick={() => { setActiveCategory(i); setSearch(""); }} onMouseDown={e => e.stopPropagation()}>{c.label}</button>
         ))}
       </div>
       {!search && <div style={EP.catName}>{EMOJI_CATEGORIES[activeCategory].name}</div>}
       <div style={EP.grid}>
         {filtered.map((emoji, i) => (
-          <button key={i} style={EP.emojiBtn} onClick={() => onSelect(emoji)}>{emoji}</button>
+          <button key={i} style={EP.emojiBtn} onClick={() => onSelect(emoji)} onMouseDown={e => e.stopPropagation()}>{emoji}</button>
         ))}
         {filtered.length === 0 && <div style={EP.noResult}>No emoji found</div>}
       </div>
@@ -155,8 +155,10 @@ const ChatBox = () => {
   const [scheduledMsgs, setScheduledMsgs] = useState([]);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionCandidates, setMentionCandidates] = useState([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [voiceRecording, setVoiceRecording] = useState(false);
+  const [voiceDuration, setVoiceDuration] = useState(0);
+  const [voiceBlob, setVoiceBlob] = useState(null);
   const [autoDownload, setAutoDownload] = useState(() => {
     try { return JSON.parse(localStorage.getItem("autoDownload") || '{"images":false,"videos":false,"documents":false}'); } catch { return { images: false, videos: false, documents: false }; }
   });
@@ -173,9 +175,9 @@ const ChatBox = () => {
   const typingTimeoutRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const prevMsgCountRef = useRef(0);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const recordingTimerRef = useRef(null);
+  const voiceRecorderRef = useRef(null);
+  const voiceChunksRef = useRef([]);
+  const voiceTimerRef = useRef(null);
   const incomingCallRef = useRef(null);
   const activeCallRef = useRef(null);
 
@@ -540,24 +542,40 @@ const ChatBox = () => {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       ringAudioRef.current = ctx;
-      if (incoming) {
-        const iv = setInterval(() => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.frequency.setValueAtTime(440, ctx.currentTime);
-          gain.gain.setValueAtTime(0.1, ctx.currentTime);
-          osc.start(); osc.stop(ctx.currentTime + 0.5);
-        }, 1000);
-        ctx._ringInterval = iv;
-      }
+      
+      // Create a more realistic ringtone pattern
+      const playRingPattern = () => {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+        
+        // Two tones for a more realistic ringtone
+        osc1.frequency.setValueAtTime(800, ctx.currentTime);
+        osc2.frequency.setValueAtTime(600, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        
+        osc1.start(ctx.currentTime);
+        osc2.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.4);
+        osc2.stop(ctx.currentTime + 0.4);
+      };
+      
+      playRingPattern();
+      const iv = setInterval(playRingPattern, 1200);
+      ctx._ringInterval = iv;
     } catch (_) {}
   };
 
   const stopRing = () => {
     if (ringAudioRef.current) {
       if (ringAudioRef.current._ringInterval) clearInterval(ringAudioRef.current._ringInterval);
-      ringAudioRef.current.close();
+      try {
+        ringAudioRef.current.close();
+      } catch (_) {}
       ringAudioRef.current = null;
     }
   };
@@ -695,34 +713,56 @@ const ChatBox = () => {
     } catch (_) {}
   };
 
-  const startRecording = async () => {
+  const startVoiceRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
-      recorder.ondataavailable = e => audioChunksRef.current.push(e.data);
-      recorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        const file = new File([blob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
-        // Attach duration metadata to file
-        file.duration = recordingTime;
-        setSelectedFiles(prev => [...prev, file]);
+      voiceRecorderRef.current = recorder;
+      voiceChunksRef.current = [];
+      recorder.ondataavailable = e => voiceChunksRef.current.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(voiceChunksRef.current, { type: "audio/webm" });
+        setVoiceBlob(blob);
         stream.getTracks().forEach(t => t.stop());
       };
       recorder.start();
-      setIsRecording(true);
-      setRecordingTime(0);
-      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
-    } catch (_) {}
+      setVoiceRecording(true);
+      setVoiceDuration(0);
+      voiceTimerRef.current = setInterval(() => setVoiceDuration(t => t + 1), 1000);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+    }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      clearInterval(recordingTimerRef.current);
+  const stopVoiceRecording = () => {
+    if (voiceRecorderRef.current) {
+      voiceRecorderRef.current.stop();
+      setVoiceRecording(false);
+      clearInterval(voiceTimerRef.current);
     }
+  };
+
+  const sendVoiceNote = async () => {
+    if (!voiceBlob) return;
+    try {
+      const file = new File([voiceBlob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+      file.duration = voiceDuration;
+      setSelectedFiles(prev => [...prev, file]);
+      setVoiceBlob(null);
+      setVoiceDuration(0);
+      setShowVoiceModal(false);
+      await sendMessage();
+    } catch (err) {
+      console.error("Error sending voice note:", err);
+    }
+  };
+
+  const discardVoiceNote = () => {
+    setVoiceBlob(null);
+    setVoiceDuration(0);
+    setVoiceRecording(false);
+    clearInterval(voiceTimerRef.current);
+    setShowVoiceModal(false);
   };
 
   const formatDuration = (seconds) => {
@@ -730,16 +770,6 @@ const ChatBox = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleMessageClick = (msg, e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setContextMenu({ 
-      msg, 
-      x: e.clientX,
-      y: e.clientY
-    });
   };
 
   const loadGroupInfo = async (dept) => {
@@ -851,14 +881,14 @@ const ChatBox = () => {
                 <button style={S.headerBtn} onClick={() => setShowStarred(!showStarred)}>⭐</button>
                 {selectedDepartment && <button style={S.headerBtn} onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
                 <button style={S.headerBtn} onClick={() => setShowMuteMenu(!showMuteMenu)}>
-                  {isChatMuted(selectedUser || (selectedDepartment ? `department:${selectedDepartment._id}` : "all")) ? "🔕" : "🔔"}
+                  {isChatMuted(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all") ? "🔕" : "🔔"}
                 </button>
                 <button style={S.headerBtn} onClick={() => setShowScheduleModal(!showScheduleModal)}>⏰</button>
                 <button style={S.headerBtn} onClick={() => startCall("voice")}>📞</button>
                 <button style={S.headerBtn} onClick={() => startCall("video")}>📹</button>
               </div>
             </div>
-            {pinnedMessages.length > 0 && (
+            {pinnedMessages.length > 0 && viewMode === "department" && (
               <div style={{ background: "rgba(251,146,60,0.1)", padding: "12px 16px", borderBottom: "1px solid rgba(251,146,60,0.3)", display: "flex", gap: 8, alignItems: "center" }}>
                 <span style={{ fontSize: 14 }}>📌</span>
                 <div style={{ flex: 1, fontSize: 13, color: "#cbd5e1" }}>
@@ -871,8 +901,8 @@ const ChatBox = () => {
               {messages.filter(msg => !msgSearchQuery || msg.text.toLowerCase().includes(msgSearchQuery.toLowerCase())).map((msg, idx) => {
                 const isOwn = msg.senderId?.toString() === currentUser?.id?.toString();
                 return (
-                  <div key={msg._id || idx} style={{ ...S.msgRow, justifyContent: isOwn ? "flex-end" : "flex-start", position: "relative" }}>
-                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative", cursor: "pointer" }} onClick={e => handleMessageClick(msg, e)} onContextMenu={e => { e.preventDefault(); handleMessageClick(msg, e); }}>
+                  <div key={msg._id || idx} style={{ ...S.msgRow, justifyContent: isOwn ? "flex-end" : "flex-start", position: "relative", alignItems: "flex-end", gap: 8 }}>
+                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative", cursor: "pointer" }} onClick={e => { e.stopPropagation(); setContextMenu({ msg, type: "emoji", x: e.clientX, y: e.clientY }); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}>
                       {!isOwn && <div style={S.msgSenderName}>{msg.senderName}</div>}
                       <div style={S.msgText}>{renderMentions(msg.text, currentUser?.name, staffList)}</div>
                       {msg.files && msg.files.length > 0 && (
@@ -881,15 +911,11 @@ const ChatBox = () => {
                             const isAudio = isAudioFile(file.originalName || file.path);
                             const isVideo = isVideoFile(file.originalName || file.path);
                             const isImage = isImageFile(file.originalName || file.path);
-                            const fileUrl = `http://localhost:5000/uploads/${file.path || file.originalName}`;
+                            const fileUrl = `http://localhost:5000/${file.path}`;
                             return (
                               <div key={fidx} onClick={e => e.stopPropagation()}>
                                 {isAudio && (
-                                  <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", padding: "8px 12px", borderRadius: 20, width: "fit-content" }}>
-                                    <span style={{ fontSize: 20 }}>🎤</span>
-                                    <audio controls style={{ width: 200, height: 24 }} src={fileUrl} />
-                                    {file.duration && <span style={{ fontSize: 12, color: "#cbd5e1", minWidth: 35 }}>{formatDuration(file.duration)}</span>}
-                                  </div>
+                                  <button style={{ background: "none", border: "none", borderRadius: "50%", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 24, color: "#6366f1", padding: 0 }} onClick={(e) => { e.stopPropagation(); const audio = new Audio(fileUrl); audio.play(); }} title="Play voice note">▶️</button>
                                 )}
                                 {isVideo && <video controls style={{ width: "100%", maxWidth: 300, borderRadius: 6 }} src={fileUrl} />}
                                 {isImage && <img src={fileUrl} alt="shared" style={{ maxWidth: 300, borderRadius: 6, cursor: "pointer" }} />}
@@ -924,20 +950,23 @@ const ChatBox = () => {
                         {isOwn && msg.readBy && <span style={{ marginLeft: 8, fontSize: 10 }}>✓✓</span>}
                       </div>
                     </div>
-                    {contextMenu?.msg._id === msg._id && (
-                      <div style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 300, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 160 }}>
-                        <div style={{ padding: "8px 10px", display: "flex", gap: 4, flexWrap: "wrap", borderBottom: "1px solid #35354f" }}>
-                          {QUICK_REACTIONS.map(emoji => (
-                            <button key={emoji} onClick={() => { handleReact(msg._id, emoji); setContextMenu(null); }} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", padding: "3px", borderRadius: 8, lineHeight: 1 }}>
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                        <button onClick={() => { handleStar(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>⭐ Star</button>
-                        <button onClick={() => { handlePin(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>📌 Pin</button>
-                        <button onClick={() => { setForwardMsg(msg); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>↗️ Forward</button>
-                        <button onClick={() => { handleReadBy(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>👁️ Read by</button>
-                        {isOwn && <button onClick={() => { handleDelete(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", color: "#ef4444", cursor: "pointer", textAlign: "left", fontSize: 13 }}>🗑️ Delete</button>}
+                    <button onClick={e => { e.stopPropagation(); setContextMenu({ msg, type: "menu", x: e.clientX, y: e.clientY }); }} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18, padding: "4px 8px", borderRadius: 4, opacity: 0.6, transition: "opacity 0.2s" }} title="More options">⋮</button>
+                    {contextMenu?.msg._id === msg._id && contextMenu?.type === "emoji" && (
+                      <div style={{ position: "fixed", top: contextMenu.y - 50, left: contextMenu.x, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 300, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", padding: "8px 10px", display: "flex", gap: 4, flexWrap: "wrap", maxWidth: 220 }}>
+                        {QUICK_REACTIONS.map(emoji => (
+                          <button key={emoji} onClick={() => { handleReact(msg._id, emoji); setContextMenu(null); }} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", padding: "3px", borderRadius: 8, lineHeight: 1 }}>
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {contextMenu?.msg._id === msg._id && contextMenu?.type === "menu" && (
+                      <div style={{ position: "fixed", top: Math.max(60, contextMenu.y - 100), left: 20, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 300, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 180 }}>
+                        <button onClick={() => { handleStar(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>⭐ Star Message</button>
+                        {viewMode === "department" && <button onClick={() => { handlePin(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>📌 Pin Message</button>}
+                        <button onClick={() => { setForwardMsg(msg); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>↗️ Forward</button>
+                        <button onClick={() => { handleReadBy(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>👁️ Read By</button>
+                        {isOwn && <button onClick={() => { handleDelete(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#ef4444", cursor: "pointer", textAlign: "left", fontSize: 13 }}>🗑️ Delete</button>}
                       </div>
                     )}
                   </div>
@@ -957,7 +986,7 @@ const ChatBox = () => {
                 {selectedFiles.map((f, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.08)", padding: "6px 10px", borderRadius: 8 }}>
                     <span style={{ fontSize: 12, color: "#cbd5e1" }}>
-                      {isAudioFile(f.name) ? `🎤 ${formatDuration(f.duration)}` : f.name.substring(0, 20)}
+                      {isAudioFile(f.name) ? `🎵 ${formatDuration(f.duration)}` : f.name.substring(0, 20)}
                     </span>
                     <button onClick={() => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>✕</button>
                   </div>
@@ -1026,8 +1055,8 @@ const ChatBox = () => {
                       ) : (
                         mediaMessages.map((msg, idx) => (
                           <div key={idx} style={{ marginBottom: 12 }}>
-                            {isImageFile(msg.fileName) && <img src={`http://localhost:5000/uploads/${msg.fileName}`} alt="media" style={{ width: "100%", borderRadius: 8 }} />}
-                            {isVideoFile(msg.fileName) && <video src={`http://localhost:5000/uploads/${msg.fileName}`} style={{ width: "100%", borderRadius: 8 }} controls />}
+                            {isImageFile(msg.fileName) && <img src={`http://localhost:5000/${msg.fileName}`} alt="media" style={{ width: "100%", borderRadius: 8 }} />}
+                            {isVideoFile(msg.fileName) && <video src={`http://localhost:5000/${msg.fileName}`} style={{ width: "100%", borderRadius: 8 }} controls />}
                           </div>
                         ))
                       )}
@@ -1037,11 +1066,11 @@ const ChatBox = () => {
               </div>
             )}
             {showMuteMenu && (
-              <div style={{ position: "absolute", top: 60, right: 16, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 200, boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
-                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, 0)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔔 Unmute</button>
-                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, 1)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 1h</button>
-                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, 8)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 8h</button>
-                <button onClick={() => muteChat(selectedUser || `department:${selectedDepartment._id}`, -1)} style={{ display: "block", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13 }}>🔕 Mute Always</button>
+              <div style={{ position: "absolute", top: 60, left: 16, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 200, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 180 }}>
+                <button onClick={() => muteChat(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all", 0)} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔔 Unmute</button>
+                <button onClick={() => muteChat(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all", 1)} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 1 hour</button>
+                <button onClick={() => muteChat(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all", 8)} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 8 hours</button>
+                <button onClick={() => muteChat(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all", -1)} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13 }}>🔕 Mute Always</button>
               </div>
             )}
             {showScheduleModal && (
@@ -1114,30 +1143,87 @@ const ChatBox = () => {
               </div>
             )}
             {activeCall && (
-              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#22c55e", color: "#fff", padding: "20px 24px", borderRadius: 12, zIndex: 200, fontSize: 14, display: "flex", gap: 16, alignItems: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
-                <div style={{ fontSize: 24 }}>📞</div>
-                <div>Calling {activeCall.receiverName}...</div>
-                <button onClick={endCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "8px 16px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>End Call</button>
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", padding: "32px", borderRadius: 16, zIndex: 200, fontSize: 14, display: "flex", flexDirection: "column", gap: 20, alignItems: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", minWidth: 320 }}>
+                <style>{`
+                  @keyframes pulse-call {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.6; }
+                  }
+                  .calling-icon {
+                    animation: pulse-call 1s infinite;
+                  }
+                `}</style>
+                <div style={{ fontSize: 56 }} className="calling-icon">📞</div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Calling {activeCall.receiverName}</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>Waiting for response...</div>
+                </div>
+                <button onClick={endCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "12px 32px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseOver={e => e.target.style.background = "#dc2626"} onMouseOut={e => e.target.style.background = "#ef4444"}>✕ End Call</button>
               </div>
             )}
             {incomingCall && (
-              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#3b82f6", color: "#fff", padding: "24px", borderRadius: 12, zIndex: 200, fontSize: 14, display: "flex", flexDirection: "column", gap: 16, alignItems: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", minWidth: 300 }}>
-                <div style={{ fontSize: 32 }}>📞</div>
-                <div style={{ textAlign: "center", fontWeight: 600 }}>{incomingCall.callerName} calling ({incomingCall.callType})</div>
-                <div style={{ display: "flex", gap: 12 }}>
-                  <button onClick={acceptCall} style={{ background: "#22c55e", border: "none", color: "#fff", padding: "10px 20px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Accept</button>
-                  <button onClick={declineCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "10px 20px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Decline</button>
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "linear-gradient(135deg, #3b82f6, #1e40af)", color: "#fff", padding: "32px", borderRadius: 16, zIndex: 200, fontSize: 14, display: "flex", flexDirection: "column", gap: 20, alignItems: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", minWidth: 320 }}>
+                <style>{`
+                  @keyframes pulse-ring {
+                    0% { transform: scale(1); opacity: 1; }
+                    100% { transform: scale(1.2); opacity: 0; }
+                  }
+                  .pulse-icon {
+                    animation: pulse-ring 1.5s infinite;
+                  }
+                `}</style>
+                <div style={{ fontSize: 56, position: "relative" }}>
+                  <div className="pulse-icon">📞</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{incomingCall.callerName}</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>Incoming {incomingCall.callType} call...</div>
+                </div>
+                <div style={{ display: "flex", gap: 16, width: "100%" }}>
+                  <button onClick={acceptCall} style={{ flex: 1, background: "#22c55e", border: "none", color: "#fff", padding: "14px 20px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseOver={e => e.target.style.background = "#16a34a"} onMouseOut={e => e.target.style.background = "#22c55e"}>✓ Accept</button>
+                  <button onClick={declineCall} style={{ flex: 1, background: "#ef4444", border: "none", color: "#fff", padding: "14px 20px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseOver={e => e.target.style.background = "#dc2626"} onMouseOut={e => e.target.style.background = "#ef4444"}>✕ Decline</button>
+                </div>
+              </div>
+            )}
+            {showVoiceModal && (
+              <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 400 }}>
+                <div style={{ background: "#1e1e2e", borderRadius: 16, padding: "32px", width: "90%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", gap: 24 }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🎙️</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: "#e9edef", marginBottom: 4 }}>Record Voice Note</div>
+                    <div style={{ fontSize: 13, color: "#8888aa" }}>Tap to record your message</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ background: "rgba(99,102,241,0.1)", borderRadius: 12, padding: "20px", textAlign: "center", border: "2px solid rgba(99,102,241,0.3)" }}>
+                      <div style={{ fontSize: 32, marginBottom: 8 }}>{voiceRecording ? "🔴" : "⭕"}</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: "#6366f1", fontFamily: "monospace" }}>{formatDuration(voiceDuration)}</div>
+                      <div style={{ fontSize: 12, color: "#8888aa", marginTop: 8 }}>{voiceRecording ? "Recording..." : voiceBlob ? "Ready to send" : "Not recording"}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                      <button onClick={voiceRecording ? stopVoiceRecording : startVoiceRecording} style={{ background: voiceRecording ? "#ef4444" : "#6366f1", border: "none", color: "#fff", padding: "12px 28px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }}>
+                        {voiceRecording ? "⏹️ Stop" : "🎤 Record"}
+                      </button>
+                    </div>
+                  </div>
+                  {voiceBlob && (
+                    <div style={{ background: "rgba(34,197,94,0.1)", borderRadius: 12, padding: "16px", border: "1px solid rgba(34,197,94,0.3)" }}>
+                      <div style={{ fontSize: 12, color: "#22c55e", fontWeight: 600, marginBottom: 8 }}>✓ Voice note recorded</div>
+                      <div style={{ fontSize: 13, color: "#cbd5e1" }}>Duration: {formatDuration(voiceDuration)}</div>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <button onClick={discardVoiceNote} style={{ flex: 1, background: "#35354f", border: "none", color: "#cbd5e1", padding: "12px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600 }}>Cancel</button>
+                    <button onClick={sendVoiceNote} disabled={!voiceBlob} style={{ flex: 1, background: voiceBlob ? "#6366f1" : "#35354f", border: "none", color: voiceBlob ? "#fff" : "#8888aa", padding: "12px", borderRadius: 8, cursor: voiceBlob ? "pointer" : "not-allowed", fontSize: 14, fontWeight: 600 }}>Send</button>
+                  </div>
                 </div>
               </div>
             )}
             <div style={S.inputBar}>
               <input type="file" multiple onChange={e => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} style={{ display: "none" }} id="fileInput" />
-              <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.headerBtn, fontSize: 18 }}>📎</button>
-              <button onClick={isRecording ? stopRecording : startRecording} style={{ ...S.headerBtn, fontSize: 18, background: isRecording ? "#ef4444" : "transparent" }}>
-                {isRecording ? `⏹️ ${recordingTime}s` : "🎤"}
-              </button>
-              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.headerBtn, fontSize: 18, position: "relative" }}>
-                😊
+              <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.headerBtn, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>📎 Attach</button>
+              <button onClick={() => setShowVoiceModal(true)} style={{ ...S.headerBtn, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>🎙️ Voice</button>
+              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.headerBtn, fontSize: 14, display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
+                😊 Emoji
                 {showEmojiPicker && <EmojiPicker onSelect={e => { setText(text + e); setShowEmojiPicker(false); }} onClose={() => setShowEmojiPicker(false)} />}
               </button>
               <textarea ref={inputRef} style={S.textInput} value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} placeholder="Type a message..." />
