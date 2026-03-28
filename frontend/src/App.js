@@ -22,12 +22,13 @@ import Tasks from './pages/Tasks';
 import EmployeeDirectory from './pages/EmployeeDirectory';
 import ScheduleBoard from './pages/ScheduleBoard';
 import AuditLog from './pages/AuditLog';
-import DailyReports from './pages/DailyReports';
 import OrgChart from './pages/OrgChart';
 import ClientProgress from './pages/ClientProgress';
 import Mapping from './pages/Mapping';
 import StockManagement from './pages/StockManagement';
 import ClientDocumentation from './pages/ClientDocumentation';
+import WeeklyReport from './pages/WeeklyReport';
+import AdminWeeklyReports from './pages/AdminWeeklyReports';
 import DarkModeToggle from './components/DarkModeToggle';
 
 const Footer = () => (
@@ -65,12 +66,13 @@ function App() {
         <Route path="/employee-directory" element={<EmployeeDirectory />} />
         <Route path="/schedule-board" element={<ScheduleBoard />} />
         <Route path="/audit-log" element={<AuditLog />} />
-        <Route path="/daily-reports" element={<DailyReports />} />
         <Route path="/org-chart" element={<OrgChart />} />
         <Route path="/client-progress" element={<ClientProgress />} />
         <Route path="/mapping" element={<Mapping />} />
         <Route path="/stock-management" element={<StockManagement />} />
         <Route path="/client-documentation" element={<ClientDocumentation />} />
+        <Route path="/weekly-reports" element={<WeeklyReport />} />
+        <Route path="/admin/weekly-reports" element={<AdminWeeklyReports />} />
       </Routes>
       <Footer />
     </>

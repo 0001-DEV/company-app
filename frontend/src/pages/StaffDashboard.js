@@ -146,7 +146,7 @@ const StaffDashboard = () => {
     { id: 'tasks', icon: '✅', label: 'My Tasks', action: () => navigate('/tasks') },
     { id: 'directory', icon: '👤', label: 'Employee Directory', action: () => navigate('/employee-directory') },
     { id: 'schedule', icon: '📅', label: 'Schedule Board', action: () => navigate('/schedule-board') },
-    { id: 'reports', icon: '📝', label: 'Daily Reports', action: () => navigate('/daily-reports') },
+    { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
     ...(canViewOthers ? [{ id: 'others', icon: '👥', label: "Work Bank", action: () => navigate('/all-staff-works') }] : []),
   ];
 

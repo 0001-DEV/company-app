@@ -164,7 +164,7 @@ function Home() {
     { id: "tasks",         icon: "📋", label: "Task Board",          path: "/tasks" },
     { id: "directory",     icon: "👤", label: "Employee Directory",  path: "/employee-directory" },
     { id: "schedule",      icon: "📅", label: "Schedule Board",      path: "/schedule-board" },
-    { id: "reports",       icon: "📝", label: "Daily Reports",       path: "/daily-reports" },
+    { id: "admin-weekly",  icon: "📊", label: "Weekly Reports",      path: "/admin/weekly-reports" },
     { id: "audit",         icon: "🔍", label: "Audit Log",           path: "/audit-log" },
     { id: "orgchart",      icon: "🏗️", label: "Org Chart",           path: "/org-chart" },
     { id: "recycle",       icon: "🗑️", label: "Recycle Bin",         path: "/recycle-bin" },

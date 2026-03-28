@@ -395,9 +395,9 @@ const S = {
   backBtn: { padding: '8px 18px', background: '#334155', color: 'var(--text-lighter, #94a3b8)', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13 },
   hamburger: { background: 'none', border: 'none', color: '#f1f5f9', fontSize: 22, cursor: 'pointer', padding: '4px 6px', lineHeight: 1 },
 
-  body: { flex: 1, display: 'flex', overflow: 'hidden' },
+  body: { flex: 1, display: 'flex', overflow: 'hidden', marginLeft: 270 },
 
-  sidebar: { width: 270, background: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column', flexShrink: 0 },
+  sidebar: { width: 270, background: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'fixed', left: 0, top: 0, bottom: 0, overflowY: 'auto' },
   sidebarHead: { padding: '14px 12px 10px', borderBottom: '1px solid #334155' },
   searchInput: { width: '100%', padding: '9px 12px 9px 34px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#f1f5f9', fontSize: 13, outline: 'none', boxSizing: 'border-box' },
   sidebarCount: { color: 'var(--text-muted, #475569)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginTop: 8, paddingLeft: 2 },

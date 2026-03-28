@@ -189,6 +189,25 @@ const ClientDocumentation = () => {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      { companyName: 'Example Company', cardType: 'Business Card', quantity: 100 },
+      { companyName: 'Example Company', cardType: 'Smart Card', quantity: 50 },
+      { companyName: 'Another Company', cardType: 'Duplex Card', quantity: 75 }
+    ];
+    
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Documentation');
+    
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    const url = window.URL.createObjectURL(new Blob([buffer]));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'client-documentation-template.xlsx';
+    a.click();
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -340,7 +359,7 @@ const ClientDocumentation = () => {
       const res = await fetch('http://localhost:5000/api/mapping/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ companyName: newClientName })
+        body: JSON.stringify({ name: newClientName })
       });
       if (res.ok) {
         alert('Client created successfully');
@@ -627,9 +646,6 @@ const ClientDocumentation = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
           <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#fff' }}>📄 Client Documentation</h1>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {userRole === 'admin' && (
-              <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>➕ Create New Client</button>
-            )}
             <button onClick={() => { setShowAllCompanies(true); fetchAllCompanies(); }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>👁️ View All Clients</button>
             <button onClick={() => { setShowRecycleBin(true); fetchRecycleBin(); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Recycle Bin</button>
             <button onClick={() => navigate(-1)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>← Back</button>
@@ -682,6 +698,7 @@ const ClientDocumentation = () => {
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setShowManualEntry(true)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📝 Manual Entry</button>
+            <button onClick={handleDownloadTemplate} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📋 Download Template</button>
             {userRole === 'admin' && (
               <>
                 <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>➕ Create New Client</button>

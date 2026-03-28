@@ -75,7 +75,7 @@ router.post("/login", async (req, res) => {
     res.json({
       message: "Admin login successful",
       token,
-      admin: { id: admin._id, name: admin.name, email: admin.email, profilePicture: admin.profilePicture || '' }
+      admin: { id: admin._id, name: admin.name, email: admin.email, role: 'admin', profilePicture: admin.profilePicture || '' }
     });
 
   } catch (err) {

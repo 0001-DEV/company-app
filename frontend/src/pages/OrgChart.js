@@ -139,13 +139,13 @@ const s = {
   deptCol: { display: "flex", flexDirection: "column", gap: 0 },
   deptCard: { background: 'var(--bg-card, white)', borderRadius: "12px 12px 0 0", padding: "14px 16px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.07)", cursor: "pointer", userSelect: "none" },
   deptIcon: { width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 },
-  deptName: { fontSize: 13, fontWeight: 700, color: 'var(--text-main, #0f172a)', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  deptName: { fontSize: 13, fontWeight: 800, color: 'var(--text-main, #0f172a)', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   deptCount: { fontSize: 11, color: 'var(--text-lighter, #94a3b8)', marginTop: 2 },
 
   memberList: { background: 'var(--bg-card, white)', borderRadius: "0 0 12px 12px", borderTop: "1px solid #f1f5f9", boxShadow: "0 4px 12px rgba(0,0,0,0.06)", overflow: "hidden" },
   noMembers: { padding: "12px 16px", fontSize: 12, color: 'var(--text-lighter, #94a3b8)', textAlign: "center" },
   memberCard: { display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid #f8fafc" },
   memberAvatar: { width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, flexShrink: 0, overflow: "hidden" },
-  memberName: { fontSize: 12, fontWeight: 600, color: 'var(--text-main, #0f172a)', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  memberName: { fontSize: 12, fontWeight: 400, color: 'var(--text-main, #0f172a)', overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   memberRole: { fontSize: 11, color: 'var(--text-lighter, #94a3b8)', marginTop: 1 },
 };
