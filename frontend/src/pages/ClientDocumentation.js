@@ -609,7 +609,23 @@ const ClientDocumentation = () => {
         const data = await res.json();
         setCardUsageData(data);
         const encodedId = btoa(companyId);
-        const link = `${window.location.origin}/card-usage-report/${encodedId}`;
+        
+        // Get the host from window.location, but replace localhost with the actual IP
+        let host = window.location.host;
+        if (host.includes('localhost') || host.includes('127.0.0.1')) {
+          // Get the machine's IP address from the backend
+          try {
+            const ipRes = await fetch('http://localhost:5000/api/config/machine-ip');
+            if (ipRes.ok) {
+              const ipData = await ipRes.json();
+              host = `${ipData.ip}:3000`;
+            }
+          } catch (err) {
+            console.warn('Could not fetch machine IP, using localhost');
+          }
+        }
+        
+        const link = `http://${host}/card-usage-report/${encodedId}`;
         setReportLink(link);
         setShowCardUsageReport(true);
       } else {

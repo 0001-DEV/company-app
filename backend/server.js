@@ -60,6 +60,9 @@ app.use('/api/reports', weeklyReportRoutes);
 const companyStaffRoutes = require('./routes/companyStaff');
 app.use('/api/company-staff', companyStaffRoutes);
 
+const configRoutes = require('./routes/config');
+app.use('/api/config', configRoutes);
+
 // ── Scheduled message dispatcher (runs every 30s) ──
 setInterval(async () => {
   try {
