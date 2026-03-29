@@ -350,7 +350,7 @@ const ClientDocumentation = () => {
   };
 
   const handleCreateClient = async () => {
-    if (!newClientName) {
+    if (!newClientName || !newClientName.trim()) {
       alert('Please enter a client name');
       return;
     }
@@ -359,7 +359,7 @@ const ClientDocumentation = () => {
       const res = await fetch('http://localhost:5000/api/mapping/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: newClientName })
+        body: JSON.stringify({ name: newClientName.trim() })
       });
       if (res.ok) {
         alert('Client created successfully');
@@ -372,6 +372,7 @@ const ClientDocumentation = () => {
       }
     } catch (err) {
       console.error('Error creating client:', err);
+      alert('Error creating client: ' + err.message);
     }
   };
 
