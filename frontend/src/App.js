@@ -27,6 +27,7 @@ import ClientProgress from './pages/ClientProgress';
 import Mapping from './pages/Mapping';
 import StockManagement from './pages/StockManagement';
 import ClientDocumentation from './pages/ClientDocumentation';
+import CardUsageReportPublic from './pages/CardUsageReportPublic';
 import WeeklyReport from './pages/WeeklyReport';
 import AdminWeeklyReports from './pages/AdminWeeklyReports';
 import DarkModeToggle from './components/DarkModeToggle';
@@ -71,6 +72,7 @@ function App() {
         <Route path="/mapping" element={<Mapping />} />
         <Route path="/stock-management" element={<StockManagement />} />
         <Route path="/client-documentation" element={<ClientDocumentation />} />
+        <Route path="/card-usage-report/:encodedId" element={<CardUsageReportPublic />} />
         <Route path="/weekly-reports" element={<WeeklyReport />} />
         <Route path="/admin/weekly-reports" element={<AdminWeeklyReports />} />
       </Routes>

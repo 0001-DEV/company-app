@@ -1,4 +1,4 @@
-﻿﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 
@@ -1227,128 +1227,130 @@ const ClientDocumentation = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-{/* Card Usage Report Modal */}
-{showCardUsageReport && cardUsageData && (
-  <div style={modalStyle} onClick={() => setShowCardUsageReport(false)}>
-    <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-      <h2 style={{ marginTop: 0, color: '#fff' }}>📊 Card Usage Report - {cardUsageData.companyName}</h2>
 
-      {/* Report Link Section */}
-      <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-        <p style={{ color: '#e0e0e0', marginBottom: '10px', fontSize: '14px' }}>
-          <strong>Shareable Link:</strong>
-        </p>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <input
-            type="text"
-            value={reportLink}
-            readOnly
-            style={{
-              flex: 1,
-              padding: '10px',
-              borderRadius: '6px',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              background: 'rgba(255, 255, 255, 0.05)',
-              color: '#e0e0e0',
-              fontSize: '12px'
-            }}
-          />
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(reportLink);
-              alert('Link copied to clipboard!');
-            }}
-            style={{
-              padding: '10px 15px',
-              background: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            📋 Copy Link
-          </button>
-        </div>
-      </div>
+      {/* Card Usage Report Modal */}
+      {showCardUsageReport && cardUsageData && (
+        <div style={modalStyle} onClick={() => setShowCardUsageReport(false)}>
+          <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>📊 Card Usage Report - {cardUsageData.companyName}</h2>
 
-      {/* Card Usage Summary */}
-      <div style={{ marginBottom: '20px' }}>
-        <h3 style={{ color: '#fff', marginTop: 0 }}>Card Usage Summary</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
-                <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
-                <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Initial Quantity</th>
-                <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Cards Used</th>
-                <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Remaining</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cardUsageData.cardTypes && cardUsageData.cardTypes.map((card, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                  <td style={{ padding: '12px' }}>{card.cardType}</td>
-                  <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
-                  <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
-                  <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            {/* Report Link Section */}
+            <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+              <p style={{ color: '#e0e0e0', marginBottom: '10px', fontSize: '14px' }}>
+                <strong>Shareable Link:</strong>
+              </p>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={reportLink}
+                  readOnly
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    color: '#e0e0e0',
+                    fontSize: '12px'
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(reportLink);
+                    alert('Link copied to clipboard!');
+                  }}
+                  style={{
+                    padding: '10px 15px',
+                    background: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  📋 Copy Link
+                </button>
+              </div>
+            </div>
 
-      {/* Detailed History */}
-      {cardUsageData.history && cardUsageData.history.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: '#fff', marginTop: 0 }}>Detailed History</h3>
-          <div style={{ overflowX: 'auto', maxHeight: '300px', overflowY: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Action</th>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Quantity</th>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cardUsageData.history.map((entry, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                    <td style={{ padding: '10px' }}>{entry.cardType}</td>
-                    <td style={{ padding: '10px' }}>
-                      {entry.action === 'added' ? '➕ Added' : entry.action === 'removed' ? '➖ Removed' : '✨ Created'}
-                    </td>
-                    <td style={{ padding: '10px' }}>{entry.quantity}</td>
-                    <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Card Usage Summary */}
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ color: '#fff', marginTop: 0 }}>Card Usage Summary</h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Initial Quantity</th>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Cards Used</th>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Remaining</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cardUsageData.cardTypes && cardUsageData.cardTypes.map((card, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                        <td style={{ padding: '12px' }}>{card.cardType}</td>
+                        <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
+                        <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
+                        <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Detailed History */}
+            {cardUsageData.history && cardUsageData.history.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ color: '#fff', marginTop: 0 }}>Detailed History</h3>
+                <div style={{ overflowX: 'auto', maxHeight: '300px', overflowY: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Action</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Quantity</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cardUsageData.history.map((entry, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                          <td style={{ padding: '10px' }}>{entry.cardType}</td>
+                          <td style={{ padding: '10px' }}>
+                            {entry.action === 'added' ? '➕ Added' : entry.action === 'removed' ? '➖ Removed' : '✨ Created'}
+                          </td>
+                          <td style={{ padding: '10px' }}>{entry.quantity}</td>
+                          <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(reportLink);
+                  alert('Link copied to clipboard!');
+                }}
+                style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                📋 Copy Link
+              </button>
+              <button onClick={() => setShowCardUsageReport(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
+            </div>
           </div>
         </div>
       )}
-
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(reportLink);
-            alert('Link copied to clipboard!');
-          }}
-          style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          📋 Copy Link
-        </button>
-        <button onClick={() => setShowCardUsageReport(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
-      </div>
     </div>
-  </div>
-)}
+  );
+};
 
-export default ClientDocumentation;
+export default ClientDocumentation;
+
