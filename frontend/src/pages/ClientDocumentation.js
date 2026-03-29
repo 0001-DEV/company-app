@@ -647,7 +647,9 @@ const ClientDocumentation = () => {
           <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#fff' }}>📄 Client Documentation</h1>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => { setShowAllCompanies(true); fetchAllCompanies(); }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>👁️ View All Clients</button>
-            <button onClick={() => { setShowRecycleBin(true); fetchRecycleBin(); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Recycle Bin</button>
+            {userRole === 'admin' && (
+              <button onClick={() => { setShowRecycleBin(true); fetchRecycleBin(); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Recycle Bin</button>
+            )}
             <button onClick={() => navigate(-1)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>← Back</button>
           </div>
         </div>
