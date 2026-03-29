@@ -1351,10 +1351,4 @@ const ClientDocumentation = () => {
   </div>
 )}
 
-export default ClientDocumentation;
-
-
-
-
-
-
+export default ClientDocumentation;
