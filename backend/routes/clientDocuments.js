@@ -469,3 +469,91 @@ router.get('/:documentId/history', verifyUser, async (req, res) => {
 });
 
 module.exports = router;
+
+// Get card usage report for a company
+router.get('/card-usage-report/:companyId', verifyUser, async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    
+    // Get all documents for this company
+    const documents = await ClientDocument.find({ 
+      companyId: companyId,
+      isDeleted: false 
+    }).sort({ uploadDate: 1 });
+
+    if (documents.length === 0) {
+      return res.json({
+        companyName: 'Unknown Company',
+        cardTypes: [],
+        history: []
+      });
+    }
+
+    const companyName = documents[0].companyName;
+    
+    // Group by card type and calculate usage
+    const cardTypeMap = {};
+    const allHistory = [];
+
+    documents.forEach(doc => {
+      const cardType = doc.cardType;
+      
+      if (!cardTypeMap[cardType]) {
+        cardTypeMap[cardType] = {
+          cardType: cardType,
+          initialQuantity: 0,
+          cardsUsed: 0,
+          remaining: 0
+        };
+      }
+
+      // Add initial quantity from first entry
+      if (doc.history && doc.history.length > 0) {
+        const firstEntry = doc.history[0];
+        if (firstEntry.action === 'created') {
+          cardTypeMap[cardType].initialQuantity += firstEntry.quantity;
+        }
+      } else {
+        // If no history, use current quantity as initial
+        cardTypeMap[cardType].initialQuantity += doc.quantity;
+      }
+
+      // Calculate cards used from history
+      if (doc.history) {
+        doc.history.forEach(entry => {
+          if (entry.action === 'removed') {
+            cardTypeMap[cardType].cardsUsed += entry.quantity;
+          }
+          
+          // Add to all history
+          allHistory.push({
+            cardType: cardType,
+            action: entry.action,
+            quantity: entry.quantity,
+            timestamp: entry.timestamp
+          });
+        });
+      }
+
+      // Current remaining
+      cardTypeMap[cardType].remaining = doc.quantity;
+    });
+
+    // Convert map to array
+    const cardTypes = Object.values(cardTypeMap);
+
+    // Sort history by date
+    allHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    res.json({
+      companyName: companyName,
+      cardTypes: cardTypes,
+      history: allHistory
+    });
+  } catch (err) {
+    console.error('Error generating card usage report:', err);
+    res.status(500).json({ message: 'Error generating report' });
+  }
+});
+
+module.exports = router;

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 
@@ -38,6 +38,9 @@ const ClientDocumentation = () => {
   const [showCompanyStaffAssign, setShowCompanyStaffAssign] = useState(false);
   const [userRole, setUserRole] = useState('');
   const [userId, setUserId] = useState('');
+  const [showCardUsageReport, setShowCardUsageReport] = useState(false);
+  const [cardUsageData, setCardUsageData] = useState(null);
+  const [reportLink, setReportLink] = useState('');
   const fileInputRef = useRef(null);
 
   const cardTypes = ['Business Card', 'Smart Card', 'Duplex Card', 'De-Titan Card'];
@@ -596,6 +599,31 @@ const ClientDocumentation = () => {
     }
   };
 
+  const handleGenerateCardUsageReport = async (companyId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/client-documents/card-usage-report/${companyId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCardUsageData(data);
+        
+        // Generate a shareable link (using base64 encoding of company ID)
+        const encodedId = btoa(companyId);
+        const link = `${window.location.origin}/card-usage-report/${encodedId}`;
+        setReportLink(link);
+        
+        setShowCardUsageReport(true);
+      } else {
+        alert('Error generating report');
+      }
+    } catch (err) {
+      console.error('Error generating report:', err);
+      alert('Error generating report');
+    }
+  };
+
   const handleViewCompanyDocs = (company) => {
     setSelectedCompanyView(company);
     fetchCompanyDocuments(company._id);
@@ -645,24 +673,24 @@ const ClientDocumentation = () => {
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#fff' }}>📄 Client Documentation</h1>
+          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#fff' }}>?? Client Documentation</h1>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button onClick={() => { setShowAllCompanies(true); fetchAllCompanies(); }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>👁️ View All Clients</button>
+            <button onClick={() => { setShowAllCompanies(true); fetchAllCompanies(); }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>??? View All Clients</button>
             {userRole === 'admin' && (
-              <button onClick={() => { setShowRecycleBin(true); fetchRecycleBin(); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Recycle Bin</button>
+              <button onClick={() => { setShowRecycleBin(true); fetchRecycleBin(); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>??? Recycle Bin</button>
             )}
-            <button onClick={() => navigate(-1)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>← Back</button>
+            <button onClick={() => navigate(-1)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Back</button>
           </div>
         </div>
 
         {/* Identicare Program Section */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px', background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.05) 100%)' }}>
-          <h2 style={{ marginTop: 0, color: '#4CAF50', fontSize: '20px' }}>🛡️ Identicare Program</h2>
+          <h2 style={{ marginTop: 0, color: '#4CAF50', fontSize: '20px' }}>??? Identicare Program</h2>
           <p style={{ color: '#e0e0e0', marginBottom: '15px', fontSize: '15px' }}>
             <strong>Identicare</strong> is our exclusive platform feature designed to deliver unmatched peace of mind to our clients.
           </p>
           <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '15px', borderRadius: '8px', marginBottom: '15px' }}>
-            <h3 style={{ marginTop: 0, color: '#4CAF50', fontSize: '16px' }}>💡 The 50% Rule</h3>
+            <h3 style={{ marginTop: 0, color: '#4CAF50', fontSize: '16px' }}>?? The 50% Rule</h3>
             <p style={{ color: '#e0e0e0', marginBottom: 0 }}>
               If a client misplaces their cards and wants them reproduced, Identicare ensures they only pay <strong>half the original price</strong> to get them back!
             </p>
@@ -674,7 +702,7 @@ const ClientDocumentation = () => {
 
         {/* Step-by-Step Guide */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px' }}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>📋 Step-by-Step Guide</h2>
+          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>?? Step-by-Step Guide</h2>
           <ol style={{ color: '#e0e0e0', lineHeight: '1.8', marginBottom: 0 }}>
             <li>Select a company from the dropdown or create a new client</li>
             <li>Choose the card type (Business Card, Smart Card, Duplex Card, De-Titan Card)</li>
@@ -687,7 +715,7 @@ const ClientDocumentation = () => {
 
         {/* Add Documentation Section */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px' }}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>➕ Add Documentation</h2>
+          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>? Add Documentation</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px' }}>
             <select value={selectedCompanyForAdd} onChange={(e) => setSelectedCompanyForAdd(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: '#1a1a2e', color: '#e0e0e0', fontSize: '14px' }}>
               <option value="" style={{ background: '#1a1a2e', color: '#e0e0e0' }}>Select Company</option>
@@ -700,11 +728,11 @@ const ClientDocumentation = () => {
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx" disabled={uploading} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button onClick={() => setShowManualEntry(true)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📝 Manual Entry</button>
-            <button onClick={handleDownloadTemplate} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📋 Download Template</button>
+            <button onClick={() => setShowManualEntry(true)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>?? Manual Entry</button>
+            <button onClick={handleDownloadTemplate} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>?? Download Template</button>
             {userRole === 'admin' && (
               <>
-                <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>➕ Create New Client</button>
+                <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Create New Client</button>
               </>
             )}
           </div>
@@ -712,7 +740,7 @@ const ClientDocumentation = () => {
 
         {/* View Documentation Section */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px' }}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>📊 View Documentation</h2>
+          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>?? View Documentation</h2>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', color: '#e0e0e0', marginBottom: '8px', fontWeight: 'bold' }}>Select a Company to View Documentation</label>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -727,8 +755,9 @@ const ClientDocumentation = () => {
               </select>
               {selectedCompanyViewDropdown && (
                 <>
-                  <button onClick={() => handleExportCompany(selectedCompanyViewDropdown)} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>📥 Export Company Summary</button>
-                  <button onClick={() => { setSelectedCompanyForStaff(selectedCompanyViewDropdown); setShowCompanyStaffAssign(true); }} style={{ padding: '10px 20px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>👥 Assign Staff to Company</button>
+                  <button onClick={() => handleExportCompany(selectedCompanyViewDropdown)} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>?? Export Company Summary</button>
+                  <button onClick={() => handleGenerateCardUsageReport(selectedCompanyViewDropdown)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>?? View Card Usage Report</button>
+                  <button onClick={() => { setSelectedCompanyForStaff(selectedCompanyViewDropdown); setShowCompanyStaffAssign(true); }} style={{ padding: '10px 20px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>?? Assign Staff to Company</button>
                 </>
               )}
             </div>
@@ -764,12 +793,12 @@ const ClientDocumentation = () => {
                         <td style={{ padding: '15px' }}>{doc.quantity}</td>
                         <td style={{ padding: '15px' }}>{new Date(doc.uploadDate).toLocaleDateString()}</td>
                         <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
-                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
-                          <button onClick={() => { setSelectedDoc(doc); setShowJobAssign(true); }} style={{ padding: '6px 10px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>💼 Assign Job</button>
-                          <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📋 History</button>
-                          <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📥 Export</button>
-                          <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
+                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Add</button>
+                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Remove</button>
+                          <button onClick={() => { setSelectedDoc(doc); setShowJobAssign(true); }} style={{ padding: '6px 10px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Assign Job</button>
+                          <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? History</button>
+                          <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Export</button>
+                          <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -785,13 +814,13 @@ const ClientDocumentation = () => {
       {showManualEntry && (
         <div style={modalStyle} onClick={() => setShowManualEntry(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>📝 Manual Entry</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Manual Entry</h2>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="number" placeholder="Quantity" value={manualData.quantity} onChange={(e) => setManualData({ ...manualData, quantity: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleManualEntry} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✓ Submit</button>
-              <button onClick={() => setShowManualEntry(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
+              <button onClick={handleManualEntry} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Submit</button>
+              <button onClick={() => setShowManualEntry(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
             </div>
           </div>
         </div>
@@ -801,13 +830,13 @@ const ClientDocumentation = () => {
       {showNewClient && (
         <div style={modalStyle} onClick={() => setShowNewClient(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>➕ Create New Client</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>? Create New Client</h2>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="text" placeholder="Client Name" value={newClientName} onChange={(e) => setNewClientName(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleCreateClient} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✓ Create</button>
-              <button onClick={() => setShowNewClient(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
+              <button onClick={handleCreateClient} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Create</button>
+              <button onClick={() => setShowNewClient(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
             </div>
           </div>
         </div>
@@ -817,14 +846,14 @@ const ClientDocumentation = () => {
       {showAddRemove && selectedDoc && (
         <div style={modalStyle} onClick={() => setShowAddRemove(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>{addRemoveAction === 'add' ? '➕ Add Cards' : '➖ Remove Cards'}</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>{addRemoveAction === 'add' ? '? Add Cards' : '? Remove Cards'}</h2>
             <p style={{ color: '#e0e0e0' }}>Document: {selectedDoc.fileName}</p>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="number" placeholder="Quantity" value={addRemoveQuantity} onChange={(e) => setAddRemoveQuantity(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAddRemove} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✓ Confirm</button>
-              <button onClick={() => setShowAddRemove(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
+              <button onClick={handleAddRemove} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Confirm</button>
+              <button onClick={() => setShowAddRemove(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
             </div>
           </div>
         </div>
@@ -834,14 +863,14 @@ const ClientDocumentation = () => {
       {showJobAssign && selectedDoc && (
         <div style={modalStyle} onClick={() => setShowJobAssign(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>💼 Assign Job</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Assign Job</h2>
             <p style={{ color: '#e0e0e0' }}>Document: {selectedDoc.fileName}</p>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="text" placeholder="Job Name" value={jobInput} onChange={(e) => setJobInput(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAssignJob} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✓ Assign</button>
-              <button onClick={() => setShowJobAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
+              <button onClick={handleAssignJob} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Assign</button>
+              <button onClick={() => setShowJobAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
             </div>
           </div>
         </div>
@@ -851,7 +880,7 @@ const ClientDocumentation = () => {
       {showHistory && historyData && historyData.length > 0 && (
         <div style={modalStyle} onClick={() => setShowHistory(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>📋 Document History</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Document History</h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
                 <thead>
@@ -868,7 +897,7 @@ const ClientDocumentation = () => {
                 <tbody>
                   {historyData.map((entry, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                      <td style={{ padding: '10px' }}>{(entry.action === "created" ? "✨ CREATED" : entry.action === "added" ? "➕ ADDED" : entry.action === "removed" ? "➖ REMOVED" : entry.action?.toUpperCase())}</td>
+                      <td style={{ padding: '10px' }}>{(entry.action === "created" ? "? CREATED" : entry.action === "added" ? "? ADDED" : entry.action === "removed" ? "? REMOVED" : entry.action?.toUpperCase())}</td>
                       <td style={{ padding: '10px' }}>{entry.quantity}</td>
                       <td style={{ padding: '10px' }}>{entry.previousQuantity}</td>
                       <td style={{ padding: '10px' }}>{entry.newQuantity}</td>
@@ -880,7 +909,7 @@ const ClientDocumentation = () => {
                 </tbody>
               </table>
             </div>
-            <button onClick={() => setShowHistory(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
+            <button onClick={() => setShowHistory(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
           </div>
         </div>
       )}
@@ -889,7 +918,7 @@ const ClientDocumentation = () => {
       {showAllCompanies && (
         <div style={modalStyle} onClick={() => setShowAllCompanies(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>👁️ All Clients</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>??? All Clients</h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
                 <thead>
@@ -903,14 +932,14 @@ const ClientDocumentation = () => {
                     <tr key={company._id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                       <td style={{ padding: '15px' }}>{company.companyName}</td>
                       <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                        <button onClick={() => handleDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
+                        <button onClick={() => handleDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <button onClick={() => setShowAllCompanies(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
+            <button onClick={() => setShowAllCompanies(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
           </div>
         </div>
       )}
@@ -921,9 +950,9 @@ const ClientDocumentation = () => {
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ margin: 0, color: '#fff' }}>{selectedCompanyView.companyName} - Documentation</h2>
-              <button onClick={() => setShowCompanyDocs(false)} style={{ padding: '8px 16px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>← Back</button>
+              <button onClick={() => setShowCompanyDocs(false)} style={{ padding: '8px 16px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Back</button>
             </div>
-            <button onClick={() => handleExportCompany(selectedCompanyView._id)} style={{ marginBottom: '20px', padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📥 Export Company Summary</button>
+            <button onClick={() => handleExportCompany(selectedCompanyView._id)} style={{ marginBottom: '20px', padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>?? Export Company Summary</button>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
                 <thead>
@@ -943,11 +972,11 @@ const ClientDocumentation = () => {
                       <td style={{ padding: '15px' }}>{doc.quantity}</td>
                       <td style={{ padding: '15px' }}>{new Date(doc.uploadDate).toLocaleDateString()}</td>
                       <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
-                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
-                        <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📋 History</button>
-                        <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📥 Export</button>
-                        <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
+                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Add</button>
+                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Remove</button>
+                        <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? History</button>
+                        <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Export</button>
+                        <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -962,7 +991,7 @@ const ClientDocumentation = () => {
       {showRecycleBin && (
         <div style={modalStyle} onClick={() => setShowRecycleBin(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>🗑️ Recycle Bin</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>??? Recycle Bin</h2>
             
             <h3 style={{ color: '#fff', marginTop: '20px' }}>Documents</h3>
             {recycleBinData.docs.length > 0 ? (
@@ -981,8 +1010,8 @@ const ClientDocumentation = () => {
                         <td style={{ padding: '10px' }}>{doc.companyName}</td>
                         <td style={{ padding: '10px' }}>{doc.fileName}</td>
                         <td style={{ padding: '10px', display: 'flex', gap: '5px' }}>
-                          <button onClick={() => handleRestoreFromRecycleBin(doc._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>↩️ Restore</button>
-                          <button onClick={() => handlePermanentDeleteDoc(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
+                          <button onClick={() => handleRestoreFromRecycleBin(doc._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Restore</button>
+                          <button onClick={() => handlePermanentDeleteDoc(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -1008,8 +1037,8 @@ const ClientDocumentation = () => {
                       <tr key={company._id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                         <td style={{ padding: '10px' }}>{company.companyName}</td>
                         <td style={{ padding: '10px', display: 'flex', gap: '5px' }}>
-                          <button onClick={() => handleRestoreCompany(company._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>↩️ Restore</button>
-                          <button onClick={() => handlePermanentDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
+                          <button onClick={() => handleRestoreCompany(company._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Restore</button>
+                          <button onClick={() => handlePermanentDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -1020,7 +1049,7 @@ const ClientDocumentation = () => {
               <p style={{ color: '#e0e0e0' }}>No deleted companies</p>
             )}
 
-            <button onClick={() => setShowRecycleBin(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
+            <button onClick={() => setShowRecycleBin(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
           </div>
         </div>
       )}
@@ -1029,7 +1058,7 @@ const ClientDocumentation = () => {
       {showStaffAssign && selectedDoc && (
         <div style={modalStyle} onClick={() => setShowStaffAssign(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>👥 Assign Staff</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Assign Staff</h2>
             <p style={{ color: '#e0e0e0' }}>Document: {selectedDoc.fileName}</p>
             <div style={{ display: 'grid', gap: '10px', marginBottom: '20px', maxHeight: '300px', overflowY: 'auto' }}>
               {staffList.map(staff => (
@@ -1046,8 +1075,8 @@ const ClientDocumentation = () => {
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAssignStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✓ Assign</button>
-              <button onClick={() => setShowStaffAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
+              <button onClick={handleAssignStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Assign</button>
+              <button onClick={() => setShowStaffAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
             </div>
           </div>
         </div>
@@ -1057,7 +1086,7 @@ const ClientDocumentation = () => {
       {showCompanyStaffAssign && (
         <div style={modalStyle} onClick={() => setShowCompanyStaffAssign(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>👥 Assign Staff to Company</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Assign Staff to Company</h2>
             <p style={{ color: '#e0e0e0' }}>This will assign staff to handle all card types for this company</p>
             <div style={{ display: 'grid', gap: '10px', marginBottom: '20px', maxHeight: '300px', overflowY: 'auto' }}>
               {staffList.map(staff => (
@@ -1074,8 +1103,132 @@ const ClientDocumentation = () => {
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAssignCompanyStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✓ Assign</button>
-              <button onClick={() => { setShowCompanyStaffAssign(false); setCompanyStaffList([]); setSelectedCompanyForStaff(''); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
+              <button onClick={handleAssignCompanyStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Assign</button>
+              <button onClick={() => { setShowCompanyStaffAssign(false); setCompanyStaffList([]); setSelectedCompanyForStaff(''); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+      {/* Card Usage Report Modal */}
+      {showCardUsageReport && cardUsageData && (
+        <div style={modalStyle} onClick={() => setShowCardUsageReport(false)}>
+          <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Card Usage Report - {cardUsageData.companyName}</h2>
+            
+            {/* Report Link Section */}
+            <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+              <p style={{ color: '#e0e0e0', marginBottom: '10px', fontSize: '14px' }}>
+                <strong>Shareable Link:</strong>
+              </p>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input 
+                  type="text" 
+                  value={reportLink} 
+                  readOnly 
+                  style={{ 
+                    flex: 1, 
+                    padding: '10px', 
+                    borderRadius: '6px', 
+                    border: '1px solid rgba(255, 255, 255, 0.3)', 
+                    background: 'rgba(255, 255, 255, 0.05)', 
+                    color: '#e0e0e0',
+                    fontSize: '12px'
+                  }} 
+                />
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(reportLink);
+                    alert('Link copied to clipboard!');
+                  }}
+                  style={{ 
+                    padding: '10px 15px', 
+                    background: '#4CAF50', 
+                    color: 'white', 
+                    border: 'none', 
+                    borderRadius: '6px', 
+                    cursor: 'pointer', 
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  ?? Copy Link
+                </button>
+              </div>
+            </div>
+
+            {/* Card Usage Summary */}
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ color: '#fff', marginTop: 0 }}>Card Usage Summary</h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Initial Quantity</th>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Cards Used</th>
+                      <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Remaining</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cardUsageData.cardTypes && cardUsageData.cardTypes.map((card, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                        <td style={{ padding: '12px' }}>{card.cardType}</td>
+                        <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
+                        <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
+                        <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Detailed History */}
+            {cardUsageData.history && cardUsageData.history.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ color: '#fff', marginTop: 0 }}>Detailed History</h3>
+                <div style={{ overflowX: 'auto', maxHeight: '300px', overflowY: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Action</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Quantity</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cardUsageData.history.map((entry, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                          <td style={{ padding: '10px' }}>{entry.cardType}</td>
+                          <td style={{ padding: '10px' }}>
+                            {entry.action === 'added' ? '? Added' : entry.action === 'removed' ? '? Removed' : '? Created'}
+                          </td>
+                          <td style={{ padding: '10px' }}>{entry.quantity}</td>
+                          <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(reportLink);
+                  alert('Link copied to clipboard!');
+                }}
+                style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                ?? Copy Link
+              </button>
+              <button onClick={() => setShowCardUsageReport(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
             </div>
           </div>
         </div>
@@ -1085,9 +1238,3 @@ const ClientDocumentation = () => {
 };
 
 export default ClientDocumentation;
-
-
-
-
-
-
