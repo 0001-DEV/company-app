@@ -14,8 +14,14 @@ const CardUsageReportPublic = () => {
         // Decode the company ID
         const companyId = atob(encodedId);
         
+        // Determine backend URL based on current host
+        const currentHost = window.location.hostname;
+        const backendUrl = currentHost === 'localhost' || currentHost === '127.0.0.1' 
+          ? 'http://localhost:5000' 
+          : `http://${currentHost}:5000`;
+        
         // Fetch the report data from public endpoint (no auth required)
-        const res = await fetch(`http://localhost:5000/api/client-documents/public/card-usage-report/${companyId}`);
+        const res = await fetch(`${backendUrl}/api/client-documents/public/card-usage-report/${companyId}`);
         if (res.ok) {
           const data = await res.json();
           setReportData(data);
