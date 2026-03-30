@@ -686,24 +686,24 @@ const ClientDocumentation = () => {
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#fff' }}>?? Client Documentation</h1>
+          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#fff' }}>📄 Client Documentation</h1>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button onClick={() => { setShowAllCompanies(true); fetchAllCompanies(); }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>??? View All Clients</button>
+            <button onClick={() => { setShowAllCompanies(true); fetchAllCompanies(); }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>👁️ View All Clients</button>
             {userRole === 'admin' && (
-              <button onClick={() => { setShowRecycleBin(true); fetchRecycleBin(); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>??? Recycle Bin</button>
+              <button onClick={() => { setShowRecycleBin(true); fetchRecycleBin(); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Recycle Bin</button>
             )}
-            <button onClick={() => navigate(-1)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Back</button>
+            <button onClick={() => navigate(-1)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>← Back</button>
           </div>
         </div>
 
         {/* Identicare Program Section */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px', background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.05) 100%)' }}>
-          <h2 style={{ marginTop: 0, color: '#4CAF50', fontSize: '20px' }}>??? Identicare Program</h2>
+          <h2 style={{ marginTop: 0, color: '#4CAF50', fontSize: '20px' }}>🛡️ Identicare Program</h2>
           <p style={{ color: '#e0e0e0', marginBottom: '15px', fontSize: '15px' }}>
             <strong>Identicare</strong> is our exclusive platform feature designed to deliver unmatched peace of mind to our clients.
           </p>
           <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '15px', borderRadius: '8px', marginBottom: '15px' }}>
-            <h3 style={{ marginTop: 0, color: '#4CAF50', fontSize: '16px' }}>?? The 50% Rule</h3>
+            <h3 style={{ marginTop: 0, color: '#4CAF50', fontSize: '16px' }}>💡 The 50% Rule</h3>
             <p style={{ color: '#e0e0e0', marginBottom: 0 }}>
               If a client misplaces their cards and wants them reproduced, Identicare ensures they only pay <strong>half the original price</strong> to get them back!
             </p>
@@ -715,7 +715,7 @@ const ClientDocumentation = () => {
 
         {/* Step-by-Step Guide */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px' }}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>?? Step-by-Step Guide</h2>
+          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>📋 Step-by-Step Guide</h2>
           <ol style={{ color: '#e0e0e0', lineHeight: '1.8', marginBottom: 0 }}>
             <li>Select a company from the dropdown or create a new client</li>
             <li>Choose the card type (Business Card, Smart Card, Duplex Card, De-Titan Card)</li>
@@ -728,7 +728,7 @@ const ClientDocumentation = () => {
 
         {/* Add Documentation Section */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px' }}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>? Add Documentation</h2>
+          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>➕ Add Documentation</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px' }}>
             <select value={selectedCompanyForAdd} onChange={(e) => setSelectedCompanyForAdd(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: '#1a1a2e', color: '#e0e0e0', fontSize: '14px' }}>
               <option value="" style={{ background: '#1a1a2e', color: '#e0e0e0' }}>Select Company</option>
@@ -741,11 +741,11 @@ const ClientDocumentation = () => {
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx" disabled={uploading} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button onClick={() => setShowManualEntry(true)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>?? Manual Entry</button>
-            <button onClick={handleDownloadTemplate} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>?? Download Template</button>
+            <button onClick={() => setShowManualEntry(true)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📝 Manual Entry</button>
+            <button onClick={handleDownloadTemplate} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📋 Download Template</button>
             {userRole === 'admin' && (
               <>
-                <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Create New Client</button>
+                <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>➕ Create New Client</button>
               </>
             )}
           </div>
@@ -753,7 +753,7 @@ const ClientDocumentation = () => {
 
         {/* View Documentation Section */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px' }}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>?? View Documentation</h2>
+          <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>📊 View Documentation</h2>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', color: '#e0e0e0', marginBottom: '8px', fontWeight: 'bold' }}>Select a Company to View Documentation</label>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -768,9 +768,9 @@ const ClientDocumentation = () => {
               </select>
               {selectedCompanyViewDropdown && (
                 <>
-                  <button onClick={() => handleExportCompany(selectedCompanyViewDropdown)} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>?? Export Company Summary</button>
-                  <button onClick={() => handleGenerateCardUsageReport(selectedCompanyViewDropdown)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>?? View Card Usage Report</button>
-                  <button onClick={() => { setSelectedCompanyForStaff(selectedCompanyViewDropdown); setShowCompanyStaffAssign(true); }} style={{ padding: '10px 20px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>?? Assign Staff to Company</button>
+                  <button onClick={() => handleExportCompany(selectedCompanyViewDropdown)} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>📥 Export Company Summary</button>
+                  <button onClick={() => handleGenerateCardUsageReport(selectedCompanyViewDropdown)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>📊 View Card Usage Report</button>
+                  <button onClick={() => { setSelectedCompanyForStaff(selectedCompanyViewDropdown); setShowCompanyStaffAssign(true); }} style={{ padding: '10px 20px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>👥 Assign Staff to Company</button>
                 </>
               )}
             </div>
@@ -806,8 +806,8 @@ const ClientDocumentation = () => {
                         <td style={{ padding: '15px' }}>{doc.quantity}</td>
                         <td style={{ padding: '15px' }}>{new Date(doc.uploadDate).toLocaleDateString()}</td>
                         <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Add</button>
-                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Remove</button>
+                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
+                          <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
                           <button onClick={() => { setSelectedDoc(doc); setShowJobAssign(true); }} style={{ padding: '6px 10px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Assign Job</button>
                           <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? History</button>
                           <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Export</button>
