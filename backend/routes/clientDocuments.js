@@ -507,7 +507,7 @@ router.get('/card-usage-report/:companyId', verifyUser, async (req, res) => {
         };
       }
 
-      // Add initial quantity from first entry
+      // Calculate total quantity from all entries (created + added)
       if (doc.history && doc.history.length > 0) {
         const firstEntry = doc.history[0];
         if (firstEntry.action === 'created') {
@@ -593,7 +593,7 @@ router.get('/public/card-usage-report/:companyId', async (req, res) => {
         };
       }
 
-      // Add initial quantity from first entry
+      // Calculate total quantity from all entries (created + added)
       if (doc.history && doc.history.length > 0) {
         const firstEntry = doc.history[0];
         if (firstEntry.action === 'created') {

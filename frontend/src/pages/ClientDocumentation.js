@@ -1131,7 +1131,7 @@ const ClientDocumentation = () => {
                     {cardUsageData.cardTypes && cardUsageData.cardTypes.map((card, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                         <td style={{ padding: '12px' }}>{card.cardType}</td>
-                        <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
+                        <td style={{ padding: '12px' }}>{card.totalQuantity || card.initialQuantity}</td>
                         <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
                         <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
                       </tr>
@@ -1308,7 +1308,7 @@ const ClientDocumentation = () => {
                     {cardUsageData.cardTypes && cardUsageData.cardTypes.map((card, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                         <td style={{ padding: '12px' }}>{card.cardType}</td>
-                        <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
+                        <td style={{ padding: '12px' }}>{card.totalQuantity || card.initialQuantity}</td>
                         <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
                         <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
                       </tr>
