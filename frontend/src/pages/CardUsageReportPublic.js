@@ -106,7 +106,7 @@ const CardUsageReportPublic = () => {
               <thead>
                 <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
                   <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
-                  <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Initial Quantity</th>
+                  <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Total Quantity</th>
                   <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Cards Used</th>
                   <th style={{ padding: '12px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Remaining</th>
                 </tr>
@@ -116,7 +116,7 @@ const CardUsageReportPublic = () => {
                   reportData.cardTypes.map((card, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                       <td style={{ padding: '12px' }}>{card.cardType}</td>
-                      <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
+                      <td style={{ padding: '12px' }}>{card.totalQuantity || card.initialQuantity}</td>
                       <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
                       <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
                     </tr>

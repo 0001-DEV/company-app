@@ -501,7 +501,7 @@ router.get('/card-usage-report/:companyId', verifyUser, async (req, res) => {
       if (!cardTypeMap[cardType]) {
         cardTypeMap[cardType] = {
           cardType: cardType,
-          initialQuantity: 0,
+          totalQuantity: 0,
           cardsUsed: 0,
           remaining: 0
         };
@@ -511,11 +511,11 @@ router.get('/card-usage-report/:companyId', verifyUser, async (req, res) => {
       if (doc.history && doc.history.length > 0) {
         const firstEntry = doc.history[0];
         if (firstEntry.action === 'created') {
-          cardTypeMap[cardType].initialQuantity += firstEntry.quantity;
+          cardTypeMap[cardType].totalQuantity += firstEntry.quantity;
         }
       } else {
         // If no history, use current quantity as initial
-        cardTypeMap[cardType].initialQuantity += doc.quantity;
+        cardTypeMap[cardType].totalQuantity += doc.quantity;
       }
 
       // Calculate cards used from history
@@ -587,7 +587,7 @@ router.get('/public/card-usage-report/:companyId', async (req, res) => {
       if (!cardTypeMap[cardType]) {
         cardTypeMap[cardType] = {
           cardType: cardType,
-          initialQuantity: 0,
+          totalQuantity: 0,
           cardsUsed: 0,
           remaining: 0
         };
@@ -597,11 +597,11 @@ router.get('/public/card-usage-report/:companyId', async (req, res) => {
       if (doc.history && doc.history.length > 0) {
         const firstEntry = doc.history[0];
         if (firstEntry.action === 'created') {
-          cardTypeMap[cardType].initialQuantity += firstEntry.quantity;
+          cardTypeMap[cardType].totalQuantity += firstEntry.quantity;
         }
       } else {
         // If no history, use current quantity as initial
-        cardTypeMap[cardType].initialQuantity += doc.quantity;
+        cardTypeMap[cardType].totalQuantity += doc.quantity;
       }
 
       // Calculate cards used from history
