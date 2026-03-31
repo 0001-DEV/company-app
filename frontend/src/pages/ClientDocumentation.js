@@ -931,7 +931,7 @@ const ClientDocumentation = () => {
       {showAllCompanies && (
         <div style={modalStyle} onClick={() => setShowAllCompanies(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>??? All Clients</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>?? All Clients</h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
                 <thead>
@@ -1369,4 +1369,5 @@ const ClientDocumentation = () => {
 };
 
 export default ClientDocumentation;
+
 
