@@ -827,13 +827,13 @@ const ClientDocumentation = () => {
       {showManualEntry && (
         <div style={modalStyle} onClick={() => setShowManualEntry(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Manual Entry</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>📝 Manual Entry</h2>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="number" placeholder="Quantity" value={manualData.quantity} onChange={(e) => setManualData({ ...manualData, quantity: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleManualEntry} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Submit</button>
-              <button onClick={() => setShowManualEntry(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
+              <button onClick={handleManualEntry} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✅ Submit</button>
+              <button onClick={() => setShowManualEntry(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
             </div>
           </div>
         </div>
@@ -843,13 +843,13 @@ const ClientDocumentation = () => {
       {showNewClient && (
         <div style={modalStyle} onClick={() => setShowNewClient(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>? Create New Client</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>➕ Create New Client</h2>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="text" placeholder="Client Name" value={newClientName} onChange={(e) => setNewClientName(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleCreateClient} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Create</button>
-              <button onClick={() => setShowNewClient(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
+              <button onClick={handleCreateClient} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✅ Create</button>
+              <button onClick={() => setShowNewClient(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
             </div>
           </div>
         </div>
@@ -859,14 +859,14 @@ const ClientDocumentation = () => {
       {showAddRemove && selectedDoc && (
         <div style={modalStyle} onClick={() => setShowAddRemove(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>{addRemoveAction === 'add' ? '? Add Cards' : '? Remove Cards'}</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>{addRemoveAction === 'add' ? '➕ Add Cards' : '➖ Remove Cards'}</h2>
             <p style={{ color: '#e0e0e0' }}>Document: {selectedDoc.fileName}</p>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="number" placeholder="Quantity" value={addRemoveQuantity} onChange={(e) => setAddRemoveQuantity(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAddRemove} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Confirm</button>
-              <button onClick={() => setShowAddRemove(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
+              <button onClick={handleAddRemove} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✅ Confirm</button>
+              <button onClick={() => setShowAddRemove(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
             </div>
           </div>
         </div>
@@ -882,8 +882,8 @@ const ClientDocumentation = () => {
               <input type="text" placeholder="Job Name" value={jobInput} onChange={(e) => setJobInput(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAssignJob} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Assign</button>
-              <button onClick={() => setShowJobAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
+              <button onClick={handleAssignJob} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✅ Assign</button>
+              <button onClick={() => setShowJobAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
             </div>
           </div>
         </div>
@@ -893,7 +893,7 @@ const ClientDocumentation = () => {
       {showHistory && historyData && historyData.length > 0 && (
         <div style={modalStyle} onClick={() => setShowHistory(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Document History</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>📋 Document History</h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
                 <thead>
@@ -910,7 +910,7 @@ const ClientDocumentation = () => {
                 <tbody>
                   {historyData.map((entry, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                      <td style={{ padding: '10px' }}>{(entry.action === "created" ? "? CREATED" : entry.action === "added" ? "? ADDED" : entry.action === "removed" ? "? REMOVED" : entry.action?.toUpperCase())}</td>
+                      <td style={{ padding: '10px' }}>{(entry.action === "created" ? "✅ CREATED" : entry.action === "added" ? "➕ ADDED" : entry.action === "removed" ? "➖ REMOVED" : entry.action?.toUpperCase())}</td>
                       <td style={{ padding: '10px' }}>{entry.quantity}</td>
                       <td style={{ padding: '10px' }}>{entry.previousQuantity}</td>
                       <td style={{ padding: '10px' }}>{entry.newQuantity}</td>
@@ -922,7 +922,7 @@ const ClientDocumentation = () => {
                 </tbody>
               </table>
             </div>
-            <button onClick={() => setShowHistory(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
+            <button onClick={() => setShowHistory(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
           </div>
         </div>
       )}
@@ -931,7 +931,7 @@ const ClientDocumentation = () => {
       {showAllCompanies && (
         <div style={modalStyle} onClick={() => setShowAllCompanies(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>??? All Clients</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>👥 All Clients</h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
                 <thead>
@@ -952,7 +952,7 @@ const ClientDocumentation = () => {
                 </tbody>
               </table>
             </div>
-            <button onClick={() => setShowAllCompanies(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
+            <button onClick={() => setShowAllCompanies(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
           </div>
         </div>
       )}
@@ -1004,7 +1004,7 @@ const ClientDocumentation = () => {
       {showRecycleBin && (
         <div style={modalStyle} onClick={() => setShowRecycleBin(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>??? Recycle Bin</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>🗑️ Recycle Bin</h2>
             
             <h3 style={{ color: '#fff', marginTop: '20px' }}>Documents</h3>
             {recycleBinData.docs.length > 0 ? (
@@ -1062,7 +1062,7 @@ const ClientDocumentation = () => {
               <p style={{ color: '#e0e0e0' }}>No deleted companies</p>
             )}
 
-            <button onClick={() => setShowRecycleBin(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
+            <button onClick={() => setShowRecycleBin(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
           </div>
         </div>
       )}
@@ -1071,7 +1071,7 @@ const ClientDocumentation = () => {
       {showCardUsageReport && cardUsageData && (
         <div style={modalStyle} onClick={() => setShowCardUsageReport(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Card Usage Report - {cardUsageData.companyName}</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>📊 Card Usage Report - {cardUsageData.companyName}</h2>
             
             {/* Report Link Section */}
             <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
@@ -1109,7 +1109,7 @@ const ClientDocumentation = () => {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  ?? Copy Link
+                  📋 Copy Link
                 </button>
               </div>
             </div>
@@ -1131,7 +1131,7 @@ const ClientDocumentation = () => {
                     {cardUsageData.cardTypes && cardUsageData.cardTypes.map((card, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                         <td style={{ padding: '12px' }}>{card.cardType}</td>
-                        <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
+                        <td style={{ padding: '12px' }}>{card.totalQuantity || card.initialQuantity || 0}</td>
                         <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
                         <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
                       </tr>
@@ -1160,7 +1160,7 @@ const ClientDocumentation = () => {
                         <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                           <td style={{ padding: '10px' }}>{entry.cardType}</td>
                           <td style={{ padding: '10px' }}>
-                            {entry.action === 'added' ? '? Added' : entry.action === 'removed' ? '? Removed' : '? Created'}
+                            {entry.action === 'added' ? '➕ Added' : entry.action === 'removed' ? '➖ Removed' : '✅ Created'}
                           </td>
                           <td style={{ padding: '10px' }}>{entry.quantity}</td>
                           <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleDateString()}</td>
@@ -1180,9 +1180,9 @@ const ClientDocumentation = () => {
                 }}
                 style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
               >
-                ?? Copy Link
+                📋 Copy Link
               </button>
-              <button onClick={() => setShowCardUsageReport(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
+              <button onClick={() => setShowCardUsageReport(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
             </div>
           </div>
         </div>
@@ -1192,7 +1192,7 @@ const ClientDocumentation = () => {
       {showStaffAssign && selectedDoc && (
         <div style={modalStyle} onClick={() => setShowStaffAssign(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Assign Staff</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>👥 Assign Staff</h2>
             <p style={{ color: '#e0e0e0' }}>Document: {selectedDoc.fileName}</p>
             <div style={{ display: 'grid', gap: '10px', marginBottom: '20px', maxHeight: '300px', overflowY: 'auto' }}>
               {staffList.map(staff => (
@@ -1209,8 +1209,8 @@ const ClientDocumentation = () => {
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAssignStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Assign</button>
-              <button onClick={() => setShowStaffAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
+              <button onClick={handleAssignStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✅ Assign</button>
+              <button onClick={() => setShowStaffAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
             </div>
           </div>
         </div>
@@ -1220,7 +1220,7 @@ const ClientDocumentation = () => {
       {showCompanyStaffAssign && (
         <div style={modalStyle} onClick={() => setShowCompanyStaffAssign(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Assign Staff to Company</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>👥 Assign Staff to Company</h2>
             <p style={{ color: '#e0e0e0' }}>This will assign staff to handle all card types for this company</p>
             <div style={{ display: 'grid', gap: '10px', marginBottom: '20px', maxHeight: '300px', overflowY: 'auto' }}>
               {staffList.map(staff => (
@@ -1237,8 +1237,8 @@ const ClientDocumentation = () => {
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAssignCompanyStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Assign</button>
-              <button onClick={() => { setShowCompanyStaffAssign(false); setCompanyStaffList([]); setSelectedCompanyForStaff(''); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Cancel</button>
+              <button onClick={handleAssignCompanyStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✅ Assign</button>
+              <button onClick={() => { setShowCompanyStaffAssign(false); setCompanyStaffList([]); setSelectedCompanyForStaff(''); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
             </div>
           </div>
         </div>
@@ -1248,7 +1248,7 @@ const ClientDocumentation = () => {
       {showCardUsageReport && cardUsageData && (
         <div style={modalStyle} onClick={() => setShowCardUsageReport(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Card Usage Report - {cardUsageData.companyName}</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>📊 Card Usage Report - {cardUsageData.companyName}</h2>
 
             {/* Report Link Section */}
             <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
@@ -1286,7 +1286,7 @@ const ClientDocumentation = () => {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  ?? Copy Link
+                  📋 Copy Link
                 </button>
               </div>
             </div>
@@ -1308,7 +1308,7 @@ const ClientDocumentation = () => {
                     {cardUsageData.cardTypes && cardUsageData.cardTypes.map((card, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                         <td style={{ padding: '12px' }}>{card.cardType}</td>
-                        <td style={{ padding: '12px' }}>{card.initialQuantity}</td>
+                        <td style={{ padding: '12px' }}>{card.totalQuantity || card.initialQuantity || 0}</td>
                         <td style={{ padding: '12px', color: '#FF9800' }}>{card.cardsUsed}</td>
                         <td style={{ padding: '12px', color: '#4CAF50', fontWeight: 'bold' }}>{card.remaining}</td>
                       </tr>
@@ -1337,7 +1337,7 @@ const ClientDocumentation = () => {
                         <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                           <td style={{ padding: '10px' }}>{entry.cardType}</td>
                           <td style={{ padding: '10px' }}>
-                            {entry.action === 'added' ? '? Added' : entry.action === 'removed' ? '? Removed' : '? Created'}
+                            {entry.action === 'added' ? '➕ Added' : entry.action === 'removed' ? '➖ Removed' : '✅ Created'}
                           </td>
                           <td style={{ padding: '10px' }}>{entry.quantity}</td>
                           <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleDateString()}</td>
@@ -1350,16 +1350,16 @@ const ClientDocumentation = () => {
             )}
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button
+              <button 
                 onClick={() => {
                   navigator.clipboard.writeText(reportLink);
                   alert('Link copied to clipboard!');
                 }}
                 style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
               >
-                ?? Copy Link
+                📋 Copy Link
               </button>
-              <button onClick={() => setShowCardUsageReport(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Close</button>
+              <button onClick={() => setShowCardUsageReport(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close</button>
             </div>
           </div>
         </div>

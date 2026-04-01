@@ -10,6 +10,8 @@ const Job = require('../models/Job');
 const Admin = require('../models/Admin');
 const User = require('../models/User');
 const ClientProject = require('../models/ClientProject');
+const { formatName } = require('../utils/nameFormatter');
+const { sendEmail } = require('../utils/notifications');
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -93,7 +95,7 @@ router.post('/create-staff', uploadImage.single('profilePicture'), async (req, r
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new User({
-      name,
+      name: formatName(name),
       email,
       phone: phone || '',
       password: hashedPassword,
@@ -388,7 +390,7 @@ router.put('/edit-staff/:id', uploadImage.single('profilePicture'), async (req, 
     const staff = await User.findById(req.params.id);
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
 
-    staff.name = name || staff.name;
+    staff.name = name ? formatName(name) : staff.name;
     staff.email = email || staff.email;
     if (phone !== undefined) staff.phone = phone;
     staff.department = departmentId || staff.department;
@@ -646,7 +648,7 @@ router.post('/bulk-upload-staff', adminAuth, uploadExcel.single('file'), async (
       const hashedPassword = await bcrypt.hash(password, salt);
 
       const newUser = await User.create({
-        name,
+        name: formatName(name),
         email,
         phone,
         password: hashedPassword,
@@ -943,6 +945,44 @@ router.delete('/permanent-delete/:staffId/:fileId', adminAuth, async (req, res) 
 });
 
 // ----------------------
+// Helper function to send birthday wish email
+// ----------------------
+const sendBirthdayWishEmail = async (staffName, staffEmail) => {
+  try {
+    const subject = `🎉 Happy Birthday, ${staffName}! - Xtreme Cr8ivity`;
+    
+    const emailBody = `Dear ${staffName},
+
+On this special day, we at Xtreme Cr8ivity want to take a moment to celebrate YOU!
+
+Your dedication, creativity, and positive energy have made a wonderful impact on our team. We truly appreciate everything you bring to the table, and we're grateful to have you as part of our Xtreme Cr8ivity family.
+
+As you celebrate another year of life, we wish you:
+✨ A year filled with joy, laughter, and unforgettable moments
+✨ Success in all your endeavors and personal goals
+✨ Good health, happiness, and endless possibilities
+✨ Continued growth and amazing achievements
+
+May this birthday bring you closer to your dreams and fill your heart with warmth and contentment.
+
+Enjoy your special day to the fullest!
+
+With warm wishes and best regards,
+
+🎨 The Xtreme Cr8ivity Team
+"Creating Excellence, One Day at a Time"
+
+---
+This is an automated birthday wish from Xtreme Cr8ivity. We hope you have a fantastic day!`;
+
+    await sendEmail([staffEmail], subject, emailBody);
+    console.log(`✅ Birthday wish email sent to ${staffName} (${staffEmail})`);
+  } catch (err) {
+    console.error(`❌ Error sending birthday email to ${staffName}:`, err.message);
+  }
+};
+
+// ----------------------
 // Get upcoming birthdays (within 3 days)
 // ----------------------
 router.get('/upcoming-birthdays', adminAuth, async (req, res) => {
@@ -971,6 +1011,11 @@ router.get('/upcoming-birthdays', adminAuth, async (req, res) => {
             daysUntil: diffDays,
             isCurrentUser: false
           });
+          
+          // Send birthday wish email automatically for today's birthdays
+          if (diffDays === 0) {
+            sendBirthdayWishEmail(staff.name, staff.email);
+          }
         }
       }
     });
@@ -998,6 +1043,69 @@ router.put('/update-birthday/:staffId', adminAuth, async (req, res) => {
     
     res.json({ message: 'Birthday updated successfully', staff });
   } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ----------------------
+// Send birthday wish email to a staff member
+// ----------------------
+router.post('/send-birthday-wish/:staffId', adminAuth, async (req, res) => {
+  try {
+    const staff = await User.findById(req.params.staffId);
+    
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    if (!staff.email) {
+      return res.status(400).json({ message: 'Staff email not found' });
+    }
+
+    // Compose a well-written birthday wish email
+    const subject = `🎉 Happy Birthday, ${staff.name}! - Xtreme Cr8ivity`;
+    
+    const emailBody = `Dear ${staff.name},
+
+On this special day, we at Xtreme Cr8ivity want to take a moment to celebrate YOU!
+
+Your dedication, creativity, and positive energy have made a wonderful impact on our team. We truly appreciate everything you bring to the table, and we're grateful to have you as part of our Xtreme Cr8ivity family.
+
+As you celebrate another year of life, we wish you:
+✨ A year filled with joy, laughter, and unforgettable moments
+✨ Success in all your endeavors and personal goals
+✨ Good health, happiness, and endless possibilities
+✨ Continued growth and amazing achievements
+
+May this birthday bring you closer to your dreams and fill your heart with warmth and contentment.
+
+Enjoy your special day to the fullest!
+
+With warm wishes and best regards,
+
+🎨 The Xtreme Cr8ivity Team
+"Creating Excellence, One Day at a Time"
+
+---
+This is an automated birthday wish from Xtreme Cr8ivity. We hope you have a fantastic day!`;
+
+    // Send the email
+    const emailSent = await sendEmail([staff.email], subject, emailBody);
+
+    if (emailSent) {
+      res.json({ 
+        message: `Birthday wish email sent successfully to ${staff.name}!`,
+        staffName: staff.name,
+        staffEmail: staff.email
+      });
+    } else {
+      res.status(500).json({ 
+        message: 'Failed to send birthday wish email. Please check email configuration.',
+        staffName: staff.name
+      });
+    }
+  } catch (err) {
+    console.error('Error sending birthday wish:', err);
     res.status(500).json({ message: err.message });
   }
 });

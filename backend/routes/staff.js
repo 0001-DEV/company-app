@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const Job = require('../models/Job');
 const User = require('../models/User');
 const ClientProject = require('../models/ClientProject');
+const { sendEmail } = require('../utils/notifications');
 const multer = require('multer');
 const path = require('path');
 
@@ -339,6 +340,44 @@ router.get('/all-staff-files', staffAuth, async (req, res) => {
 });
 
 // ----------------------
+// Helper function to send birthday wish email
+// ----------------------
+const sendBirthdayWishEmail = async (staffName, staffEmail) => {
+  try {
+    const subject = `🎉 Happy Birthday, ${staffName}! - Xtreme Cr8ivity`;
+    
+    const emailBody = `Dear ${staffName},
+
+On this special day, we at Xtreme Cr8ivity want to take a moment to celebrate YOU!
+
+Your dedication, creativity, and positive energy have made a wonderful impact on our team. We truly appreciate everything you bring to the table, and we're grateful to have you as part of our Xtreme Cr8ivity family.
+
+As you celebrate another year of life, we wish you:
+✨ A year filled with joy, laughter, and unforgettable moments
+✨ Success in all your endeavors and personal goals
+✨ Good health, happiness, and endless possibilities
+✨ Continued growth and amazing achievements
+
+May this birthday bring you closer to your dreams and fill your heart with warmth and contentment.
+
+Enjoy your special day to the fullest!
+
+With warm wishes and best regards,
+
+🎨 The Xtreme Cr8ivity Team
+"Creating Excellence, One Day at a Time"
+
+---
+This is an automated birthday wish from Xtreme Cr8ivity. We hope you have a fantastic day!`;
+
+    await sendEmail([staffEmail], subject, emailBody);
+    console.log(`✅ Birthday wish email sent to ${staffName} (${staffEmail})`);
+  } catch (err) {
+    console.error(`❌ Error sending birthday email to ${staffName}:`, err.message);
+  }
+};
+
+// ----------------------
 // Get upcoming birthdays for staff view
 // ----------------------
 router.get('/upcoming-birthdays', staffAuth, async (req, res) => {
@@ -377,14 +416,23 @@ router.get('/upcoming-birthdays', staffAuth, async (req, res) => {
     // Check if current user has birthday today
     const currentUserBirthdayToday = upcomingBirthdays.find(b => b.isCurrentUser && b.daysUntil === 0);
     
-    // If current user's birthday is today, ONLY show their notification
+    // If current user's birthday is today, send them a birthday wish email
     if (currentUserBirthdayToday) {
+      sendBirthdayWishEmail(currentUserBirthdayToday.name, currentUserBirthdayToday.email);
       return res.json([currentUserBirthdayToday]);
     }
     
     // For other staff: show upcoming birthdays (1-3 days) AND today's birthdays of others
     // Exclude current user's own birthday from the list
     const filteredBirthdays = upcomingBirthdays.filter(b => !b.isCurrentUser);
+    
+    // Send birthday wish emails to staff members with birthdays today
+    filteredBirthdays.forEach(birthday => {
+      if (birthday.daysUntil === 0) {
+        sendBirthdayWishEmail(birthday.name, birthday.email);
+      }
+    });
+    
     res.json(filteredBirthdays);
   } catch (err) {
     res.status(500).json({ message: err.message });

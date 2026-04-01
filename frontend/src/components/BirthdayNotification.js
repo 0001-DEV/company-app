@@ -27,9 +27,37 @@ const BirthdayNotification = ({ userRole }) => {
       if (response.ok) {
         const data = await response.json();
         setBirthdays(data);
+        
+        // Send birthday wish emails automatically for today's birthdays
+        data.forEach(birthday => {
+          if (birthday.daysUntil === 0 && !birthday.isCurrentUser) {
+            sendBirthdayWishAutomatically(birthday.staffId, birthday.name);
+          }
+        });
       }
     } catch (err) {
       console.error('Error fetching birthdays:', err);
+    }
+  };
+
+  const sendBirthdayWishAutomatically = async (staffId, staffName) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/admin/send-birthday-wish/${staffId}`, {
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        console.log(`✅ Birthday wish email sent automatically to ${staffName}`);
+      } else {
+        console.error(`Failed to send birthday wish email to ${staffName}`);
+      }
+    } catch (err) {
+      console.error('Error sending birthday wish:', err);
     }
   };
 
