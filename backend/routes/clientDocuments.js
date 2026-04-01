@@ -509,18 +509,10 @@ router.get('/card-usage-report/:companyId', verifyUser, async (req, res) => {
 
       // Calculate total quantity from all entries (created + added)
       if (doc.history && doc.history.length > 0) {
-        const firstEntry = doc.history[0];
-        if (firstEntry.action === 'created') {
-          cardTypeMap[cardType].totalQuantity += firstEntry.quantity;
-        }
-      } else {
-        // If no history, use current quantity as initial
-        cardTypeMap[cardType].totalQuantity += doc.quantity;
-      }
-
-      // Calculate cards used from history
-      if (doc.history) {
         doc.history.forEach(entry => {
+          if (entry.action === 'created' || entry.action === 'added') {
+            cardTypeMap[cardType].totalQuantity += entry.quantity;
+          }
           if (entry.action === 'removed') {
             cardTypeMap[cardType].cardsUsed += entry.quantity;
           }
@@ -533,6 +525,9 @@ router.get('/card-usage-report/:companyId', verifyUser, async (req, res) => {
             timestamp: entry.timestamp
           });
         });
+      } else {
+        // If no history, use current quantity as total
+        cardTypeMap[cardType].totalQuantity += doc.quantity;
       }
 
       // Current remaining
@@ -595,18 +590,10 @@ router.get('/public/card-usage-report/:companyId', async (req, res) => {
 
       // Calculate total quantity from all entries (created + added)
       if (doc.history && doc.history.length > 0) {
-        const firstEntry = doc.history[0];
-        if (firstEntry.action === 'created') {
-          cardTypeMap[cardType].totalQuantity += firstEntry.quantity;
-        }
-      } else {
-        // If no history, use current quantity as initial
-        cardTypeMap[cardType].totalQuantity += doc.quantity;
-      }
-
-      // Calculate cards used from history
-      if (doc.history) {
         doc.history.forEach(entry => {
+          if (entry.action === 'created' || entry.action === 'added') {
+            cardTypeMap[cardType].totalQuantity += entry.quantity;
+          }
           if (entry.action === 'removed') {
             cardTypeMap[cardType].cardsUsed += entry.quantity;
           }
@@ -619,6 +606,9 @@ router.get('/public/card-usage-report/:companyId', async (req, res) => {
             timestamp: entry.timestamp
           });
         });
+      } else {
+        // If no history, use current quantity as total
+        cardTypeMap[cardType].totalQuantity += doc.quantity;
       }
 
       // Current remaining
