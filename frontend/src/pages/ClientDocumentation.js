@@ -808,10 +808,10 @@ const ClientDocumentation = () => {
                         <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                           <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
                           <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
-                          <button onClick={() => { setSelectedDoc(doc); setShowJobAssign(true); }} style={{ padding: '6px 10px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Assign Job</button>
-                          <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? History</button>
-                          <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Export</button>
-                          <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
+                          <button onClick={() => { setSelectedDoc(doc); setShowJobAssign(true); }} style={{ padding: '6px 10px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>💼 Assign Job</button>
+                          <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📋 History</button>
+                          <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📥 Export</button>
+                          <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -876,7 +876,7 @@ const ClientDocumentation = () => {
       {showJobAssign && selectedDoc && (
         <div style={modalStyle} onClick={() => setShowJobAssign(false)}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#fff' }}>?? Assign Job</h2>
+            <h2 style={{ marginTop: 0, color: '#fff' }}>💼 Assign Job</h2>
             <p style={{ color: '#e0e0e0' }}>Document: {selectedDoc.fileName}</p>
             <div style={{ display: 'grid', gap: '15px', marginBottom: '20px' }}>
               <input type="text" placeholder="Job Name" value={jobInput} onChange={(e) => setJobInput(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.1)', color: '#e0e0e0', fontSize: '14px' }} />
@@ -945,7 +945,7 @@ const ClientDocumentation = () => {
                     <tr key={company._id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                       <td style={{ padding: '15px' }}>{company.companyName}</td>
                       <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                        <button onClick={() => handleDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
+                        <button onClick={() => handleDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -963,9 +963,9 @@ const ClientDocumentation = () => {
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ margin: 0, color: '#fff' }}>{selectedCompanyView.companyName} - Documentation</h2>
-              <button onClick={() => setShowCompanyDocs(false)} style={{ padding: '8px 16px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>? Back</button>
+              <button onClick={() => setShowCompanyDocs(false)} style={{ padding: '8px 16px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>← Back</button>
             </div>
-            <button onClick={() => handleExportCompany(selectedCompanyView._id)} style={{ marginBottom: '20px', padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>?? Export Company Summary</button>
+            <button onClick={() => handleExportCompany(selectedCompanyView._id)} style={{ marginBottom: '20px', padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📥 Export Company Summary</button>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
                 <thead>
@@ -985,11 +985,11 @@ const ClientDocumentation = () => {
                       <td style={{ padding: '15px' }}>{doc.quantity}</td>
                       <td style={{ padding: '15px' }}>{new Date(doc.uploadDate).toLocaleDateString()}</td>
                       <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Add</button>
-                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>? Remove</button>
-                        <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? History</button>
-                        <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Export</button>
-                        <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
+                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
+                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
+                        <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📋 History</button>
+                        <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📥 Export</button>
+                        <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -1023,8 +1023,8 @@ const ClientDocumentation = () => {
                         <td style={{ padding: '10px' }}>{doc.companyName}</td>
                         <td style={{ padding: '10px' }}>{doc.fileName}</td>
                         <td style={{ padding: '10px', display: 'flex', gap: '5px' }}>
-                          <button onClick={() => handleRestoreFromRecycleBin(doc._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Restore</button>
-                          <button onClick={() => handlePermanentDeleteDoc(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
+                          <button onClick={() => handleRestoreFromRecycleBin(doc._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🔄 Restore</button>
+                          <button onClick={() => handlePermanentDeleteDoc(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -1050,8 +1050,8 @@ const ClientDocumentation = () => {
                       <tr key={company._id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                         <td style={{ padding: '10px' }}>{company.companyName}</td>
                         <td style={{ padding: '10px', display: 'flex', gap: '5px' }}>
-                          <button onClick={() => handleRestoreCompany(company._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>?? Restore</button>
-                          <button onClick={() => handlePermanentDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>??? Delete</button>
+                          <button onClick={() => handleRestoreCompany(company._id)} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🔄 Restore</button>
+                          <button onClick={() => handlePermanentDeleteCompany(company._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
                         </td>
                       </tr>
                     ))}
