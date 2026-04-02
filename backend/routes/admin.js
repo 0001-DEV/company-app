@@ -386,7 +386,7 @@ router.get("/departments", async (req, res) => {
 // ✏️ Edit staff
 router.put('/edit-staff/:id', uploadImage.single('profilePicture'), async (req, res) => {
   try {
-    const { name, email, phone, departmentId, password, birthday } = req.body;
+    const { name, email, phone, departmentId, password, birthday, removePicture } = req.body;
     const staff = await User.findById(req.params.id);
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
 
@@ -398,7 +398,10 @@ router.put('/edit-staff/:id', uploadImage.single('profilePicture'), async (req, 
       staff.birthday = birthday === '' ? null : new Date(birthday);
     }
 
-    if (req.file) {
+    // Handle picture removal
+    if (removePicture === 'true') {
+      staff.profilePicture = '';
+    } else if (req.file) {
       staff.profilePicture = `/uploads/${req.file.filename}`;
     }
 

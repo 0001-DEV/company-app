@@ -37,6 +37,11 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
     }
   };
 
+  const handleRemovePicture = () => {
+    setProfilePicture(null);
+    setPreviewUrl('');
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!viewOnly) {
@@ -48,6 +53,10 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
       formData.append('birthday', birthday);
       if (password) formData.append('password', password);
       if (profilePicture) formData.append('profilePicture', profilePicture);
+      // If picture was removed (previewUrl is empty but initialData had a picture), send flag
+      if (!previewUrl && initialData?.profilePicture) {
+        formData.append('removePicture', 'true');
+      }
       
       onSubmit(formData); 
     }
@@ -77,10 +86,22 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
               </div>
             )}
             {!viewOnly && (
-              <label style={{ position: 'absolute', bottom: '0', right: '0', background: '#3b82f6', color: 'white', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '2px solid white' }}>
-                📷
-                <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-              </label>
+              <>
+                <label style={{ position: 'absolute', bottom: '0', right: '0', background: '#3b82f6', color: 'white', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '2px solid white' }}>
+                  📷
+                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                </label>
+                {previewUrl && (
+                  <button 
+                    type="button"
+                    onClick={handleRemovePicture}
+                    style={{ position: 'absolute', top: '0', right: '0', background: '#ef4444', color: 'white', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '2px solid white', fontSize: '14px', fontWeight: 'bold', padding: 0 }}
+                    title="Remove picture"
+                  >
+                    ✕
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
