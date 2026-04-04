@@ -29,6 +29,7 @@ const StaffDashboard = () => {
   const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [hasWorkBankAccess, setHasWorkBankAccess] = useState(false);
   const filesPerPage = 4;
   const navigate = useNavigate();
 
@@ -43,13 +44,14 @@ const StaffDashboard = () => {
       const token = localStorage.getItem('token');
       if (!token) { navigate('/staff-login'); return; }
       try {
-        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes] = await Promise.all([
+        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes] = await Promise.all([
           fetch('/api/chat/me', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/staff/my-profile', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/staff/my-files', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/chat/unread-counts', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/notices', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/staff/my-client-projects', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('http://localhost:5000/api/admin/workbank/access/check', { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         if (!meRes.ok) { navigate('/staff-login'); return; }
         setStaff(await meRes.json());
@@ -66,6 +68,10 @@ const StaffDashboard = () => {
         }
         if (clientProjRes && clientProjRes.ok) {
           setClientProjects(await clientProjRes.json());
+        }
+        if (workBankRes && workBankRes.ok) {
+          const data = await workBankRes.json();
+          setHasWorkBankAccess(data.hasAccess || false);
         }
         // Check unread announcements
         try {
@@ -147,7 +153,8 @@ const StaffDashboard = () => {
     { id: 'directory', icon: '👤', label: 'Employee Directory', action: () => navigate('/employee-directory') },
     { id: 'schedule', icon: '📅', label: 'Schedule Board', action: () => navigate('/schedule-board') },
     { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
-    ...(canViewOthers ? [{ id: 'others', icon: '👥', label: "Work Bank", action: () => navigate('/all-staff-works') }] : []),
+    ...(hasWorkBankAccess ? [{ id: 'workbank', icon: '📂', label: 'Work Bank', action: () => navigate('/uploaded-works') }] : []),
+    ...(canViewOthers ? [{ id: 'others', icon: '👥', label: "All Staff Works", action: () => navigate('/all-staff-works') }] : []),
   ];
 
   const initials = staff?.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??';
