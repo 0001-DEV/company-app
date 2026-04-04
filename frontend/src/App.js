@@ -12,7 +12,6 @@ import Home from "./pages/Home";
 import Chatbox from './pages/Chatbox';
 import StaffDashboard from './pages/StaffDashboard';
 import UploadedWorks from './pages/UploadedWorks';
-import ManagePermissions from './pages/ManagePermissions';
 import AllStaffWorks from './pages/AllStaffWorks';
 import RecycleBin from './pages/RecycleBin';
 import StaffCredentials from './pages/StaffCredentials';
@@ -57,7 +56,6 @@ function App() {
         <Route path="/department/:id" element={<DepartmentDetail />} />
         <Route path="/chat" element={<Chatbox />} />
         <Route path="/uploaded-works" element={<UploadedWorks />} />
-        <Route path="/manage-permissions" element={<ManagePermissions />} />
         <Route path="/all-staff-works" element={<AllStaffWorks />} />
         <Route path="/recycle-bin" element={<RecycleBin />} />
         <Route path="/staff-credentials" element={<StaffCredentials />} />
