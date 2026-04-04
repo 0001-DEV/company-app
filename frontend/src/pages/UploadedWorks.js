@@ -263,8 +263,8 @@ const UploadedWorks = () => {
     return acc;
   }, {});
 
-  const staffList = Object.values(staffGroups);
-  const filteredStaff = staffList.filter(s =>
+  const staffGroupsList = Object.values(staffGroups);
+  const filteredStaff = staffGroupsList.filter(s =>
     s.staffName.toLowerCase().includes(search.toLowerCase()) ||
     s.staffEmail.toLowerCase().includes(search.toLowerCase()) ||
     s.department.toLowerCase().includes(search.toLowerCase())
@@ -300,7 +300,7 @@ const UploadedWorks = () => {
   const pagedFiles = selectedFiles.slice((currentPage - 1) * filesPerPage, currentPage * filesPerPage);
 
   const totalFiles = files.length;
-  const totalStaff = staffList.length;
+  const totalStaff = staffGroupsList.length;
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
