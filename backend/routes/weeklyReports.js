@@ -93,6 +93,11 @@ router.get('/all-current', verifyUser, async (req, res) => {
 
     const { weekNumber, year } = getCurrentWeekAndYear();
 
+    // Delete reports older than 1 week (7 days)
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    await WeeklyReport.deleteMany({ createdAt: { $lt: oneWeekAgo } });
+
     const reports = await WeeklyReport.find({
       weekNumber,
       year
