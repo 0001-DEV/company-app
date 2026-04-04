@@ -739,7 +739,7 @@ router.put('/toggle-view-permission/:staffId', verifyToken, async (req, res) => 
 router.get('/staff-with-permissions', verifyToken, async (req, res) => {
   try {
     const staff = await User.find({ role: 'staff' })
-      .select('name email canViewOthersWork department')
+      .select('name email canViewOthersWork department profilePicture')
       .populate('department', 'name');
     
     res.json(staff);
