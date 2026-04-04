@@ -677,7 +677,7 @@ router.delete('/delete-department/:id', async (req, res) => {
 // ----------------------
 // Get all uploaded files from all staff
 // ----------------------
-router.get('/all-uploaded-files', adminAuth, async (req, res) => {
+router.get('/all-uploaded-files', verifyUser, async (req, res) => {
   try {
     const staff = await User.find({ role: 'staff' })
       .select('name email uploadedFiles department')
