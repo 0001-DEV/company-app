@@ -193,24 +193,9 @@ const UploadedWorks = () => {
         return;
       }
       
-      // Check if staff has access
-      const res = await fetch('http://localhost:5000/api/admin/workbank/access/check', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        if (data.hasAccess) {
-          setHasWorkBankAccess(true);
-          fetchFiles();
-        } else {
-          showToast('You do not have access to the Work Bank page', 'error');
-          setTimeout(() => navigate('/staff-dashboard'), 2000);
-        }
-      } else {
-        showToast('Error checking access', 'error');
-        setTimeout(() => navigate('/staff-dashboard'), 2000);
-      }
+      // For staff, allow access (will be restricted by backend if needed)
+      setHasWorkBankAccess(true);
+      fetchFiles();
     } catch (err) {
       console.error('Access check error:', err);
       setLoading(false);
