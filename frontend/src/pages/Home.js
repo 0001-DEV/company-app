@@ -156,7 +156,6 @@ function Home() {
     { id: "works",         icon: "📤", label: "Work Bank",          path: "/uploaded-works" },
     { id: "stock",         icon: "📦", label: "Stock Management",    path: "/stock-management" },
     { id: "progress",      icon: "📊", label: "Client Progress",     path: "/client-progress" },
-    { id: "perms",         icon: "🔑", label: "Manage Permissions",  path: "/manage-permissions" },
     { id: "cards",         icon: "💳", label: "Our Work",          path: "/card-samples" },
     { id: "creds",         icon: "🔒", label: "Staff Credentials",   path: "/staff-credentials" },
     { id: "chat",          icon: "📩", label: "Chat Box",            path: "/chat", badge: hasUnreadMessages },
