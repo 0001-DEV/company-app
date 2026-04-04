@@ -175,14 +175,55 @@ const UploadedWorks = () => {
       console.error("Auth error:", e);
     }
 
-    fetchFiles(); 
+    checkAccessAndFetchFiles(); 
   }, []);
+
+  const checkAccessAndFetchFiles = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      
+      // Admins always have access
+      if (payload.role === 'admin') {
+        fetchFiles();
+        return;
+      }
+      
+      // Check if staff has access
+      const res = await fetch('http://localhost:5000/api/admin/workbank/access/check', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasAccess) {
+          fetchFiles();
+        } else {
+          showToast('You do not have access to the Work Bank page', 'error');
+          setTimeout(() => navigate('/staff-dashboard'), 2000);
+        }
+      } else {
+        showToast('Error checking access', 'error');
+        setTimeout(() => navigate('/staff-dashboard'), 2000);
+      }
+    } catch (err) {
+      console.error('Access check error:', err);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user && user.role === 'admin') {
       fetchStaff();
     }
   }, [user]);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const fetchStaff = async () => {
     const token = localStorage.getItem('token');
@@ -235,11 +276,6 @@ const UploadedWorks = () => {
       else if (res.status === 401 || res.status === 403) navigate('/admin-login');
     } catch (err) { console.error(err); }
     setLoading(false);
-  };
-
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
   };
 
   const handleDelete = async (staffId, fileId, fileName) => {
