@@ -39,6 +39,107 @@ const Toast = ({ message, type, onClose }) => (
   </div>
 );
 
+const StaffAssignmentModal = ({ onClose, onSubmit, staffList }) => {
+  const [selectedStaff, setSelectedStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCurrentAccess = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        const res = await fetch('http://localhost:5000/api/admin/workbank/access/get', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSelectedStaff(data.staffIds || []);
+        }
+      } catch (err) {
+        console.error('Error fetching access:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCurrentAccess();
+  }, []);
+
+  const toggleStaff = (id) => {
+    setSelectedStaff(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  };
+
+  const handleSubmit = () => {
+    onSubmit(selectedStaff);
+  };
+
+  if (loading) {
+    return (
+      <div style={mStyles.overlay}>
+        <div style={mStyles.modal}>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={mStyles.overlay}>
+      <div style={mStyles.modal}>
+        <div style={mStyles.modalHeader}>
+          <h2 style={mStyles.modalTitle}>👥 Manage Work Bank Access</h2>
+          <button type="button" onClick={onClose} style={mStyles.modalClose}>✕</button>
+        </div>
+
+        <p style={{ color: '#94a3b8', marginBottom: '20px', fontSize: '14px', padding: '0 18px' }}>
+          Select staff members who can access and manage the Work Bank page:
+        </p>
+
+        <div style={{ ...mStyles.field, padding: '0 18px' }}>
+          <label style={mStyles.label}>Staff Members</label>
+          <div style={mStyles.staffList}>
+            {staffList.map(staff => (
+              <label key={staff._id} style={{
+                ...mStyles.staffItem,
+                background: selectedStaff.includes(staff._id) ? '#1e293b' : '#334155',
+                borderColor: selectedStaff.includes(staff._id) ? '#3b82f6' : 'transparent',
+              }}>
+                <input type="checkbox" checked={selectedStaff.includes(staff._id)} onChange={() => toggleStaff(staff._id)} style={{ display: 'none' }} />
+                <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid', borderColor: selectedStaff.includes(staff._id) ? '#3b82f6' : '#94a3b8', background: selectedStaff.includes(staff._id) ? '#3b82f6' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}>
+                  {selectedStaff.includes(staff._id) && <span style={{ color: 'white', fontSize: '12px' }}>✓</span>}
+                </div>
+                <div>
+                  <div style={{ fontWeight: '600', color: selectedStaff.includes(staff._id) ? '#f8fafc' : '#cbd5e1' }}>{staff.name}</div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>{staff.email}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div style={mStyles.modalFooter}>
+          <button type="button" onClick={onClose} style={mStyles.cancelBtn}>Cancel</button>
+          <button type="button" onClick={handleSubmit} style={mStyles.submitBtn}>Save Access</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const mStyles = {
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, backdropFilter: 'blur(6px)' },
+  modal: { background: '#1e293b', borderRadius: 16, width: '90%', maxWidth: 420, border: '1px solid #334155', boxShadow: '0 28px 70px rgba(0,0,0,0.7)', overflow: 'hidden' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid #334155' },
+  modalTitle: { fontSize: 14, fontWeight: 900, color: '#f1f5f9', margin: 0 },
+  modalClose: { background: '#334155', border: 'none', color: '#94a3b8', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14, fontWeight: 800 },
+  field: { marginBottom: 20 },
+  label: { display: 'block', fontSize: 12, fontWeight: 700, color: '#cbd5e1', marginBottom: 12 },
+  staffList: { display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 300, overflowY: 'auto' },
+  staffItem: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 8, border: '2px solid', cursor: 'pointer', transition: '0.2s' },
+  modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 18px', borderTop: '1px solid #334155' },
+  cancelBtn: { padding: '8px 14px', background: '#334155', color: '#94a3b8', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 800, fontSize: 12 },
+  submitBtn: { padding: '8px 16px', background: 'linear-gradient(135deg,#8b5cf6,#6366f1)', color: 'white', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 900, fontSize: 12 }
+};
+
 const UploadedWorks = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,10 +152,90 @@ const UploadedWorks = () => {
   const [viewFile, setViewFile] = useState(null);
   const [renameModal, setRenameModal] = useState(null); // { staffId, fileId }
   const [renameValue, setRenameValue] = useState('');
+  const [staffList, setStaffList] = useState([]);
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [user, setUser] = useState(null);
   const filesPerPage = 20;
   const navigate = useNavigate();
 
-  useEffect(() => { fetchFiles(); }, []);
+  useEffect(() => { 
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/admin-login');
+      return;
+    }
+
+    // Decode token to get user info
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      setUser(payload);
+    } catch (e) {
+      console.error("Auth error:", e);
+    }
+
+    fetchFiles(); 
+  }, []);
+
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      fetchStaff();
+    }
+  }, [user]);
+
+  const fetchStaff = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/workbank/staff-list', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setStaffList(await res.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleStaffAssignment = async (selectedStaffIds) => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/workbank/access/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ staffIds: selectedStaffIds })
+      });
+      
+      if (res.ok) {
+        showToast('Work Bank access updated!', 'success');
+        setShowStaffModal(false);
+      } else {
+        const text = await res.text();
+        console.error('Response:', text);
+        try {
+          const err = JSON.parse(text);
+          showToast(err.message || 'Failed to update access', 'error');
+        } catch (e) {
+          showToast('Server error: ' + text.substring(0, 100), 'error');
+        }
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      showToast('Error updating access: ' + err.message, 'error');
+    }
+  };
+
+  const fetchFiles = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { navigate('/admin-login'); return; }
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/all-uploaded-files', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setFiles(await res.json());
+      else if (res.status === 401 || res.status === 403) navigate('/admin-login');
+    } catch (err) { console.error(err); }
+    setLoading(false);
+  };
 
   const fetchFiles = async () => {
     const token = localStorage.getItem('token');
@@ -146,6 +327,15 @@ const UploadedWorks = () => {
   return (
     <div style={S.page} className="ignore-dark">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* Staff assignment modal */}
+      {showStaffModal && (
+        <StaffAssignmentModal 
+          onClose={() => setShowStaffModal(false)} 
+          onSubmit={handleStaffAssignment} 
+          staffList={staffList} 
+        />
+      )}
 
       {/* File preview modal */}
       {viewFile && (
@@ -255,6 +445,9 @@ const UploadedWorks = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={S.statPill}>👥 {totalStaff} staff</div>
           <div style={S.statPill}>📎 {totalFiles} files</div>
+          {user?.role === 'admin' && (
+            <button style={{ ...S.backBtn, background: '#8b5cf6', color: 'white' }} onClick={() => setShowStaffModal(true)}>👥 Manage Staff</button>
+          )}
           <button style={S.backBtn} onClick={() => navigate('/home')}>← Dashboard</button>
         </div>
       </div>

@@ -1459,4 +1459,76 @@ router.get('/export-client-projects', verifyUser, async (req, res) => {
   }
 });
 
+// 👥 Work Bank Access Management
+
+// Get all staff for Work Bank access assignment
+router.get('/workbank/staff-list', verifyToken, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const staff = await User.find({ role: 'staff' }).select('_id name email').sort({ name: 1 });
+    res.json(staff);
+  } catch (err) {
+    console.error('Error fetching staff:', err);
+    res.status(500).json({ message: 'Error fetching staff' });
+  }
+});
+
+// Update Work Bank page access
+router.post('/workbank/access/update', verifyToken, async (req, res) => {
+  try {
+    const WorkBankAccess = require('../models/WorkBankAccess');
+    const { staffIds } = req.body;
+    
+    // Delete existing access and create new one
+    await WorkBankAccess.deleteMany({});
+    const access = new WorkBankAccess({
+      staffIds: staffIds || [],
+      updatedAt: new Date(),
+      updatedBy: req.adminId
+    });
+    await access.save();
+    
+    res.json({ message: 'Work Bank access updated', access });
+  } catch (err) {
+    console.error('Error updating Work Bank access:', err);
+    res.status(500).json({ message: 'Error updating Work Bank access' });
+  }
+});
+
+// Get Work Bank page access
+router.get('/workbank/access/get', verifyToken, async (req, res) => {
+  try {
+    const WorkBankAccess = require('../models/WorkBankAccess');
+    const access = await WorkBankAccess.findOne().sort({ updatedAt: -1 });
+    
+    if (!access) {
+      return res.json({ staffIds: [] });
+    }
+    
+    res.json({ staffIds: access.staffIds || [] });
+  } catch (err) {
+    console.error('Error getting Work Bank access:', err);
+    res.status(500).json({ message: 'Error getting Work Bank access' });
+  }
+});
+
+// Check if user has Work Bank page access
+router.get('/workbank/access/check', verifyUser, async (req, res) => {
+  try {
+    const WorkBankAccess = require('../models/WorkBankAccess');
+    
+    if (req.user.role === 'admin') {
+      return res.json({ hasAccess: true });
+    }
+    
+    const access = await WorkBankAccess.findOne().sort({ updatedAt: -1 });
+    
+    const hasAccess = access && access.staffIds && access.staffIds.includes(req.user.id);
+    res.json({ hasAccess: hasAccess || false });
+  } catch (err) {
+    console.error('Error checking Work Bank access:', err);
+    res.status(500).json({ message: 'Error checking Work Bank access' });
+  }
+});
+
  module.exports = router;
