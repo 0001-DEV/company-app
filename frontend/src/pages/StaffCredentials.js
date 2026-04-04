@@ -137,7 +137,15 @@ const EditModal = ({ staff, onClose, onSave }) => {
         </div>
         <div style={m.body}>
           <div style={m.staffInfo}>
-            <div style={m.staffAvatar}>{staff.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}</div>
+            {staff.profilePicture && staff.profilePicture.trim() ? (
+              <img 
+                src={`${staff.profilePicture}?t=${Date.now()}`} 
+                alt={staff.name} 
+                style={{ ...m.staffAvatar, objectFit: 'cover' }} 
+              />
+            ) : (
+              <div style={m.staffAvatar}>{staff.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}</div>
+            )}
             <div>
               <div style={m.staffName}>{staff.name}</div>
               <div style={m.staffDept}>{staff.department?.name || 'No Department'}</div>
@@ -320,7 +328,15 @@ function StaffCredentials() {
                     <td style={s.td}><span style={s.rowNum}>{(currentPage - 1) * ITEMS_PER_PAGE + i + 1}</span></td>
                     <td style={s.td}>
                       <div style={s.staffCell}>
-                        <div style={{ ...s.avatar, background: color }}>{initials}</div>
+                        {member.profilePicture && member.profilePicture.trim() ? (
+                          <img 
+                            src={`${member.profilePicture}?t=${Date.now()}`} 
+                            alt={member.name} 
+                            style={{ ...s.avatar, objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          <div style={{ ...s.avatar, background: color }}>{initials}</div>
+                        )}
                         <span style={s.staffName}>{member.name}</span>
                       </div>
                     </td>

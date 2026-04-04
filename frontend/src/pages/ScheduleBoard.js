@@ -22,7 +22,7 @@ export default function ScheduleBoard() {
       try {
         const [meRes, deptRes, staffRes, schedRes] = await Promise.all([
           fetch("http://localhost:5000/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } }),
-          fetch("http://localhost:5000/api/admin/fixed-departments", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } }),
           fetch("http://localhost:5000/api/admin/all-staff", { headers: { Authorization: `Bearer ${token()}` } }),
           fetch("http://localhost:5000/api/extras/schedules", { headers: { Authorization: `Bearer ${token()}` } }),
         ]);
@@ -41,7 +41,15 @@ export default function ScheduleBoard() {
 
   const filtered = deptFilter === "all" ? schedules : schedules.filter(s => s.departmentId === deptFilter || s.departmentName === deptFilter);
 
+  const refreshDepartments = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } });
+      if (res.ok) setDepartments(await res.json());
+    } catch (_) {}
+  };
+
   const initForm = (deptId) => {
+    refreshDepartments();
     const dept = departments.find(d => d._id === deptId);
     const deptStaff = staff.filter(s => s.department?._id === deptId || s.department === deptId);
     const today = new Date();

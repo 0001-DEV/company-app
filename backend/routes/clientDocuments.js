@@ -237,8 +237,52 @@ router.get('/export-company/:companyId', verifyUser, async (req, res) => {
     const company = await CompanyMapping.findById(req.params.companyId);
     const companyName = company?.companyName || 'Unknown';
 
-    // Create export data - show each entry separately
-    const data = documents.map(doc => ({
+    // Group documents by card type and calculate totals
+    const cardTypeSummary = {};
+    
+    documents.forEach(doc => {
+      if (!cardTypeSummary[doc.cardType]) {
+        cardTypeSummary[doc.cardType] = {
+          totalPurchased: 0,
+          totalUsed: 0,
+          entries: []
+        };
+      }
+      
+      // Sum up quantities from history
+      let purchased = 0;
+      let used = 0;
+      
+      if (doc.history && Array.isArray(doc.history)) {
+        doc.history.forEach(entry => {
+          if (entry.action === 'created' || entry.action === 'added') {
+            purchased += entry.quantity || 0;
+          } else if (entry.action === 'used' || entry.action === 'removed') {
+            used += entry.quantity || 0;
+          }
+        });
+      }
+      
+      cardTypeSummary[doc.cardType].totalPurchased += purchased;
+      cardTypeSummary[doc.cardType].totalUsed += used;
+      cardTypeSummary[doc.cardType].entries.push({
+        fileName: doc.fileName,
+        quantity: doc.quantity,
+        uploadDate: new Date(doc.uploadDate).toLocaleDateString(),
+        uploadedBy: doc.uploadedByName
+      });
+    });
+
+    // Create summary sheet data
+    const summaryData = Object.entries(cardTypeSummary).map(([cardType, data]) => ({
+      'Card Type': cardType,
+      'Total Purchased': data.totalPurchased,
+      'Total Used': data.totalUsed,
+      'Total Remaining': data.totalPurchased - data.totalUsed
+    }));
+
+    // Create detailed sheet data
+    const detailedData = documents.map(doc => ({
       'Company Name': companyName,
       'Card Type': doc.cardType,
       'File Name': doc.fileName,
@@ -247,9 +291,15 @@ router.get('/export-company/:companyId', verifyUser, async (req, res) => {
       'Uploaded By': doc.uploadedByName
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Documentation');
+    
+    // Add summary sheet
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+    
+    // Add detailed sheet
+    const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
+    XLSX.utils.book_append_sheet(workbook, detailedSheet, 'Details');
 
     const filename = `${companyName}-Documentation`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

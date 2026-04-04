@@ -73,7 +73,15 @@ const ManagePermissions = () => {
             return (
               <div key={member._id} style={{ ...s.card, borderTop: `4px solid ${color}` }}>
                 <div style={s.cardTop}>
-                  <div style={{ ...s.avatar, background: color }}>{initials}</div>
+                  {member.profilePicture && member.profilePicture.trim() ? (
+                    <img 
+                      src={`${member.profilePicture}?t=${Date.now()}`} 
+                      alt={member.name} 
+                      style={{ ...s.avatar, objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    <div style={{ ...s.avatar, background: color }}>{initials}</div>
+                  )}
                   <div style={s.cardInfo}>
                     <div style={s.cardName}>{member.name}</div>
                     <div style={s.cardEmail}>{member.email}</div>

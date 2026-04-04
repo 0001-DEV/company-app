@@ -61,7 +61,7 @@ function AllDepartments() {
   const fetchDepartments = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/admin/fixed-departments', {
+      const res = await fetch('http://localhost:5000/api/admin/departments', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();

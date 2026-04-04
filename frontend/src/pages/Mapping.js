@@ -3,97 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import * as XLSX from 'xlsx';
 
-const NumericStepper = ({ value, onChange, onFinalSync, style = {} }) => {
-  const [localValue, setLocalValue] = useState(value || 0);
-  const valueRef = useRef(value || 0);
-  const intervalRef = useRef(null);
-  const timeoutRef = useRef(null);
-
-  // Keep local value and ref in sync with prop
-  useEffect(() => {
-    setLocalValue(value || 0);
-    valueRef.current = value || 0;
-  }, [value]);
-
-  const updateValue = (delta) => {
-    const next = Math.max(0, valueRef.current + delta);
-    valueRef.current = next;
-    setLocalValue(next);
-    onChange(next);
-  };
-
-  const startCounter = (delta) => {
-    updateValue(delta);
-    timeoutRef.current = setTimeout(() => {
-      intervalRef.current = setInterval(() => {
-        updateValue(delta);
-      }, 60); // 60ms for smooth rapid fire
-    }, 400);
-  };
-
-  const stopCounter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (onFinalSync) onFinalSync(valueRef.current);
-  };
-
-  const handleInputChange = (e) => {
-    const rawValue = e.target.value;
-    // Allow empty string while typing to avoid leading zero issues
-    if (rawValue === '') {
-      setLocalValue('');
-      return;
-    }
-    const val = parseInt(rawValue) || 0;
-    valueRef.current = val;
-    setLocalValue(val);
-    onChange(val);
-  };
-
-  return (
-    <div style={{ ...styles.rowStepper, ...style }}>
-      <button 
-        onMouseDown={(e) => { e.preventDefault(); startCounter(-1); }} 
-        onMouseUp={stopCounter} 
-        onMouseLeave={stopCounter}
-        onTouchStart={(e) => { e.preventDefault(); startCounter(-1); }}
-        onTouchEnd={stopCounter}
-        style={styles.rowStepBtn}
-      >▼</button>
-      <input 
-        type="number" 
-        value={localValue} 
-        onChange={handleInputChange}
-        onFocus={(e) => e.target.select()} // Auto-select text on click to make typing easier
-        onBlur={() => {
-          const finalVal = localValue === '' ? 0 : localValue;
-          setLocalValue(finalVal);
-          if (onFinalSync) onFinalSync(finalVal);
-        }}
-        style={{ 
-          ...styles.rowStepVal, 
-          border: 'none', 
-          background: 'transparent', 
-          outline: 'none', 
-          width: '100%', 
-          padding: 0,
-          textAlign: 'center',
-          appearance: 'textfield', // Hide default arrows
-          margin: 0
-        }}
-      />
-      <button 
-        onMouseDown={(e) => { e.preventDefault(); startCounter(1); }} 
-        onMouseUp={stopCounter} 
-        onMouseLeave={stopCounter}
-        onTouchStart={(e) => { e.preventDefault(); startCounter(1); }}
-        onTouchEnd={stopCounter}
-        style={styles.rowStepBtn}
-      >▲</button>
-    </div>
-  );
-};
-
 const Toast = ({ message, type = 'success', onClose }) => (
   <div style={{
     position: 'fixed', top: '24px', right: '24px', zIndex: 9999,
@@ -111,95 +20,88 @@ const Toast = ({ message, type = 'success', onClose }) => (
   </div>
 );
 
-const MappingModal = ({ onClose, onSubmit, initialData, staffList, userRole }) => {
-  const [companyName, setCompanyName] = useState(initialData?.companyName || '');
-  const [companyType, setCompanyType] = useState(initialData?.companyType || '');
-  const [cardType, setCardType] = useState(initialData?.cardType || '');
-  const [cardsProduced, setCardsProduced] = useState(initialData?.cardsProduced || 0);
-  const [assignedStaff, setAssignedStaff] = useState(initialData?.assignedStaff?.map(s => s._id || s) || []);
+const StaffAssignmentModal = ({ onClose, onSubmit, staffList }) => {
+  const [selectedStaff, setSelectedStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({ companyName, companyType, cardType, cardsProduced, assignedStaff });
-  };
+  useEffect(() => {
+    const fetchCurrentAccess = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        const res = await fetch('/api/mapping/access/get', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSelectedStaff(data.staffIds || []);
+        }
+      } catch (err) {
+        console.error('Error fetching access:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCurrentAccess();
+  }, []);
 
   const toggleStaff = (id) => {
-    setAssignedStaff(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+    setSelectedStaff(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   };
+
+  const handleSubmit = () => {
+    onSubmit(selectedStaff);
+  };
+
+  if (loading) {
+    return (
+      <div style={mStyles.overlay}>
+        <div style={mStyles.modal}>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={mStyles.overlay}>
-      <form onSubmit={handleSubmit} style={mStyles.modal}>
+      <div style={mStyles.modal}>
         <div style={mStyles.modalHeader}>
-          <div>
-            <h2 style={mStyles.modalTitle}>{initialData ? '✏️ Edit Company' : '🏢 New Company Registration'}</h2>
-            <p style={{ margin: '6px 0 0', fontSize: '14px', color: '#cbd5e1', fontWeight: '500' }}>Fill in the details to track progress.</p>
-          </div>
+          <h2 style={mStyles.modalTitle}>👥 Manage Mapping Page Access</h2>
           <button type="button" onClick={onClose} style={mStyles.modalClose}>✕</button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }} className="modal-grid">
-          <div style={mStyles.field}>
-            <label style={mStyles.label}>Company Name</label>
-            <input type="text" value={companyName} required onChange={e => setCompanyName(e.target.value)} style={mStyles.input} placeholder="e.g. Xtreme Cr8ivity" />
-          </div>
+        <p style={{ color: '#94a3b8', marginBottom: '20px', fontSize: '14px' }}>
+          Select staff members who can access and manage the Mapping page:
+        </p>
 
-          <div style={mStyles.field}>
-            <label style={mStyles.label}>Industry / Type</label>
-            <input type="text" value={companyType} onChange={e => setCompanyType(e.target.value)} style={mStyles.input} placeholder="e.g. Technology..." />
+        <div style={mStyles.field}>
+          <label style={mStyles.label}>Staff Members</label>
+          <div style={mStyles.staffList}>
+            {staffList.map(staff => (
+              <label key={staff._id} style={{
+                ...mStyles.staffItem,
+                background: selectedStaff.includes(staff._id) ? '#1e293b' : '#334155',
+                borderColor: selectedStaff.includes(staff._id) ? '#3b82f6' : 'transparent',
+              }}>
+                <input type="checkbox" checked={selectedStaff.includes(staff._id)} onChange={() => toggleStaff(staff._id)} style={{ display: 'none' }} />
+                <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid', borderColor: selectedStaff.includes(staff._id) ? '#3b82f6' : '#94a3b8', background: selectedStaff.includes(staff._id) ? '#3b82f6' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}>
+                  {selectedStaff.includes(staff._id) && <span style={{ color: 'white', fontSize: '12px' }}>✓</span>}
+                </div>
+                <div>
+                  <div style={{ fontWeight: '600', color: selectedStaff.includes(staff._id) ? '#f8fafc' : '#cbd5e1' }}>{staff.name}</div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>{staff.email}</div>
+                </div>
+              </label>
+            ))}
           </div>
         </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }} className="modal-grid">
-          <div style={mStyles.field}>
-            <label style={mStyles.label}>Card Type</label>
-            <select value={cardType} onChange={e => setCardType(e.target.value)} style={mStyles.input}>
-              <option value="">Select Type</option>
-              <option value="NFC & QR CODE">NFC & QR CODE</option>
-              <option value="QR CODE">QR CODE</option>
-              <option value="BOTH">BOTH</option>
-            </select>
-          </div>
-
-          <div style={mStyles.field}>
-            <label style={mStyles.label}>Cards Produced</label>
-            <NumericStepper 
-              value={cardsProduced} 
-              onChange={setCardsProduced}
-              style={{ background: '#0f172a', borderRadius: '12px', height: '48px' }}
-            />
-          </div>
-        </div>
-
-        {userRole === 'admin' && (
-          <div style={mStyles.field}>
-            <label style={mStyles.label}>Assign Dedicated Staff</label>
-            <div style={mStyles.staffList}>
-              {staffList.map(staff => (
-                <label key={staff._id} style={{
-                  ...mStyles.staffItem,
-                  background: assignedStaff.includes(staff._id) ? '#1e293b' : '#334155',
-                  borderColor: assignedStaff.includes(staff._id) ? '#3b82f6' : 'transparent',
-                }}>
-                  <input type="checkbox" checked={assignedStaff.includes(staff._id)} onChange={() => toggleStaff(staff._id)} style={{ display: 'none' }} />
-                  <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid', borderColor: assignedStaff.includes(staff._id) ? '#3b82f6' : '#94a3b8', background: assignedStaff.includes(staff._id) ? '#3b82f6' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}>
-                    {assignedStaff.includes(staff._id) && <span style={{ color: 'white', fontSize: '12px' }}>✓</span>}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: '600', color: assignedStaff.includes(staff._id) ? '#f8fafc' : '#cbd5e1' }}>{staff.name}</div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{staff.email}</div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div style={mStyles.modalFooter}>
-          <button type="button" onClick={onClose} style={mStyles.cancelBtn}>Discard</button>
-          <button type="submit" style={mStyles.submitBtn}>{initialData ? 'Save Changes' : 'Register Company'}</button>
+          <button type="button" onClick={onClose} style={mStyles.cancelBtn}>Cancel</button>
+          <button type="button" onClick={handleSubmit} style={mStyles.submitBtn}>Save Access</button>
         </div>
-      </form>
+      </div>
     </div>
   );
 };
@@ -208,21 +110,35 @@ const Mapping = () => {
   const [mappings, setMappings] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingMapping, setEditingMapping] = useState(null);
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 25;
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showStaffModal, setShowStaffModal] = useState(false);
   const [toast, setToast] = useState(null);
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [selectedCompanies, setSelectedCompanies] = useState(new Set());
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  // Fetch mappings
   const fetchMappings = async () => {
     const token = localStorage.getItem('token');
     try {
-      const endpoint = user?.role === 'admin' ? '/api/mapping' : '/api/mapping/my-mappings';
+      // Check if user has mapping page access
+      const accessRes = await fetch('/api/mapping/access/check', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (accessRes.ok) {
+        const accessData = await accessRes.json();
+        if (!accessData.hasAccess && user?.role !== 'admin') {
+          setToast({ message: 'You do not have access to this page', type: 'error' });
+          navigate('/staff-dashboard');
+          return;
+        }
+      }
+      
+      // Fetch mappings
+      const endpoint = user?.role === 'admin' ? '/api/mapping' : '/api/mapping';
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -237,6 +153,7 @@ const Mapping = () => {
     }
   };
 
+  // Fetch staff list
   const fetchStaff = async () => {
     const token = localStorage.getItem('token');
     try {
@@ -244,25 +161,26 @@ const Mapping = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setStaffList(await res.json());
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   };
 
+  // Initialize user and fetch data
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/admin-login');
       return;
     }
-    
+
     const fetchMe = async () => {
       try {
-        // First, try to parse token for immediate role check
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const payload = JSON.parse(window.atob(base64));
         setUser(payload);
 
-        // Then, fetch from server to be 100% sure and get latest info
         const res = await fetch('/api/chat/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -272,8 +190,6 @@ const Mapping = () => {
         }
       } catch (e) {
         console.error("Auth error:", e);
-        // If it's a genuine auth error, we might want to redirect, 
-        // but if it's just a parsing error, we stay quiet.
       }
     };
 
@@ -287,102 +203,36 @@ const Mapping = () => {
     }
   }, [user]);
 
-  const handleCreateOrUpdate = async (data) => {
+  // Handle staff assignment
+  const handleStaffAssignment = async (selectedStaffIds) => {
     const token = localStorage.getItem('token');
-    const method = editingMapping ? 'PUT' : 'POST';
-    const url = editingMapping 
-      ? `/api/mapping/assign/${editingMapping._id}` 
-      : '/api/mapping';
-    
     try {
-      const payload = editingMapping 
-        ? { 
-            staffIds: data.assignedStaff, 
-            companyName: data.companyName, 
-            companyType: data.companyType,
-            cardType: data.cardType,
-            cardsProduced: data.cardsProduced
-          }
-        : data;
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch('/api/mapping/access/update', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ staffIds: selectedStaffIds })
       });
-
+      
       if (res.ok) {
-        setToast({ message: editingMapping ? 'Update successful!' : 'New company added!', type: 'success' });
-        setShowModal(false);
-        setEditingMapping(null);
-        fetchMappings();
+        setToast({ message: 'Page access updated!', type: 'success' });
+        setShowStaffModal(false);
       } else {
-        const err = await res.json();
-        setToast({ message: err.message || 'Operation failed', type: 'error' });
-      }
-    } catch (err) {
-      setToast({ message: 'A network error occurred', type: 'error' });
-    }
-  };
-
-  const [localComments, setLocalComments] = useState({});
-
-  const canSeeInteraction = (isTicked, tickedById) => {
-    if (!isTicked) return true; // Everyone can see it to tick it
-    return tickedById === user?.id; // ONLY original ticker can see it to untick
-  };
-
-  const handleUpdateStatus = async (id, updates) => {
-    // Check untick rule locally first
-    const mapping = mappings.find(m => m._id === id);
-    if (updates.isDesigned === false && !canSeeInteraction(mapping.isDesigned, mapping.isDesignedById)) {
-      setToast({ message: `Accountability Rule: Only ${mapping.isDesignedBy} can untick this.`, type: 'error' });
-      return;
-    }
-    if (updates.isPackageSent === false && !canSeeInteraction(mapping.isPackageSent, mapping.isPackageSentById)) {
-      setToast({ message: `Accountability Rule: Only ${mapping.isPackageSentBy} can untick this.`, type: 'error' });
-      return;
-    }
-    if (updates.isPackageReceived === false && !canSeeInteraction(mapping.isPackageReceived, mapping.isPackageReceivedById)) {
-      setToast({ message: `Accountability Rule: Only ${mapping.isPackageReceivedBy} can untick this.`, type: 'error' });
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`/api/mapping/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(updates)
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setMappings(prev => prev.map(m => m._id === id ? updated : m));
-        // Clear local comment for this id after sync if it was a comment update
-        if (updates.clientComment !== undefined) {
-          setLocalComments(prev => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-          });
+        const text = await res.text();
+        console.error('Response:', text);
+        try {
+          const err = JSON.parse(text);
+          setToast({ message: err.message || 'Failed to update access', type: 'error' });
+        } catch (e) {
+          setToast({ message: 'Server error: ' + text.substring(0, 100), type: 'error' });
         }
-        setToast({ message: 'Status synced!', type: 'success' });
       }
     } catch (err) {
-      setToast({ message: 'Sync failed', type: 'error' });
+      console.error('Error:', err);
+      setToast({ message: 'Error updating access: ' + err.message, type: 'error' });
     }
   };
 
-  const handleLocalCommentChange = (id, value) => {
-    setLocalComments(prev => ({ ...prev, [id]: value }));
-  };
-
-  const saveComment = (id) => {
-    if (localComments[id] !== undefined) {
-      handleUpdateStatus(id, { clientComment: localComments[id] });
-    }
-  };
-
+  // Handle bulk upload
   const handleBulkUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -415,46 +265,119 @@ const Mapping = () => {
     }
   };
 
-  const handleExportExcel = () => {
+  // Download template
+  const handleDownloadTemplate = () => {
     try {
-      const dataToExport = mappings.map(m => ({
-        'Company Name': m.companyName,
-        'Industry/Type': m.companyType || 'N/A',
-        'Card Type': m.cardType || 'N/A',
-        'Cards Produced': m.cardsProduced || 0,
-        'Designed Status': m.isDesigned ? 'DONE' : 'PENDING',
-        'Designed Marked By': m.isDesignedBy || 'N/A',
-        'Designed Date': m.isDesignedAt ? new Date(m.isDesignedAt).toLocaleDateString() : 'N/A',
-        'Sent Status': m.isPackageSent ? 'SENT' : 'WAITING',
-        'Sent Marked By': m.isPackageSentBy || 'N/A',
-        'Sent Date': m.isPackageSentAt ? new Date(m.isPackageSentAt).toLocaleDateString() : 'N/A',
-        'Received Status': m.isPackageReceived ? 'RECEIVED' : 'OPEN',
-        'Received Marked By': m.isPackageReceivedBy || 'N/A',
-        'Received Date': m.isPackageReceivedAt ? new Date(m.isPackageReceivedAt).toLocaleDateString() : 'N/A',
-        'Client Feedback': m.clientComment || '',
-        'Assigned Staff': m.assignedStaff?.map(s => s.name).join(', ') || 'Unassigned',
-        'Upload Date': new Date(m.fullDateUploaded || m.createdAt).toLocaleDateString()
-      }));
+      const templateData = [
+        { 'MAPPED CLIENT': 'MTN', 'ID Card Types': 'Classic Lustre', 'Card Number': 100, 'Business Card Type': 'Classic Lustre', 'Business Card No': 100, 'Card Holder type': 'Silver Cut-out Card Holder', 'Card Holder number': 100, 'Lanyard': 'Red Lanyard with Plastic Hook', 'Date sent': '2025-02-02', 'Delivered': 'Yes', 'Reached out': 'Yes, We sent Invoice' },
+        { 'MAPPED CLIENT': '', 'ID Card Types': 'Egg Shell', 'Card Number': 50, 'Business Card Type': 'Egg Shell', 'Business Card No': 50, 'Card Holder type': '', 'Card Holder number': '', 'Lanyard': '', 'Date sent': '', 'Delivered': '', 'Reached out': '' },
+        { 'MAPPED CLIENT': '', 'ID Card Types': 'Translux Matte Finish', 'Card Number': 75, 'Business Card Type': 'Translux', 'Business Card No': 75, 'Card Holder type': '', 'Card Holder number': '', 'Lanyard': '', 'Date sent': '', 'Delivered': '', 'Reached out': '' },
+        { 'MAPPED CLIENT': '', 'ID Card Types': 'Nubis', 'Card Number': 25, 'Business Card Type': 'Nubis', 'Business Card No': 25, 'Card Holder type': '', 'Card Holder number': '', 'Lanyard': '', 'Date sent': '', 'Delivered': '', 'Reached out': '' },
+        { 'MAPPED CLIENT': 'ABC Motors', 'ID Card Types': 'Classic Lustre', 'Card Number': 200, 'Business Card Type': 'Classic Lustre', 'Business Card No': 200, 'Card Holder type': 'Gold Card Holder', 'Card Holder number': 200, 'Lanyard': 'Blue Lanyard', 'Date sent': '2025-02-05', 'Delivered': 'No', 'Reached out': 'Pending' },
+        { 'MAPPED CLIENT': '', 'ID Card Types': 'Egg Shell', 'Card Number': 150, 'Business Card Type': 'Egg Shell', 'Business Card No': 150, 'Card Holder type': '', 'Card Holder number': '', 'Lanyard': '', 'Date sent': '', 'Delivered': '', 'Reached out': '' }
+      ];
 
-      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Company Mappings");
-      
-      // Auto-size columns
-      const max_width = dataToExport.reduce((w, r) => Math.max(w, r['Company Name'].length), 10);
-      worksheet['!cols'] = [ { wch: max_width + 5 } ];
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Company Mapping');
 
-      const dateStr = new Date().toISOString().split('T')[0];
-      XLSX.writeFile(workbook, `Company_Mapping_Report_${dateStr}.xlsx`);
-      setToast({ message: 'Download started! Check your Downloads folder.', type: 'success' });
+      worksheet['!cols'] = [
+        { wch: 20 }, { wch: 22 }, { wch: 14 }, { wch: 20 }, { wch: 16 },
+        { wch: 26 }, { wch: 18 }, { wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 22 }
+      ];
+
+      XLSX.writeFile(workbook, 'Company_Mapping_Template.xlsx');
+      setToast({ message: 'Template downloaded!', type: 'success' });
     } catch (err) {
-      console.error('Export error:', err);
-      setToast({ message: 'Export failed', type: 'error' });
+      console.error('Template download error:', err);
+      setToast({ message: 'Failed to download template', type: 'error' });
     }
   };
 
+  // Export to Excel
+  const handleExportExcel = () => {
+    try {
+      const dataToExport = [];
+      
+      mappings.forEach(m => {
+        let cardTypes = [];
+        let businessCardTypes = [];
+        
+        try {
+          cardTypes = m.cardType ? JSON.parse(m.cardType) : [];
+        } catch (e) {
+          cardTypes = m.cardType ? [{ type: m.cardType, quantity: m.cardsProduced || 0 }] : [];
+        }
+        
+        try {
+          businessCardTypes = m.businessCardType ? JSON.parse(m.businessCardType) : [];
+        } catch (e) {
+          businessCardTypes = m.businessCardType ? [{ type: m.businessCardType, quantity: m.businessCardNo || 0 }] : [];
+        }
+        
+        // Get the maximum number of card types to create rows
+        const maxTypes = Math.max(cardTypes.length, businessCardTypes.length, 1);
+        
+        for (let i = 0; i < maxTypes; i++) {
+          const cardType = cardTypes[i] || { type: '', quantity: 0 };
+          const bizCardType = businessCardTypes[i] || { type: '', quantity: 0 };
+          
+          dataToExport.push({
+            'MAPPED CLIENT': i === 0 ? m.companyName : '', // Company name only on first row
+            'ID Card Types': cardType.type || '',
+            'Card Number': cardType.quantity || 0,
+            'Business Card Type': bizCardType.type || '',
+            'Business Card No': bizCardType.quantity || 0,
+            'Card Holder type': i === 0 ? (m.cardHolderType || '') : '',
+            'Card Holder number': i === 0 ? (m.cardHolderNumber || 0) : 0,
+            'Lanyard': i === 0 ? (m.lanyard || '') : '',
+            'Date sent': i === 0 ? (m.dateSent ? new Date(m.dateSent).toLocaleDateString() : '') : '',
+            'Delivered': i === 0 ? (m.delivered ? 'Yes' : 'No') : '',
+            'Reached out': i === 0 ? (m.reachedOut || '') : ''
+          });
+        }
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Company Mapping");
+
+      worksheet['!cols'] = [
+        { wch: 20 }, { wch: 22 }, { wch: 14 }, { wch: 20 }, { wch: 16 },
+        { wch: 26 }, { wch: 18 }, { wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 22 }
+      ];
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `Company_Mapping_Report_${dateStr}.xlsx`);
+      setToast({ message: 'Export completed! Check your Downloads folder.', type: 'success' });
+    } catch (err) {
+      console.error('Export error:', err);
+      setToast({ message: 'Export failed: ' + err.message, type: 'error' });
+    }
+  };
+
+  // Update mapping field
+  const handleUpdateField = async (id, field, value) => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/mapping/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ [field]: value })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setMappings(prev => prev.map(m => m._id === id ? updated : m));
+        setToast({ message: 'Updated!', type: 'success' });
+      }
+    } catch (err) {
+      setToast({ message: 'Update failed', type: 'error' });
+    }
+  };
+
+  // Delete mapping
   const handleDelete = async (id) => {
-    if (!window.confirm('This will permanently remove this company. Proceed?')) return;
+    if (!window.confirm('Delete this company?')) return;
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`/api/mapping/${id}`, {
@@ -463,415 +386,570 @@ const Mapping = () => {
       });
       if (res.ok) {
         setMappings(mappings.filter(m => m._id !== id));
-        setToast({ message: 'Company removed', type: 'success' });
+        setToast({ message: 'Company deleted successfully!', type: 'success' });
+      } else {
+        const err = await res.json();
+        setToast({ message: err.message || 'Delete failed', type: 'error' });
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Delete error:', err);
+      setToast({ message: 'Delete failed: ' + err.message, type: 'error' });
+    }
   };
 
-  const filteredMappings = mappings.filter(m => 
-    m.companyName.toLowerCase().includes(search.toLowerCase()) ||
-    (m.companyType || '').toLowerCase().includes(search.toLowerCase())
-  ).sort((a, b) => {
-    if (sortBy === 'name') return a.companyName.localeCompare(b.companyName);
-    if (sortBy === 'type') return (a.companyType || '').localeCompare(b.companyType || '');
-    if (sortBy === 'year') return b.yearUploaded - a.yearUploaded;
-    if (sortBy === 'month') {
-      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      return months.indexOf(b.monthUploaded) - months.indexOf(a.monthUploaded);
+  // Toggle company selection
+  const toggleSelection = (id) => {
+    const newSelected = new Set(selectedCompanies);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
     }
-    return new Date(b.updatedAt) - new Date(a.updatedAt);
-  });
+    setSelectedCompanies(newSelected);
+  };
 
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredMappings.length / itemsPerPage);
-  const paginatedMappings = filteredMappings.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  // Select all visible companies
+  const toggleSelectAll = () => {
+    if (selectedCompanies.size === filteredMappings.length) {
+      setSelectedCompanies(new Set());
+    } else {
+      setSelectedCompanies(new Set(filteredMappings.map(m => m._id)));
+    }
+  };
+
+  // Bulk delete selected companies
+  const handleBulkDelete = async () => {
+    if (selectedCompanies.size === 0) {
+      setToast({ message: 'Please select companies to delete', type: 'error' });
+      return;
+    }
+    
+    if (!window.confirm(`Delete ${selectedCompanies.size} selected companies?`)) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      let deletedCount = 0;
+      for (const id of selectedCompanies) {
+        try {
+          const res = await fetch(`/api/mapping/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) deletedCount++;
+        } catch (err) {
+          console.error(`Failed to delete ${id}:`, err);
+        }
+      }
+      
+      setMappings(mappings.filter(m => !selectedCompanies.has(m._id)));
+      setSelectedCompanies(new Set());
+      setToast({ message: `${deletedCount} companies deleted successfully!`, type: 'success' });
+    } catch (err) {
+      console.error('Bulk delete error:', err);
+      setToast({ message: 'Bulk delete failed: ' + err.message, type: 'error' });
+    }
+  };
+
+  // Filter mappings
+  const filteredMappings = mappings.filter(m =>
+    m.companyName.toLowerCase().includes(search.toLowerCase())
   );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, sortBy]);
 
   if (loading) return <div style={styles.loading}><div style={styles.spinner} /></div>;
 
   return (
-    <div style={styles.container} className="main-container">
+    <div style={styles.container}>
       <style>{`
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-          -webkit-appearance: none; 
-          margin: 0; 
-        }
-
-        .table-scroll {
-          overflow-x: auto;
-          border-radius: 24px;
-          background: #1e293b;
-          border: 1px solid #334155;
-          -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-        }
-
-        /* Custom Scrollbar for better visibility */
-        .table-scroll::-webkit-scrollbar {
-          height: 8px;
-        }
-        .table-scroll::-webkit-scrollbar-track {
-          background: #0f172a;
-          border-radius: 0 0 24px 24px;
-        }
-        .table-scroll::-webkit-scrollbar-thumb {
-          background: #334155;
-          border-radius: 10px;
-        }
-        .table-scroll::-webkit-scrollbar-thumb:hover {
-          background: #3b82f6;
-        }
-
-        .responsive-table {
-          min-width: 1400px; /* Slightly increased to ensure all columns fit well */
-        }
-
-        .mapping-row:hover {
-          background: #1e293b !important;
-        }
-        
-        @media (max-width: 1024px) {
-          /* No longer needed here as it is always active */
-        }
-
-        @media (max-width: 768px) {
-          .main-container {
-            padding: 20px !important;
-          }
-          .hero-section {
-            flex-direction: column;
-            align-items: flex-start !important;
-            gap: 20px;
-          }
-          .toolbar-section {
-            flex-direction: column;
-            align-items: stretch !important;
-          }
-          .search-box {
-            max-width: none !important;
-          }
-          .modal-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .mobile-scroll-hint {
-            display: block !important;
-          }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .table-scroll { overflow-x: auto; overflow-y: visible; border-radius: 12px; background: #1e293b; border: 1px solid #334155; }
+        .table-scroll::-webkit-scrollbar { height: 8px; }
+        .table-scroll::-webkit-scrollbar-track { background: #0f172a; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .table-scroll::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
       `}</style>
-      <TopBar 
-        title="Mapping Intelligence" 
-        dark={true}
-        actions={user ? [
-          { label: '📤 Export Excel', onClick: handleExportExcel, style: { background: '#059669' } },
-          { label: '📥 Import Excel', onClick: () => fileInputRef.current?.click(), style: { background: '#1e293b', border: '1px solid #334155' } },
-          { label: '+ New Registration', onClick: () => { setEditingMapping(null); setShowModal(true); } }
-        ] : []}
-      />
 
-      <div style={{ display: 'none', background: '#3b82f6', color: 'white', padding: '8px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '12px', fontWeight: '700', textAlign: 'center' }} className="mobile-scroll-hint">
-        💡 Swipe table left/right to see all columns (Designed, Sent, etc.)
-      </div>
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleBulkUpload} 
-        accept=".xlsx, .xls, .csv" 
-        style={{ display: 'none' }} 
-      />
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      <TopBar />
 
-      <div style={styles.hero} className="hero-section">
-        <div style={styles.heroLeft}>
-          <h2 style={styles.title}>Company Mapping</h2>
-          <p style={styles.subtitle}>Strategic tracking for business onboarding and package delivery.</p>
-        </div>
-      </div>
-
-      <div style={styles.toolbar} className="toolbar-section">
-        <div style={styles.searchBox} className="search-box">
-          <span style={styles.searchIcon}>🔍</span>
-          <input type="text" placeholder="Search by name or industry..." value={search} onChange={e => setSearch(e.target.value)} style={styles.searchInput} />
+      <div style={styles.header}>
+        <div style={styles.titleSection}>
+          <h1 style={styles.title}>📍 Company Mapping</h1>
+          <p style={styles.subtitle}>Track card production and delivery status</p>
         </div>
 
-        <div style={styles.sortBox}>
-          <span style={styles.sortLabel}>Sort View</span>
-          <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={styles.sortSelect}>
-            <option value="dateModified">Recently Updated</option>
-            <option value="name">Company A-Z</option>
-            <option value="type">Industry Type</option>
-            <option value="year">Upload Year</option>
-            <option value="month">Upload Month</option>
-          </select>
+        <div style={styles.toolbar}>
+          <input
+            type="text"
+            placeholder="🔍 Search companies..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={styles.searchInput}
+          />
+
+          {selectedCompanies.size > 0 && (
+            <button onClick={handleBulkDelete} style={{ ...styles.btn, background: '#dc2626', color: 'white' }}>
+              🗑️ Delete {selectedCompanies.size}
+            </button>
+          )}
+
+          <button
+            onClick={() => setIsEditMode(!isEditMode)}
+            style={{
+              ...styles.btn,
+              background: isEditMode ? '#ef4444' : '#3b82f6',
+              color: 'white'
+            }}
+          >
+            {isEditMode ? '✓ Editing' : '✏️ Edit Mode'}
+          </button>
+
+          <button onClick={() => setShowStaffModal(true)} style={{ ...styles.btn, background: '#8b5cf6', color: 'white' }}>
+            👥 Manage Staff
+          </button>
+
+          <button onClick={handleDownloadTemplate} style={{ ...styles.btn, background: '#06b6d4', color: 'white' }}>
+            📋 Template
+          </button>
+
+          <button onClick={handleExportExcel} style={{ ...styles.btn, background: '#10b981', color: 'white' }}>
+            📊 Export
+          </button>
+
+          <label style={{ ...styles.btn, background: '#f59e0b', color: 'white', cursor: 'pointer', margin: 0 }}>
+            📤 Import
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleBulkUpload} style={{ display: 'none' }} />
+          </label>
         </div>
       </div>
 
       <div style={styles.tableWrapper} className="table-scroll">
-        <div className="responsive-table">
-          <div style={styles.tableHeader}>
-            <div style={{ ...styles.col, flex: 2 }}>Company Details</div>
-            <div style={{ ...styles.col, flex: 1 }}>Card Type</div>
-            <div style={{ ...styles.col, flex: 1, textAlign: 'center' }}>Quantity</div>
-            <div style={{ ...styles.col, textAlign: 'center' }}>Designed</div>
-            <div style={{ ...styles.col, textAlign: 'center' }}>Sent</div>
-            <div style={{ ...styles.col, textAlign: 'center' }}>Received</div>
-            <div style={{ ...styles.col, flex: 1.2 }}>Client Feedback</div>
-            <div style={{ ...styles.col, flex: 1.8 }}>Responsible</div>
-            {user?.role === 'admin' && <div style={{ ...styles.col, flex: 0.5, textAlign: 'right' }}>Actions</div>}
-          </div>
-
-          {paginatedMappings.map(m => (
-            <div key={m._id} style={styles.row} className="mapping-row">
-              {/* Company Info */}
-              <div style={{ ...styles.col, flex: 2, display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={styles.rowAvatar}>{m.companyName[0]}</div>
-                <div>
-                  <div style={styles.rowName}>{m.companyName}</div>
-                  <div style={styles.rowMeta}>{m.companyType || 'N/A'} • {new Date(m.fullDateUploaded || m.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                </div>
-              </div>
-
-              {/* Card Type Dropdown */}
-              <div style={{ ...styles.col, flex: 1 }}>
-                <select 
-                  value={m.cardType || ''} 
-                  onChange={e => handleUpdateStatus(m._id, { cardType: e.target.value })}
-                  style={{ ...styles.rowSelect, width: '100%' }}
-                >
-                  <option value="">Select Type</option>
-                  <option value="NFC & QR CODE">NFC & QR CODE</option>
-                  <option value="QR CODE">QR CODE</option>
-                  <option value="BOTH">BOTH</option>
-                </select>
-              </div>
-
-              {/* Cards Produced Counter */}
-              <div style={{ ...styles.col, flex: 1 }}>
-                <NumericStepper 
-                  value={m.cardsProduced} 
-                  onChange={(val) => {
-                    // Optimistic UI update
-                    setMappings(prev => prev.map(mapping => 
-                      mapping._id === m._id ? { ...mapping, cardsProduced: val } : mapping
-                    ));
-                  }}
-                  onFinalSync={(val) => {
-                    handleUpdateStatus(m._id, { cardsProduced: val });
-                  }}
+        <table style={styles.table}>
+          <thead>
+            <tr style={styles.headerRow}>
+              <th style={{ ...styles.th, width: '40px', minWidth: '40px', maxWidth: '40px' }}>
+                <input
+                  type="checkbox"
+                  checked={selectedCompanies.size === filteredMappings.length && filteredMappings.length > 0}
+                  onChange={toggleSelectAll}
+                  style={{ cursor: 'pointer', width: '18px', height: '18px' }}
                 />
-              </div>
-
-              {/* Checkboxes */}
-              <div style={{ ...styles.col, textAlign: 'center' }}>
-                {canSeeInteraction(m.isDesigned, m.isDesignedById) ? (
-                  <label style={styles.checkLabel}>
-                    <input 
-                      type="checkbox" 
-                      checked={m.isDesigned} 
-                      onChange={e => handleUpdateStatus(m._id, { isDesigned: e.target.checked })} 
-                      style={styles.checkbox}
+              </th>
+              <th style={styles.th}>Company</th>
+              <th style={styles.th}>ID Card Types & Qty</th>
+              <th style={styles.th}>Total ID Qty</th>
+              <th style={styles.th}>Business Card Types & Qty</th>
+              <th style={styles.th}>Total Biz Qty</th>
+              <th style={styles.th}>Card Holder Type</th>
+              <th style={styles.th}>Holder Qty</th>
+              <th style={styles.th}>Lanyard</th>
+              <th style={styles.th}>Date Sent</th>
+              <th style={styles.th}>Delivered</th>
+              <th style={styles.th}>Reached Out</th>
+              <th style={styles.th}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMappings.map(mapping => {
+              let cardTypes = [];
+              let businessCardTypes = [];
+              
+              try {
+                cardTypes = mapping.cardType ? JSON.parse(mapping.cardType) : [];
+              } catch (e) {
+                // Handle old format (string like "BOTH")
+                cardTypes = mapping.cardType ? [{ type: mapping.cardType, quantity: mapping.cardsProduced || 0 }] : [];
+              }
+              
+              try {
+                businessCardTypes = mapping.businessCardType ? JSON.parse(mapping.businessCardType) : [];
+              } catch (e) {
+                // Handle old format
+                businessCardTypes = mapping.businessCardType ? [{ type: mapping.businessCardType, quantity: mapping.businessCardNo || 0 }] : [];
+              }
+              
+              return (
+                <tr key={mapping._id} style={styles.row}>
+                  <td style={{ ...styles.td, width: '40px', minWidth: '40px', maxWidth: '40px', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCompanies.has(mapping._id)}
+                      onChange={() => toggleSelection(mapping._id)}
+                      style={{ cursor: 'pointer', width: '18px', height: '18px' }}
                     />
-                    <span style={{ color: m.isDesigned ? '#10b981' : '#94a3b8', fontSize: '10px', fontWeight: '800' }}>{m.isDesigned ? 'DONE' : 'PENDING'}</span>
-                  </label>
-                ) : (
-                  <div style={styles.staticStatus}>
-                    <span style={{ fontSize: '16px' }}>✅</span>
-                    <span style={{ color: '#10b981', fontSize: '10px', fontWeight: '800' }}>DONE</span>
-                  </div>
-                )}
-                {m.isDesigned && (
-                  <div style={styles.trackInfo}>
-                    <div>{m.isDesignedBy || 'SYSTEM'}</div>
-                    <div>{m.isDesignedAt ? new Date(m.isDesignedAt).toLocaleDateString('en-GB') : 'EXISTING'}</div>
-                  </div>
-                )}
-              </div>
-              <div style={{ ...styles.col, textAlign: 'center' }}>
-                {canSeeInteraction(m.isPackageSent, m.isPackageSentById) ? (
-                  <label style={styles.checkLabel}>
-                    <input 
-                      type="checkbox" 
-                      checked={m.isPackageSent} 
-                      onChange={e => handleUpdateStatus(m._id, { isPackageSent: e.target.checked })} 
-                      style={styles.checkbox}
-                    />
-                    <span style={{ color: m.isPackageSent ? '#10b981' : '#94a3b8', fontSize: '10px', fontWeight: '800' }}>{m.isPackageSent ? 'SENT' : 'WAITING'}</span>
-                  </label>
-                ) : (
-                  <div style={styles.staticStatus}>
-                    <span style={{ fontSize: '16px' }}>📩</span>
-                    <span style={{ color: '#10b981', fontSize: '10px', fontWeight: '800' }}>SENT</span>
-                  </div>
-                )}
-                {m.isPackageSent && (
-                  <div style={styles.trackInfo}>
-                    <div>{m.isPackageSentBy || 'SYSTEM'}</div>
-                    <div>{m.isPackageSentAt ? new Date(m.isPackageSentAt).toLocaleDateString('en-GB') : 'EXISTING'}</div>
-                  </div>
-                )}
-              </div>
-              <div style={{ ...styles.col, textAlign: 'center' }}>
-                {canSeeInteraction(m.isPackageReceived, m.isPackageReceivedById) ? (
-                  <label style={styles.checkLabel}>
-                    <input 
-                      type="checkbox" 
-                      checked={m.isPackageReceived} 
-                      onChange={e => handleUpdateStatus(m._id, { isPackageReceived: e.target.checked })} 
-                      style={styles.checkbox}
-                    />
-                    <span style={{ color: m.isPackageReceived ? '#10b981' : '#94a3b8', fontSize: '10px', fontWeight: '800' }}>{m.isPackageReceived ? 'RECVD' : 'OPEN'}</span>
-                  </label>
-                ) : (
-                  <div style={styles.staticStatus}>
-                    <span style={{ fontSize: '16px' }}>📦</span>
-                    <span style={{ color: '#10b981', fontSize: '10px', fontWeight: '800' }}>RECVD</span>
-                  </div>
-                )}
-                {m.isPackageReceived && (
-                  <div style={styles.trackInfo}>
-                    <div>{m.isPackageReceivedBy || 'SYSTEM'}</div>
-                    <div>{m.isPackageReceivedAt ? new Date(m.isPackageReceivedAt).toLocaleDateString('en-GB') : 'EXISTING'}</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Comment */}
-              <div style={{ ...styles.col, flex: 1.2, position: 'relative' }}>
-                <textarea 
-                  value={localComments[m._id] !== undefined ? localComments[m._id] : m.clientComment} 
-                  onChange={e => handleLocalCommentChange(m._id, e.target.value)}
-                  onBlur={() => saveComment(m._id)}
-                  placeholder="Add internal notes..."
-                  style={styles.rowTextarea}
-                />
-                {localComments[m._id] !== undefined && (
-                  <div style={styles.unsavedBadge}>Unsaved</div>
-                )}
-              </div>
-
-              {/* Staff */}
-              <div style={{ ...styles.col, flex: 1.8, display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {m.assignedStaff?.length > 0 ? m.assignedStaff.map(s => (
-                  <div key={s._id} style={styles.staffTag} title={s.email}>{s.name}</div>
-                )) : <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '12px' }}>Unassigned</span>}
-              </div>
-
-              {/* Actions */}
-              {user?.role === 'admin' && (
-                <div style={{ ...styles.col, flex: 0.5, display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <button onClick={() => { setEditingMapping(m); setShowModal(true); }} style={styles.actionBtn}>✏️</button>
-                  <button onClick={() => handleDelete(m._id)} style={{ ...styles.actionBtn, color: '#ef4444' }}>🗑️</button>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {paginatedMappings.length === 0 && (
-            <div style={styles.emptyState}>
-              <div style={{ fontSize: '32px' }}>📂</div>
-              <div style={{ marginTop: '12px', fontWeight: '600' }}>No companies found</div>
-            </div>
-          )}
-        </div>
+                  </td>
+                  <td style={styles.td}>{mapping.companyName}</td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        key={`ct-${mapping._id}`}
+                        defaultValue={cardTypes.map(ct => `${ct.type}:${ct.quantity}`).join(', ')}
+                        onBlur={e => {
+                          const types = e.target.value.split(',').map(t => {
+                            const [type, qty] = t.trim().split(':');
+                            return { type: type.trim(), quantity: parseInt(qty) || 1 };
+                          }).filter(t => t.type);
+                          handleUpdateField(mapping._id, 'cardType', JSON.stringify(types));
+                        }}
+                        placeholder="e.g. Classic Lustre:100, Egg Shell:50"
+                        style={styles.input}
+                      />
+                    ) : (
+                      cardTypes.map(ct => `${ct.type}: ${ct.quantity}`).join(', ') || 'N/A'
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <span style={{ color: '#94a3b8', fontSize: '11px' }}>See Type column</span>
+                    ) : (
+                      cardTypes.reduce((sum, ct) => sum + (ct.quantity || 0), 0)
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        key={`bct-${mapping._id}`}
+                        defaultValue={businessCardTypes.map(bct => `${bct.type}:${bct.quantity}`).join(', ')}
+                        onBlur={e => {
+                          const types = e.target.value.split(',').map(t => {
+                            const [type, qty] = t.trim().split(':');
+                            return { type: type.trim(), quantity: parseInt(qty) || 1 };
+                          }).filter(t => t.type);
+                          handleUpdateField(mapping._id, 'businessCardType', JSON.stringify(types));
+                        }}
+                        placeholder="e.g. Classic Lustre:100, Egg Shell:50"
+                        style={styles.input}
+                      />
+                    ) : (
+                      businessCardTypes.map(bct => `${bct.type}: ${bct.quantity}`).join(', ') || 'N/A'
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <span style={{ color: '#94a3b8', fontSize: '11px' }}>See Type column</span>
+                    ) : (
+                      businessCardTypes.reduce((sum, bct) => sum + (bct.quantity || 0), 0)
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        defaultValue={mapping.cardHolderType || ''}
+                        onBlur={e => handleUpdateField(mapping._id, 'cardHolderType', e.target.value)}
+                        placeholder="e.g. Silver Cut-out"
+                        style={styles.input}
+                      />
+                    ) : (
+                      mapping.cardHolderType || 'N/A'
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <input
+                        type="number"
+                        defaultValue={mapping.cardHolderNumber || 0}
+                        onBlur={e => handleUpdateField(mapping._id, 'cardHolderNumber', parseInt(e.target.value) || 0)}
+                        style={styles.input}
+                      />
+                    ) : (
+                      mapping.cardHolderNumber || 0
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        defaultValue={mapping.lanyard || ''}
+                        onBlur={e => handleUpdateField(mapping._id, 'lanyard', e.target.value)}
+                        placeholder="e.g. Red Lanyard"
+                        style={styles.input}
+                      />
+                    ) : (
+                      mapping.lanyard || 'N/A'
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <input
+                        type="date"
+                        defaultValue={mapping.dateSent ? new Date(mapping.dateSent).toISOString().split('T')[0] : ''}
+                        onBlur={e => handleUpdateField(mapping._id, 'dateSent', e.target.value ? new Date(e.target.value) : null)}
+                        style={styles.input}
+                      />
+                    ) : (
+                      mapping.dateSent ? new Date(mapping.dateSent).toLocaleDateString() : 'N/A'
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <select
+                        defaultValue={mapping.delivered ? 'Yes' : 'No'}
+                        onChange={e => handleUpdateField(mapping._id, 'delivered', e.target.value === 'Yes')}
+                        style={styles.input}
+                      >
+                        <option>Yes</option>
+                        <option>No</option>
+                      </select>
+                    ) : (
+                      mapping.delivered ? 'Yes' : 'No'
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        defaultValue={mapping.reachedOut || ''}
+                        onBlur={e => handleUpdateField(mapping._id, 'reachedOut', e.target.value)}
+                        placeholder="e.g. Yes, Invoice sent"
+                        style={styles.input}
+                      />
+                    ) : (
+                      mapping.reachedOut || 'N/A'
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    <button onClick={() => handleDelete(mapping._id)} style={{ ...styles.btn, background: '#ef4444', color: 'white', padding: '6px 12px', fontSize: '12px' }}>
+                      🗑️ Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
-      {/* Pagination UI */}
-      {totalPages > 1 && (
-        <div style={styles.pagination}>
-          <button 
-            disabled={currentPage === 1} 
-            onClick={() => setCurrentPage(prev => prev - 1)}
-            style={{ ...styles.pageBtn, opacity: currentPage === 1 ? 0.5 : 1 }}
-          >
-            Previous
-          </button>
-          <div style={styles.pageInfo}>
-            Page <span style={{ color: '#3b82f6' }}>{currentPage}</span> of {totalPages}
-          </div>
-          <button 
-            disabled={currentPage === totalPages} 
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            style={{ ...styles.pageBtn, opacity: currentPage === totalPages ? 0.5 : 1 }}
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {showModal && (
-        <MappingModal 
-          onClose={() => setShowModal(false)} 
-          onSubmit={handleCreateOrUpdate} 
-          initialData={editingMapping}
-          staffList={staffList}
-          userRole={user?.role}
-        />
-      )}
+      {showStaffModal && <StaffAssignmentModal onClose={() => setShowStaffModal(false)} onSubmit={handleStaffAssignment} staffList={staffList} />}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 };
 
+export default Mapping;
+
 const styles = {
-  container: { padding: '40px', maxWidth: '1500px', margin: '0 auto', fontFamily: "'Inter', sans-serif", minHeight: '100vh', background: '#0f172a', color: '#f8fafc' },
-  hero: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  title: { fontSize: '32px', fontWeight: '900', color: '#f8fafc', margin: 0, letterSpacing: '-0.02em' },
-  subtitle: { fontSize: '16px', color: '#94a3b8', margin: '8px 0 0 0' },
-  addBtn: { background: '#3b82f6', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', transition: '0.2s', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', flexShrink: 0 },
-  toolbar: { display: 'flex', gap: '24px', marginBottom: '32px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' },
-  searchBox: { position: 'relative', flex: '1 1 250px', maxWidth: '400px' },
-  searchIcon: { position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' },
-  searchInput: { width: '100%', padding: '14px 14px 14px 48px', borderRadius: '12px', border: '1px solid #334155', background: '#1e293b', color: 'white', outline: 'none', fontSize: '15px' },
-  sortBox: { display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 },
-  sortLabel: { fontSize: '13px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' },
-  sortSelect: { padding: '12px 16px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', color: 'white', outline: 'none', fontWeight: '600', cursor: 'pointer' },
-  
-  tableWrapper: { background: '#1e293b', borderRadius: '24px', border: '1px solid #334155', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)' },
-  tableHeader: { display: 'flex', padding: '20px 24px', background: '#0f172a', borderBottom: '1px solid #334155', fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  row: { display: 'flex', padding: '20px 24px', borderBottom: '1px solid #334155', alignItems: 'center', transition: 'background 0.2s' },
-  col: { flex: 1, padding: '0 8px', minWidth: 0 },
-  rowAvatar: { width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '800', flexShrink: 0 },
-  rowName: { fontSize: '16px', fontWeight: '700', color: '#f8fafc' },
-  rowMeta: { fontSize: '12px', color: '#94a3b8', marginTop: '2px' },
-  checkLabel: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' },
-  staticStatus: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' },
-  trackInfo: { fontSize: '9px', color: '#64748b', textAlign: 'center', marginTop: '4px', fontWeight: '600', textTransform: 'uppercase', lineHeight: '1.2' },
-  checkbox: { width: '20px', height: '20px', cursor: 'pointer', accentColor: '#3b82f6' },
-  rowTextarea: { width: '100%', minHeight: '60px', padding: '10px', borderRadius: '10px', border: '1px solid #334155', background: '#0f172a', color: '#cbd5e1', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' },
-  rowSelect: { background: '#0f172a', color: '#cbd5e1', border: '1px solid #334155', borderRadius: '8px', padding: '4px 6px', fontSize: '10px', fontWeight: '600', outline: 'none', cursor: 'pointer' },
-  rowStepper: { display: 'flex', alignItems: 'center', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', overflow: 'hidden', height: '28px' },
-  rowStepBtn: { background: '#334155', border: 'none', color: 'white', padding: '0 8px', cursor: 'pointer', fontSize: '10px', fontWeight: '800', transition: '0.2s', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', ':hover': { background: '#475569' } },
-  rowStepVal: { flex: 1, textAlign: 'center', fontSize: '11px', fontWeight: '800', color: '#3b82f6', minWidth: '25px' },
-  unsavedBadge: { position: 'absolute', top: '4px', right: '16px', background: '#f59e0b', color: 'white', fontSize: '8px', padding: '2px 6px', borderRadius: '4px', fontWeight: '800', textTransform: 'uppercase' },
-  staffTag: { background: '#334155', color: '#cbd5e1', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', border: '1px solid #475569' },
-  actionBtn: { background: 'transparent', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', color: '#94a3b8', transition: '0.2s', ':hover': { background: '#334155' } },
-  emptyState: { padding: '60px', textAlign: 'center', color: '#64748b' },
-  loading: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0f172a' },
-  spinner: { width: '40px', height: '40px', border: '4px solid #334155', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' },
-  
-  pagination: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '32px', padding: '20px 0' },
-  pageBtn: { padding: '10px 20px', borderRadius: '10px', background: '#1e293b', color: 'white', border: '1px solid #334155', fontWeight: '700', cursor: 'pointer', fontSize: '14px', transition: '0.2s' },
-  pageInfo: { fontSize: '14px', fontWeight: '700', color: '#94a3b8' }
+  container: {
+    background: '#0f172a',
+    minHeight: '100vh',
+    padding: '24px',
+    color: '#f8fafc'
+  },
+  loading: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    background: '#0f172a'
+  },
+  spinner: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid #334155',
+    borderTop: '4px solid #3b82f6',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  header: {
+    marginBottom: '32px'
+  },
+  titleSection: {
+    marginBottom: '24px'
+  },
+  title: {
+    fontSize: '32px',
+    fontWeight: '700',
+    margin: '0 0 8px 0',
+    color: '#f8fafc'
+  },
+  subtitle: {
+    fontSize: '14px',
+    color: '#94a3b8',
+    margin: 0
+  },
+  toolbar: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap',
+    alignItems: 'center'
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: '200px',
+    padding: '10px 16px',
+    borderRadius: '8px',
+    border: '1px solid #334155',
+    background: '#1e293b',
+    color: '#f8fafc',
+    fontSize: '14px',
+    outline: 'none'
+  },
+  btn: {
+    padding: '10px 16px',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    transition: '0.2s',
+    whiteSpace: 'nowrap'
+  },
+  tableWrapper: {
+    width: '100%',
+    overflowX: 'auto',
+    borderRadius: '12px',
+    border: '1px solid #334155',
+    background: '#1e293b'
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    minWidth: '2000px'
+  },
+  headerRow: {
+    background: '#0f172a',
+    borderBottom: '2px solid #334155'
+  },
+  th: {
+    padding: '14px 8px',
+    textAlign: 'left',
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#cbd5e1',
+    whiteSpace: 'nowrap',
+    borderRight: '1px solid #334155',
+    minWidth: '120px',
+    maxWidth: '180px'
+  },
+  row: {
+    borderBottom: '1px solid #334155',
+    transition: '0.2s'
+  },
+  td: {
+    padding: '12px 8px',
+    fontSize: '12px',
+    color: '#cbd5e1',
+    borderRight: '1px solid #334155',
+    minWidth: '120px',
+    maxWidth: '180px'
+  },
+  input: {
+    width: '100%',
+    padding: '8px 6px',
+    borderRadius: '6px',
+    border: '1px solid #334155',
+    background: '#0f172a',
+    color: '#f8fafc',
+    fontSize: '12px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    fontFamily: 'inherit'
+  }
 };
 
 const mStyles = {
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)', padding: '20px' },
-  modal: { background: 'rgba(30, 41, 59, 0.98)', backdropFilter: 'blur(10px)', padding: '32px', borderRadius: '24px', width: '580px', maxWidth: '95%', border: '1px solid rgba(255, 255, 255, 0.15)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
-  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', position: 'sticky', top: 0, background: 'rgba(30, 41, 59, 0.98)', backdropFilter: 'blur(10px)', zIndex: 10, marginTop: '-32px', paddingTop: '32px', paddingBottom: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' },
-  modalTitle: { margin: 0, fontSize: '24px', fontWeight: '900', color: '#f8fafc', letterSpacing: '-0.5px' },
-  modalClose: { background: 'rgba(255, 255, 255, 0.1)', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#cbd5e1', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease', fontSize: '18px', fontWeight: '700' },
-  field: { marginBottom: '24px' },
-  label: { display: 'block', fontSize: '12px', fontWeight: '800', color: '#e2e8f0', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.08em', textShadow: '0 1px 2px rgba(0,0,0,0.2)' },
-  input: { width: '100%', padding: '14px 16px', borderRadius: '12px', border: '1.5px solid rgba(255, 255, 255, 0.25)', background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)', color: '#f8fafc', outline: 'none', fontSize: '15px', fontWeight: '500', transition: 'all 0.2s ease', boxSizing: 'border-box' },
-  staffList: { maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '12px', background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', gap: '8px' },
-  staffItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '10px', border: '1px solid', cursor: 'pointer', transition: '0.2s' },
-  modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '32px', position: 'sticky', bottom: 0, background: 'rgba(30, 41, 59, 0.98)', backdropFilter: 'blur(10px)', zIndex: 10, marginBottom: '-32px', paddingBottom: '32px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '24px' },
-  cancelBtn: { padding: '12px 28px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.15)', background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1', fontWeight: '700', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease', fontSize: '14px' },
-  submitBtn: { padding: '12px 32px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.4)', transition: 'all 0.2s ease', fontSize: '14px' }
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    backdropFilter: 'blur(4px)'
+  },
+  modal: {
+    background: '#1e293b',
+    borderRadius: '16px',
+    border: '1px solid #334155',
+    padding: '32px',
+    maxWidth: '500px',
+    width: '90%',
+    maxHeight: '80vh',
+    overflowY: 'auto',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '24px'
+  },
+  modalTitle: {
+    fontSize: '20px',
+    fontWeight: '700',
+    margin: 0,
+    color: '#f8fafc'
+  },
+  modalClose: {
+    background: 'transparent',
+    border: 'none',
+    color: '#94a3b8',
+    fontSize: '24px',
+    cursor: 'pointer',
+    padding: 0,
+    transition: '0.2s'
+  },
+  field: {
+    marginBottom: '20px'
+  },
+  label: {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#cbd5e1',
+    marginBottom: '8px'
+  },
+  staffList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    maxHeight: '300px',
+    overflowY: 'auto'
+  },
+  staffItem: {
+    display: 'flex',
+    gap: '12px',
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #334155',
+    background: '#334155',
+    cursor: 'pointer',
+    transition: '0.2s',
+    alignItems: 'center'
+  },
+  modalFooter: {
+    display: 'flex',
+    gap: '12px',
+    justifyContent: 'flex-end',
+    marginTop: '24px'
+  },
+  cancelBtn: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: '1px solid #334155',
+    background: 'transparent',
+    color: '#cbd5e1',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    transition: '0.2s'
+  },
+  submitBtn: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: 'none',
+    background: '#3b82f6',
+    color: 'white',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    transition: '0.2s'
+  }
 };
-
-export default Mapping;

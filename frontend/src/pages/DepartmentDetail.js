@@ -148,7 +148,15 @@ export default function DepartmentDetail() {
                   <div key={member._id} style={S.staffCard}
                     onClick={() => navigate(`/admin/staff/${member._id}`)}
                   >
-                    <div style={{ ...S.staffAvatar, background: c }}>{getInitials(member.name)}</div>
+                    {member.profilePicture && member.profilePicture.trim() ? (
+                      <img 
+                        src={`${member.profilePicture}?t=${Date.now()}`} 
+                        alt={member.name} 
+                        style={{ ...S.staffAvatar, objectFit: 'cover', border: `2px solid ${c}` }} 
+                      />
+                    ) : (
+                      <div style={{ ...S.staffAvatar, background: c }}>{getInitials(member.name)}</div>
+                    )}
                     <div style={S.staffName}>{member.name}</div>
                     <div style={S.staffEmail}>{member.email}</div>
                     <div style={S.staffMeta}>

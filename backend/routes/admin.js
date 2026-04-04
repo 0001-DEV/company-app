@@ -427,44 +427,9 @@ router.put('/edit-staff/:id', uploadImage.single('profilePicture'), async (req, 
 // 📋 Get fixed list of departments for dropdown
 router.get('/fixed-departments', async (req, res) => {
   try {
-    const departmentNames = [
-      "ICT Department",
-      "Design Department",
-      "Production Department",
-      "Marketing Department",
-      "Human Resources",
-      "Finance Department",
-      "Sales Department",
-      "Customer Service",
-      "Operations Department",
-      "Research & Development",
-      "Quality Assurance",
-      "Legal Department",
-      "Administration",
-      "Logistics Department"
-    ];
-
-    console.log("Creating/fetching departments...");
-    
-    // Get all existing departments
-    let departments = await Department.find();
-    console.log("Existing departments:", departments.length);
-    
-    // If we have fewer than expected, create missing ones
-    if (departments.length < departmentNames.length) {
-      for (let name of departmentNames) {
-        let dept = await Department.findOne({ name });
-        if (!dept) {
-          dept = new Department({ name });
-          await dept.save();
-          console.log("Created department:", name);
-        }
-      }
-      // Fetch all again
-      departments = await Department.find();
-    }
-
-    console.log("Returning departments:", departments.length);
+    // This endpoint is deprecated - use /api/admin/departments instead
+    // Simply return all existing departments without recreating deleted ones
+    const departments = await Department.find();
     res.json(departments);
   } catch (err) {
     console.error("Error in fixed-departments:", err);

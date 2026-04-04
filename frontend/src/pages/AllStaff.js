@@ -28,6 +28,7 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
   );
   const [profilePicture, setProfilePicture] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(initialData?.profilePicture || '');
+  const [showPictureModal, setShowPictureModal] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -38,8 +39,10 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
   };
 
   const handleRemovePicture = () => {
-    setProfilePicture(null);
-    setPreviewUrl('');
+    if (window.confirm('Are you sure you want to delete this profile picture?')) {
+      setProfilePicture(null);
+      setPreviewUrl('');
+    }
   };
 
   const handleSubmit = (e) => {
@@ -63,8 +66,24 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
   };
 
   return (
-    <div style={mStyles.overlay}>
-      <form onSubmit={handleSubmit} style={mStyles.modal}>
+    <>
+      {/* Picture View Modal */}
+      {showPictureModal && previewUrl && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <img src={previewUrl} alt={name} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '12px' }} />
+            <button 
+              onClick={() => setShowPictureModal(false)}
+              style={{ position: 'absolute', top: '10px', right: '10px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', fontSize: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={mStyles.overlay}>
+        <form onSubmit={handleSubmit} style={mStyles.modal}>
         <div style={mStyles.modalHeader}>
           <h2 style={mStyles.modalTitle}>
             {viewOnly ? '👤 Staff Details' : (initialData ? '✏️ Edit Staff' : '➕ Add New Staff')}
@@ -78,7 +97,9 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
               <img 
                 src={previewUrl.startsWith('blob:') ? previewUrl : previewUrl} 
                 alt="Profile Preview" 
-                style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #3b82f6' }} 
+                onClick={() => setShowPictureModal(true)}
+                style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #3b82f6', cursor: 'pointer' }} 
+                title="Click to view full picture"
               />
             ) : (
               <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', border: '3px solid #e5e7eb' }}>
@@ -167,7 +188,8 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
           <button type="button" onClick={onClose} style={mStyles.cancelBtn}>Close</button>
         </div>
       </form>
-    </div>
+        </div>
+    </>
   );
 };
 
@@ -224,7 +246,7 @@ function AllStaff() {
   const refreshDepartments = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/admin/fixed-departments', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/admin/departments', { headers: { Authorization: `Bearer ${token}` } });
       setDepartments(await res.json());
     } catch (err) { console.error(err); }
   };
@@ -342,6 +364,52 @@ function AllStaff() {
     }
   };
 
+  const downloadExcelTemplate = () => {
+    try {
+      const templateData = [
+        {
+          'Name': 'John Doe',
+          'Email': 'john@example.com',
+          'Phone': '+234 123 456 7890',
+          'Password': '123456',
+          'Department': 'ICT Department',
+          'Birthday': '1990-01-15',
+          'Picture': '(Leave blank - upload via UI)'
+        },
+        {
+          'Name': 'Jane Smith',
+          'Email': 'jane@example.com',
+          'Phone': '+234 987 654 3210',
+          'Password': '123456',
+          'Department': 'Design Department',
+          'Birthday': '1992-05-20',
+          'Picture': '(Leave blank - upload via UI)'
+        }
+      ];
+
+      const XLSX = require('xlsx');
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      
+      // Set column widths
+      worksheet['!cols'] = [
+        { wch: 20 },
+        { wch: 25 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 30 }
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
+      XLSX.writeFile(workbook, 'Staff_Import_Template.xlsx');
+      setToast({ message: 'Template downloaded! Fill it and upload. Pictures can be added via the Edit button after import.', type: 'success' });
+    } catch (err) {
+      setToast({ message: 'Failed to download template', type: 'error' });
+    }
+  };
+
   const avatarColors = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
 
   return (
@@ -353,13 +421,14 @@ function AllStaff() {
         subtitle={`${staff.length} total staff members`}
         backPath="/home"
         actions={[
-          { label: '➕ Add Staff', onClick: () => { setEditingData(null); setShowStaffModal(true); setViewOnly(false); } },
+          { label: '➕ Add Staff', onClick: () => { refreshDepartments(); setEditingData(null); setShowStaffModal(true); setViewOnly(false); } },
           { label: '🏢 Add Department', onClick: () => { setEditingDept(null); setShowDeptModal(true); }, style: { background: 'linear-gradient(135deg,#10b981,#059669)' } },
           {
             label: bulkUploading ? '⏳ Importing...' : '📥 Bulk Upload (CSV/Excel)',
             onClick: () => document.getElementById('bulk-upload-excel-input')?.click(),
             style: { background: 'linear-gradient(135deg,#f59e0b,#f97316)' },
           },
+          { label: '📋 Download Template', onClick: downloadExcelTemplate, style: { background: 'linear-gradient(135deg,#06b6d4,#0891b2)' } },
           { label: '📋 Departments', onClick: () => navigate('/department'), style: { background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' } }
         ]}
       />
@@ -409,8 +478,14 @@ function AllStaff() {
               return (
                 <div key={member._id} style={s.card}>
                   <div style={{ ...s.cardTop, background: `linear-gradient(135deg, ${color}22, ${color}11)`, borderTop: `4px solid ${color}` }}>
-                    {member.profilePicture ? (
-                      <img src={member.profilePicture} alt={member.name} style={{ ...s.avatar, objectFit: 'cover', border: `2px solid ${color}` }} />
+                    {member.profilePicture && member.profilePicture.trim() ? (
+                      <img 
+                        src={`${member.profilePicture}?t=${Date.now()}`} 
+                        alt={member.name} 
+                        onClick={() => { refreshDepartments(); setEditingData(member); setShowStaffModal(true); setViewOnly(true); }}
+                        style={{ ...s.avatar, objectFit: 'cover', border: `2px solid ${color}`, cursor: 'pointer' }} 
+                        title="Click to view profile"
+                      />
                     ) : (
                       <div style={{ ...s.avatar, background: color }}>{initials}</div>
                     )}
@@ -422,8 +497,8 @@ function AllStaff() {
                   <div style={s.cardBottom}>
                     <div style={s.jobCount}>📋 {member.assignedJobs?.length || 0} jobs</div>
                     <div style={s.cardActions}>
-                      <button style={s.viewBtn} onClick={() => { setEditingData(member); setShowStaffModal(true); setViewOnly(true); }}>👁</button>
-                      <button style={s.editBtn} onClick={() => { setEditingData(member); setShowStaffModal(true); setViewOnly(false); }}>✏️</button>
+                      <button style={s.viewBtn} onClick={() => { refreshDepartments(); setEditingData(member); setShowStaffModal(true); setViewOnly(true); }}>👁</button>
+                      <button style={s.editBtn} onClick={() => { refreshDepartments(); setEditingData(member); setShowStaffModal(true); setViewOnly(false); }}>✏️</button>
                       <button style={s.delBtn} onClick={() => handleDelete(member._id)}>🗑️</button>
                     </div>
                   </div>

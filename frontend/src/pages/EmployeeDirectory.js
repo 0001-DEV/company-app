@@ -93,7 +93,15 @@ export default function EmployeeDirectory() {
           <div style={s.grid}>
             {filtered.map(person => (
               <div key={person._id} style={s.card} onClick={() => setSelected(person)}>
-                <div style={{ ...s.avatar, background: colorFor(person.name) }}>{getInitials(person.name)}</div>
+                {person.profilePicture && person.profilePicture.trim() ? (
+                  <img 
+                    src={`${person.profilePicture}?t=${Date.now()}`} 
+                    alt={person.name} 
+                    style={{ ...s.avatar, objectFit: 'cover' }} 
+                  />
+                ) : (
+                  <div style={{ ...s.avatar, background: colorFor(person.name) }}>{getInitials(person.name)}</div>
+                )}
                 <div style={s.name}>{person.name}</div>
                 <div style={s.dept}>{person.department?.name || "—"}</div>
                 <div style={s.email}>{person.email}</div>
@@ -115,7 +123,15 @@ export default function EmployeeDirectory() {
         <div style={s.overlay} onClick={() => setSelected(null)}>
           <div style={s.modal} onClick={e => e.stopPropagation()}>
             <button style={s.closeBtn} onClick={() => setSelected(null)}>✕</button>
-            <div style={{ ...s.modalAvatar, background: colorFor(selected.name) }}>{getInitials(selected.name)}</div>
+            {selected.profilePicture && selected.profilePicture.trim() ? (
+              <img 
+                src={`${selected.profilePicture}?t=${Date.now()}`} 
+                alt={selected.name} 
+                style={{ ...s.modalAvatar, objectFit: 'cover' }} 
+              />
+            ) : (
+              <div style={{ ...s.modalAvatar, background: colorFor(selected.name) }}>{getInitials(selected.name)}</div>
+            )}
             <div style={s.modalName}>{selected.name}</div>
             <div style={s.modalDept}>{selected.department?.name || "No Department"}</div>
             <div style={s.modalDivider} />

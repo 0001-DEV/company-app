@@ -96,8 +96,8 @@ export default function OrgChart() {
                             return (
                               <div key={m._id} style={s.memberCard}>
                                 <div style={{ ...s.memberAvatar, background: color + "30", color }}>
-                                  {m.photo
-                                    ? <img src={`http://localhost:5000/${m.photo}`} alt={m.name} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                                  {m.profilePicture && m.profilePicture.trim()
+                                    ? <img src={`${m.profilePicture}?t=${Date.now()}`} alt={m.name} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                                     : initials}
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>

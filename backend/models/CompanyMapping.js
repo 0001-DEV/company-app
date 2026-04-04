@@ -15,8 +15,16 @@ const companyMappingSchema = new mongoose.Schema({
   isPackageReceivedAt: { type: Date },
   isPackageReceivedBy: { type: String },
   isPackageReceivedById: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  cardType: { type: String, enum: ['', 'NFC & QR CODE', 'QR CODE', 'BOTH'], default: '' },
+  cardType: { type: String, default: '' }, // JSON array: [{ type: 'Classic Lustre', quantity: 1 }]
   cardsProduced: { type: Number, default: 0 },
+  businessCardType: { type: String, default: '' }, // JSON array: [{ type: 'Classic Lustre', quantity: 1 }]
+  businessCardNo: { type: Number, default: 0 },
+  cardHolderType: { type: String, default: '' },
+  cardHolderNumber: { type: Number, default: 0 },
+  lanyard: { type: String, default: '' },
+  dateSent: { type: Date },
+  delivered: { type: Boolean, default: false },
+  reachedOut: { type: String, default: '' },
   clientComment: { type: String, default: '' },
   assignedStaff: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   yearUploaded: { type: Number, default: () => new Date().getFullYear() },

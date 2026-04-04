@@ -298,7 +298,7 @@ const ChatBox = () => {
     const fetchDepartments = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/admin/fixed-departments", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setDepartments(await res.json());
       } catch (err) { console.error(err); }
     };
@@ -827,7 +827,16 @@ const ChatBox = () => {
               {unreadCounts["all"] > 0 && <div style={S.badge}>{unreadCounts["all"]}</div>}
             </div>
           )}
-          <div style={S.sectionHeader} onClick={() => setDeptSectionOpen(v => !v)}>
+          <div style={S.sectionHeader} onClick={() => { 
+            if (!deptSectionOpen) {
+              const token = localStorage.getItem("token");
+              fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token}` } })
+                .then(res => res.ok && res.json())
+                .then(data => data && setDepartments(data))
+                .catch(err => console.error(err));
+            }
+            setDeptSectionOpen(v => !v);
+          }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#8696a0" }}>Departments</span>
           </div>
           {deptSectionOpen && filteredDepts.map(dept => (
