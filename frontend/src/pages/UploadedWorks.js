@@ -237,19 +237,6 @@ const UploadedWorks = () => {
     setLoading(false);
   };
 
-  const fetchFiles = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) { navigate('/admin-login'); return; }
-    try {
-      const res = await fetch('http://localhost:5000/api/admin/all-uploaded-files', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) setFiles(await res.json());
-      else if (res.status === 401 || res.status === 403) navigate('/admin-login');
-    } catch (err) { console.error(err); }
-    setLoading(false);
-  };
-
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
