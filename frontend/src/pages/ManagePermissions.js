@@ -75,9 +75,10 @@ const ManagePermissions = () => {
                 <div style={s.cardTop}>
                   {member.profilePicture && member.profilePicture.trim() ? (
                     <img 
-                      src={`${member.profilePicture}?t=${Date.now()}`} 
+                      src={`http://localhost:5000/uploads/${member.profilePicture}?t=${Date.now()}`} 
                       alt={member.name} 
                       style={{ ...s.avatar, objectFit: 'cover' }} 
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   ) : (
                     <div style={{ ...s.avatar, background: color }}>{initials}</div>
