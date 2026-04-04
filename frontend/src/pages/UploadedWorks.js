@@ -155,6 +155,7 @@ const UploadedWorks = () => {
   const [staffList, setStaffList] = useState([]);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [user, setUser] = useState(null);
+  const [hasWorkBankAccess, setHasWorkBankAccess] = useState(false);
   const filesPerPage = 20;
   const navigate = useNavigate();
 
@@ -187,6 +188,7 @@ const UploadedWorks = () => {
       
       // Admins always have access
       if (payload.role === 'admin') {
+        setHasWorkBankAccess(true);
         fetchFiles();
         return;
       }
@@ -199,6 +201,7 @@ const UploadedWorks = () => {
       if (res.ok) {
         const data = await res.json();
         if (data.hasAccess) {
+          setHasWorkBankAccess(true);
           fetchFiles();
         } else {
           showToast('You do not have access to the Work Bank page', 'error');
@@ -468,7 +471,7 @@ const UploadedWorks = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={S.statPill}>👥 {totalStaff} staff</div>
           <div style={S.statPill}>📎 {totalFiles} files</div>
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || hasWorkBankAccess) && (
             <button style={{ ...S.backBtn, background: '#8b5cf6', color: 'white' }} onClick={() => setShowStaffModal(true)}>👥 Manage Staff</button>
           )}
           <button style={S.backBtn} onClick={() => navigate('/home')}>← Dashboard</button>
