@@ -96,9 +96,15 @@ router.get('/all-current', verifyUser, async (req, res) => {
     const reports = await WeeklyReport.find({
       weekNumber,
       year
-    }).populate('userId', 'name email department').populate('userId.department', 'name');
+    }).populate('userId', 'name email department profilePicture').populate('userId.department', 'name');
 
-    res.json({ reports, weekNumber, year });
+    // Map userId to user for frontend compatibility
+    const formattedReports = reports.map(report => ({
+      ...report.toObject(),
+      user: report.userId
+    }));
+
+    res.json({ reports: formattedReports, weekNumber, year });
   } catch (err) {
     console.error('Error fetching all reports:', err);
     res.status(500).json({ message: 'Error fetching reports', error: err.message });

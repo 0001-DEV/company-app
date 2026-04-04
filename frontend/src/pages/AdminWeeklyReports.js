@@ -240,13 +240,30 @@ const AdminWeeklyReports = () => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
+                  {report.user?.profilePicture ? (
+                    <img 
+                      src={`http://localhost:5000${report.user.profilePicture}?t=${Date.now()}`}
+                      alt={report.user?.name}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid rgba(16, 185, 129, 0.3)'
+                      }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
                   <div style={{
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
                     background: 'rgba(16, 185, 129, 0.2)',
                     color: '#10b981',
-                    display: 'flex',
+                    display: report.user?.profilePicture ? 'none' : 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 'bold'
@@ -315,9 +332,27 @@ const AdminWeeklyReports = () => {
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-              <div>
-                <h2 style={{ margin: 0, color: '#fff', fontSize: '24px' }}>{selectedReport.user?.name}</h2>
-                <p style={{ margin: '8px 0 0 0', color: '#b0b0b0', fontSize: '14px' }}>{selectedReport.user?.department?.name}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                {selectedReport.user?.profilePicture ? (
+                  <img 
+                    src={`http://localhost:5000${selectedReport.user.profilePicture}?t=${Date.now()}`}
+                    alt={selectedReport.user?.name}
+                    style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid rgba(16, 185, 129, 0.3)'
+                    }}
+                    onError={(e) => {
+                      e.style.display = 'none';
+                    }}
+                  />
+                ) : null}
+                <div>
+                  <h2 style={{ margin: 0, color: '#fff', fontSize: '24px' }}>{selectedReport.user?.name}</h2>
+                  <p style={{ margin: '8px 0 0 0', color: '#b0b0b0', fontSize: '14px' }}>{selectedReport.user?.department?.name}</p>
+                </div>
               </div>
               <button
                 onClick={() => setShowModal(false)}
