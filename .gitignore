@@ -79,3 +79,6 @@ coverage/
 # Misc
 .cache/
 >>>>>>> 500de3921b8b68c26e46441c078fdc0e74f56b00
+
+.vercel
+.env*.local
