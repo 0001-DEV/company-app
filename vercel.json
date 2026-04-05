@@ -28,6 +28,10 @@
   ],
   "routes": [
     {
+      "src": "/api/test",
+      "dest": "api/test.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "backend/server.js"
     },
