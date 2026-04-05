@@ -13,9 +13,14 @@
     "SMTP_USER": "@smtp_user",
     "SMTP_PASS": "@smtp_pass"
   },
+  "functions": {
+    "api/test.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "api/test.js",
       "use": "@vercel/node"
     },
     {
@@ -29,7 +34,7 @@
   "routes": [
     {
       "src": "/api/test",
-      "dest": "api/test.js"
+      "dest": "/api/test.js"
     },
     {
       "src": "/api/(.*)",

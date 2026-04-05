@@ -2,7 +2,11 @@ const { MongoClient } = require("mongodb");
 
 const uri = process.env.MONGODB_URI;
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
+  if (!uri) {
+    return res.status(500).json({ error: "MONGODB_URI environment variable not set" });
+  }
+
   const client = new MongoClient(uri);
   try {
     await client.connect();
@@ -17,8 +21,9 @@ module.exports = async function handler(req, res) {
       testData: testData 
     });
   } catch (error) {
+    console.error("MongoDB connection error:", error);
     res.status(500).json({ error: error.message });
   } finally {
     await client.close();
   }
-};
+}
