@@ -13,31 +13,9 @@
     "SMTP_USER": "@smtp_user",
     "SMTP_PASS": "@smtp_pass"
   },
-  "builds": [
-    {
-      "src": "api/test.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "backend/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "backend/**"
-      }
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/test",
-      "dest": "api/test.js"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/build/$1"
-    }
-  ]
+  }
 }
