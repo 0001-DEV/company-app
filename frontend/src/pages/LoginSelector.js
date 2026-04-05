@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import card0 from "../assets/cards/CARD 0.jpeg";
 import card1 from "../assets/cards/CARD 1.jpeg";
 import card2 from "../assets/cards/CARD 2.jpeg";
@@ -7,9 +8,21 @@ import card3 from "../assets/cards/CARD 3.jpeg";
 
 function LoginSelector() {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [currentImage, setCurrentImage] = useState(0);
   
   const images = [card0, card1, card2, card3];
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated()) {
+      if (user?.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (user?.role === 'staff') {
+        navigate('/staff-dashboard');
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {

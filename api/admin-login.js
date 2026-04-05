@@ -1,86 +1,55 @@
-const { MongoClient } = require('mongodb');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const { withMiddleware } = require('./middleware');
+const { validateCredentials, createUserResponse, logAuthEvent } = require('./auth-utils');
 
-// CORS headers for all responses
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Credentials': 'true'
-};
-
-module.exports = async (req, res) => {
-  // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
-    return res.status(200).json({});
-  }
-
-  // Set CORS headers
-  Object.keys(corsHeaders).forEach(key => {
-    res.setHeader(key, corsHeaders[key]);
-  });
-
+const handler = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    return res.status(500).json({ message: 'Database configuration error' });
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
   }
 
-  const client = new MongoClient(uri);
-
   try {
-    await client.connect();
-    const db = client.db("company-app");
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    // Find admin user in database
-    const admin = await db.collection('users').findOne({ 
-      email: email.toLowerCase(),
-      role: 'admin'
+    // Validate admin credentials specifically
+    const admin = await validateCredentials(req.db, email, password, 'admin');
+    
+    // Log successful admin login
+    await logAuthEvent(req.db, admin._id, 'admin_login', {
+      ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+      userAgent: req.headers['user-agent']
     });
 
-    if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
-    }
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Incorrect password' });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: admin._id, role: 'admin' },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '7d' }
-    );
-
-    // Return success response
-    res.status(200).json({
-      message: 'Admin login successful',
-      token,
-      admin: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-        role: 'admin',
-        profilePicture: admin.profilePicture || ''
-      }
-    });
+    // Return success response with token
+    const response = createUserResponse(admin, true);
+    response.admin = response.user; // Keep backward compatibility
+    delete response.user;
+    
+    return res.status(200).json(response);
 
   } catch (error) {
     console.error('Admin login error:', error);
-    res.status(500).json({ message: 'Server error during admin login' });
-  } finally {
-    await client.close();
+    
+    // Log failed admin login attempt
+    await logAuthEvent(req.db, null, 'admin_login_failed', {
+      email: email.toLowerCase(),
+      error: error.message,
+      ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress
+    });
+
+    const statusCode = error.message === 'User not found' ? 404 : 
+                      error.message === 'Invalid password' ? 401 : 
+                      error.message === 'User account is deactivated' ? 403 : 500;
+
+    return res.status(statusCode).json({ 
+      message: error.message === 'User not found' ? 'Admin not found' :
+               error.message === 'User account is deactivated' ? 
+                 'Admin account has been deactivated' : 
+                 'Invalid admin credentials'
+    });
   }
 };
+
+module.exports = withMiddleware(handler, { requireDb: true });

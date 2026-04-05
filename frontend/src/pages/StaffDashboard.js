@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import BirthdayNotification from '../components/BirthdayNotification';
 import NoticeBoard from '../components/NoticeBoard';
 
 const StaffDashboard = () => {
-  const [staff, setStaff] = useState(null);
+  const navigate = useNavigate();
+  const { user: staff, logout, getAuthHeader } = useAuth();
   const [files, setFiles] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [fileComments, setFileComments] = useState({});
@@ -31,7 +33,6 @@ const StaffDashboard = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [hasWorkBankAccess, setHasWorkBankAccess] = useState(false);
   const filesPerPage = 4;
-  const navigate = useNavigate();
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 768);
@@ -41,20 +42,20 @@ const StaffDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) { navigate('/staff-login'); return; }
+      const authHeaders = getAuthHeader();
+      if (!authHeaders.Authorization) { navigate('/'); return; }
       try {
         const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes] = await Promise.all([
-          fetch('/api/chat/me', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/staff/my-profile', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/staff/my-files', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/chat/unread-counts', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/notices', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/staff/my-client-projects', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('http://localhost:5000/api/admin/workbank/access/check', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/chat/me', { headers: authHeaders }),
+          fetch('/api/staff/my-profile', { headers: authHeaders }),
+          fetch('/api/staff/my-files', { headers: authHeaders }),
+          fetch('/api/chat/unread-counts', { headers: authHeaders }),
+          fetch('/api/notices', { headers: authHeaders }),
+          fetch('/api/staff/my-client-projects', { headers: authHeaders }),
+          fetch('/api/admin/workbank/access/check', { headers: authHeaders }),
         ]);
-        if (!meRes.ok) { navigate('/staff-login'); return; }
-        setStaff(await meRes.json());
+        if (!meRes.ok) { navigate('/'); return; }
+        // Staff data is already available from auth context, but we can still fetch additional data
         if (profileRes.ok) { const p = await profileRes.json(); setCanViewOthers(p.canViewOthersWork === true); }
         if (filesRes.ok) setUploadedFiles(await filesRes.json());
         if (unreadRes.ok) { const u = await unreadRes.json(); setHasUnread(Object.keys(u).length > 0); }
@@ -75,10 +76,10 @@ const StaffDashboard = () => {
         }
         // Check unread announcements
         try {
-          const annRes = await fetch('/api/features/announcements', { headers: { Authorization: `Bearer ${token}` } });
+          const annRes = await fetch('/api/features/announcements', { headers: authHeaders });
           if (annRes.ok) {
             const anns = await annRes.json();
-            const meData = await fetch('/api/chat/me', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+            const meData = await fetch('/api/chat/me', { headers: authHeaders }).then(r => r.json());
             const hasUnreadAnn = anns.some(a => !a.readBy?.includes(meData.id));
             setHasNewAnnouncement(hasUnreadAnn);
           }
@@ -88,16 +89,16 @@ const StaffDashboard = () => {
     };
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, [navigate, getAuthHeader]);
 
   const handleFileUpload = async () => {
     if (!files || files.length === 0) { alert('Please select at least one file'); return; }
-    const token = localStorage.getItem('token');
+    const authHeaders = getAuthHeader();
     const formData = new FormData();
     Array.from(files).forEach(f => formData.append('files', f));
     try {
       const res = await fetch('/api/staff/upload-general-file', {
-        method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData
+        method: 'POST', headers: authHeaders, body: formData
       });
       if (res.ok) { alert(`${files.length} file(s) uploaded!`); setFiles([]); window.location.reload(); }
       else { const d = await res.json(); alert(`Failed: ${d.message}`); }
@@ -108,9 +109,9 @@ const StaffDashboard = () => {
     const diff = (new Date() - new Date(uploadedAt)) / (1000 * 60 * 60);
     if (diff > 1.5) { alert('Cannot delete after 1.5 hours'); return; }
     if (!window.confirm('Delete this file?')) return;
-    const token = localStorage.getItem('token');
+    const authHeaders = getAuthHeader();
     try {
-      const res = await fetch(`/api/staff/delete-file/${fileId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/staff/delete-file/${fileId}`, { method: 'DELETE', headers: authHeaders });
       if (res.ok) { alert('Deleted!'); window.location.reload(); }
     } catch (err) { alert('Error deleting'); }
   };
@@ -118,17 +119,20 @@ const StaffDashboard = () => {
   const handleUpdateComment = async (fileId) => {
     const commentText = fileComments[fileId];
     if (!commentText?.trim()) { alert('Enter a comment'); return; }
-    const token = localStorage.getItem('token');
+    const authHeaders = getAuthHeader();
     try {
       const res = await fetch(`/api/staff/file-comment/${fileId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ comment: commentText })
       });
       if (res.ok) { alert('Comment saved!'); window.location.reload(); }
     } catch (err) { alert('Error saving comment'); }
   };
 
-  const handleLogout = () => { localStorage.removeItem('token'); navigate('/staff-login'); };
+  const handleLogout = async () => { 
+    await logout(); 
+    navigate('/'); 
+  };
 
   if (loading) return <div style={s.loadingScreen}><div style={s.spinner} /><span>Loading your dashboard...</span></div>;
 
@@ -209,7 +213,8 @@ const StaffDashboard = () => {
                   if (item.id === 'notices') {
                     setHasNewNotice(false);
                     // mark as seen by storing latest notice id
-                    fetch('/api/notices', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+                    const authHeaders = getAuthHeader();
+                    fetch('/api/notices', { headers: authHeaders })
                       .then(r => r.json()).then(notices => { if (notices[0]) localStorage.setItem('lastSeenNotice', notices[0]._id); }).catch(() => { });
                   }
                 }
@@ -416,8 +421,8 @@ const StaffDashboard = () => {
                   <div style={s.uploadCardTitle}>Monitor Client Projects</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
                     <button onClick={() => { 
-                      const token = localStorage.getItem('token');
-                      fetch('/api/staff/my-client-projects', { headers: { Authorization: `Bearer ${token}` } })
+                      const authHeaders = getAuthHeader();
+                      fetch('/api/staff/my-client-projects', { headers: authHeaders })
                         .then(res => res.json())
                         .then(data => setClientProjects(data));
                     }} style={{ background: '#f1f5f9', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: '#475569' }}>
@@ -452,11 +457,11 @@ const StaffDashboard = () => {
                       const statusColors = { 'Designed': '#3b82f6', 'Printed': '#f59e0b', 'Dispatched': '#10b981' };
 
                       const updateStatus = async (newStatus) => {
-                        const token = localStorage.getItem('token');
+                        const authHeaders = getAuthHeader();
                         try {
-                          const res = await fetch(`http://localhost:5000/api/staff/my-client-project/${proj._id}`, {
+                          const res = await fetch(`/api/staff/my-client-project/${proj._id}`, {
                             method: 'PUT',
-                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            headers: { 'Content-Type': 'application/json', ...authHeaders },
                             body: JSON.stringify({ status: newStatus })
                           });
                           const data = await res.json();
@@ -645,16 +650,16 @@ const StaffDashboard = () => {
               <form onSubmit={async e => {
                 e.preventDefault();
                 if (!staffUsageProject?._id) { alert('Project ID missing'); return; }
-                const token = localStorage.getItem('token');
+                const authHeaders = getAuthHeader();
                 
                 const payload = usageMode === 'add' 
                   ? { addTotalCardsPaid: Number(staffUsageCards) } 
                   : { addCardsUsed: Number(staffUsageCards), deductionNote: staffUsageNote };
 
                 try {
-                  const res = await fetch(`http://localhost:5000/api/staff/my-client-project/${staffUsageProject._id}`, {
+                  const res = await fetch(`/api/staff/my-client-project/${staffUsageProject._id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify(payload)
                   });
                   const data = await res.json();

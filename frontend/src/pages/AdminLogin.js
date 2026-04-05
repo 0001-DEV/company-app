@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import card0 from "../assets/cards/CARD 0.jpeg";
 import card1 from "../assets/cards/CARD 1.jpeg";
 import card2 from "../assets/cards/CARD 2.jpeg";
@@ -10,12 +11,21 @@ function AdminLogin() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
   const navigate = useNavigate();
+  const { login, isAuthenticated, user } = useAuth();
 
   const images = [card0, card1, card2, card3];
 
-  useState(() => {
+  // Redirect if already authenticated as admin
+  useEffect(() => {
+    if (isAuthenticated() && user?.role === 'admin') {
+      navigate('/admin-dashboard');
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
     }, 5000);
@@ -25,27 +35,20 @@ function AdminLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Something went wrong');
-        return;
+      const result = await login({ email, password }, 'admin');
+      
+      if (result.success) {
+        navigate('/admin-dashboard');
+      } else {
+        setError(result.error || 'Login failed');
       }
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.admin));
-      navigate('/admin-dashboard');
-
     } catch (err) {
       setError('Something went wrong connecting to server');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,9 +115,9 @@ function AdminLogin() {
             </div>
           </div>
 
-          <button type="submit" style={styles.loginButton}>
+          <button type="submit" style={styles.loginButton} disabled={loading}>
             <span style={styles.buttonIcon}>🔐</span>
-            Sign In as Admin
+            {loading ? 'Signing In...' : 'Sign In as Admin'}
           </button>
         </form>
 

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import card0 from "../assets/cards/CARD 0.jpeg";
 import card1 from "../assets/cards/CARD 1.jpeg";
 import card2 from "../assets/cards/CARD 2.jpeg";
@@ -10,13 +11,22 @@ function StaffLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
   const [noticePopup, setNoticePopup] = useState(null);
   const navigate = useNavigate();
+  const { login, isAuthenticated, user, getAuthHeader } = useAuth();
 
   const images = [card0, card1, card2, card3];
 
-  useState(() => {
+  // Redirect if already authenticated as staff
+  useEffect(() => {
+    if (isAuthenticated() && user?.role === 'staff') {
+      navigate('/staff-dashboard');
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
     }, 5000);
@@ -26,46 +36,39 @@ function StaffLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/staff/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+      const result = await login({ email, password }, 'staff');
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Login failed");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-
-      // Fetch latest notice and show popup
-      try {
-        const noticeRes = await fetch("http://localhost:5000/api/notices", {
-          headers: { Authorization: `Bearer ${data.token}` }
-        });
-        if (noticeRes.ok) {
-          const notices = await noticeRes.json();
-          if (notices.length > 0) {
-            const latest = notices[0];
-            setNoticePopup(latest);
-            setTimeout(() => {
-              setNoticePopup(null);
-              navigate("/staff-dashboard");
-            }, 3000);
-            return;
+      if (result.success) {
+        // Fetch latest notice and show popup
+        try {
+          const noticeRes = await fetch("/api/notices", {
+            headers: getAuthHeader()
+          });
+          if (noticeRes.ok) {
+            const notices = await noticeRes.json();
+            if (notices.length > 0) {
+              const latest = notices[0];
+              setNoticePopup(latest);
+              setTimeout(() => {
+                setNoticePopup(null);
+                navigate("/staff-dashboard");
+              }, 3000);
+              return;
+            }
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
 
-      navigate("/staff-dashboard");
-
+        navigate("/staff-dashboard");
+      } else {
+        setError(result.error || "Login failed");
+      }
     } catch (err) {
       setError("Server error, try again");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -145,9 +148,9 @@ function StaffLogin() {
             </div>
           </div>
 
-          <button type="submit" style={styles.loginButton}>
+          <button type="submit" style={styles.loginButton} disabled={loading}>
             <span style={styles.buttonIcon}>🔐</span>
-            Sign In
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 

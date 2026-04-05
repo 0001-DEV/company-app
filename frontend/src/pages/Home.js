@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import card0 from "../assets/cards/CARD 0.jpeg";
 import card1 from "../assets/cards/CARD 1.jpeg";
 import card2 from "../assets/cards/CARD 2.jpeg";
@@ -9,18 +10,13 @@ import NoticeBoard from "../components/NoticeBoard";
 
 function Home() {
   const navigate = useNavigate();
+  const { user: admin, logout, getAuthHeader } = useAuth();
   const [search, setSearch] = React.useState("");
   const [hasUnreadMessages, setHasUnreadMessages] = React.useState(false);
   const [activeNav, setActiveNav] = React.useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
-  const [admin, setAdmin] = React.useState(null);
   const lastMessageIds = React.useRef(new Set());
-
-  React.useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) setAdmin(JSON.parse(userStr));
-  }, []);
 
   React.useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 768);
@@ -47,11 +43,11 @@ function Home() {
   React.useEffect(() => {
     const checkUnreadMessages = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+        const authHeaders = getAuthHeader();
+        if (!authHeaders.Authorization) return;
 
         const response = await fetch('/api/chat/unread-counts', {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: authHeaders
         });
         if (response.ok) {
           const data = await response.json();
@@ -60,7 +56,7 @@ function Home() {
 
         // Also poll latest messages to track new ones
         const msgsRes = await fetch('/api/chat/latest-messages', {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: authHeaders
         });
         if (msgsRes.ok) {
           const messages = await msgsRes.json();
@@ -73,18 +69,18 @@ function Home() {
     checkUnreadMessages();
     const interval = setInterval(checkUnreadMessages, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [getAuthHeader]);
 
   // Fetch real stats
   React.useEffect(() => {
     const fetchStats = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+      const authHeaders = getAuthHeader();
+      if (!authHeaders.Authorization) return;
       try {
         const [staffRes, deptRes, filesRes] = await Promise.all([
-          fetch('/api/admin/all-staff', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/admin/departments', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/admin/all-uploaded-files', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/admin/all-staff', { headers: authHeaders }),
+          fetch('/api/admin/departments', { headers: authHeaders }),
+          fetch('/api/admin/all-uploaded-files', { headers: authHeaders }),
         ]);
 
         const staffData  = staffRes.ok  ? await staffRes.json()  : [];
@@ -146,7 +142,7 @@ function Home() {
       }
     };
     fetchStats();
-  }, []);
+  }, [getAuthHeader]);
 
   const navItems = [
     { id: "staff",         icon: "🆔", label: "Staff IDs",          path: "/all-staff" },
@@ -215,11 +211,10 @@ function Home() {
     }
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      navigate("/admin-login");
+      await logout();
+      navigate("/");
     }
   };
 
