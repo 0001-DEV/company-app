@@ -1,7 +1,6 @@
 {
   "name": "company-app",
   "version": "1.0.0",
-  "type": "module",
   "dependencies": {
     "firebase": "^12.10.0",
     "mongodb": "^7.1.1",

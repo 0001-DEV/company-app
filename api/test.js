@@ -1,7 +1,9 @@
-export default function handler(req, res) {
-  res.status(200).json({ 
+module.exports = (req, res) => {
+  res.status(200).json({
     success: true,
     message: 'Test endpoint working!',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.url
   });
-}
+};
