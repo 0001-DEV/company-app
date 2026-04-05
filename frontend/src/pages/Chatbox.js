@@ -3,14 +3,14 @@ import { useLocation } from "react-router-dom";
 import PollWidget from "../components/PollWidget";
 
 const EMOJI_CATEGORIES = [
-  { label: "😀", name: "Smileys", emojis: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"] },
-  { label: "👋", name: "People", emojis: ["👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🙏","✍️","💅","🤳","💪","🦾","🦵","🦶","👃","👀","👅","👄","💋","👶","🧒","👦","👧","🧑","👱","👨","🧔","👩","🧓","👴","👵","🙍","🙎","🙅","🙆","💁","🙋","🧏","🙇","🤦","🤷"] },
-  { label: "❤️", name: "Hearts", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"] },
-  { label: "🐶", name: "Animals", emojis: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","蚊","コオロギ","スパイダー","サソリ","カメ","ヘビ","トカゲ","タコ","イカ","エビ","ロブスター","カニ","フグ","魚","熱帯魚","イルカ","クジラ1","クジラ2","サメ","ワニ","タイガー","ヒョウ","ゼブラ","ゴリラ","ゾウ","カバ","サイ","ラクダ1","ラクダ2","キリン","カンガルー","水牛","雄牛","雌牛","馬","豚","羊1","羊2","ラマ","山羊","鹿","犬","プードル","猫","ニワトリ","七面鳥","クジャク","オウム","白鳥","フラミンゴ","鳩","ウサギ","アライグマ","スカンク","アナグマ","カワウソ","マウス","ラット","リス","ハリネズミ"] },
-  { label: "🍎", name: "Food", emojis: ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","ブルーベリー","メロン","チェリー","ピーチ","マンゴー","パイン","ココナッツ","キウイ","トマト","ナス","アボカド","ブロッコリー","レタス","キュウリ","唐辛子","ピーマン","ニンニク","タマネギ","ジャガイモ","サツマイモ","クロワッサン","ベーグル","パン","バゲット","プレッツェル","チーズ","卵","目玉焼き","バター","パンケーキ","ワッフル","ベーコン","ステーキ","チキン","肉","ホットドッグ","バーガー","ポテト","ピザ","ナン","サンドイッチ","ケバブ","ファラフェル","タコス","ブリトー","タマル","サラダ","パエリア","鍋","缶詰","パスタ","ラーメン","シチュー","カレー","寿司","弁当","餃子","オイスター","天ぷら","おにぎり","ご飯","せんべい","なると","月見団子","おでん","カップケーキ","ケーキ","誕生日ケーキ","プリン","キャンディ","飴","チョコ","ポップコーン","ドーナツ","クッキー","栗","ピーナッツ","蜂蜜","ジュース","カップ","タピオカ","コーヒー","お茶","ティーポット","ビール","乾杯","ワイングラス","ワイン","ウィスキー","カクテル","トロピカルドリンク","マテ茶","シャンパン","氷","スプーン","フォーク","皿","箸","塩"] },
-  { label: "⚽", name: "Activity", emojis: ["⚽","🏀","🏈","⚾","ソフトボール","テニス","バレー","ラグビー","ビリヤード","ヨーヨー","卓球","バドミントン","ホッケー","フィールドホッケー","ラクロス","クリケット","ブーメラン","ゴルフ","凧","弓矢","釣り","シュノーケル","ボクシング","空手","ユニフォーム","スケボー","ローラースケート","そり","スケート","カーリング","スキー1","スキー2","スノボ","パラシュート","重量挙げ","レスリング","バスケ","フェンシング","乗馬","ヨガ","サーフィン","水泳","水球","ボート","登山","自転車","トロフィー","金メダル","銀メダル","銅メダル","メダル","軍事勲章","ロゼット","リボン","チケット","入場券","サーカス","ジャグリング","演劇","バレエ","絵画","映画","マイク","ヘッドホン","音符","ピアノ","ドラム","🪘","サックス","トランペット","ギター","バンジョー","バイオリン","ダイス","チェス","ダーツ","ボウリング","ゲーム","スロット","パズル"] },
-  { label: "🚗", name: "Travel", emojis: ["🚗","タクシー","SUV","バス","トロリーバス","レースカー","パトカー","救急車","消防車","ミニバン","ピックアップトラック","トラック","大型トラック","バイク","スクーター","三輪車","自転車","キックボード","スケボー","ローラースケート","バス停","高速道路","線路","給油","パトランプ","信号","歩行者信号","通行止め","工事中","錨","救命浮環","帆船","モーターボート","客船","フェリー","船","飛行機","小型飛行機","離陸","着陸","パラシュート","座席","ヘリコプター","モノレール","ロープウェイ","ゴンドラ","人工衛星","ロケット","UFO","惑星","地球1","地球2","地球3","地球儀","地図","コンパス","山","山頂","火山","富士山","キャンプ","砂浜","砂漠","島","公園","スタジアム","古典的な建物","建設中","レンガ","石","薪","小屋","住宅街","廃屋","家","庭付きの家","オフィス","郵便局","日本郵便","病院","銀行","ホテル","ラブホテル","コンビニ","学校","デパート","工場","城","西洋の城","結婚式","東京タワー","自由の女神","教会","モスク","ヒンドゥー寺院","シナゴーグ","鳥居","カアバ"] },
-  { label: "💡", name: "Objects", emojis: ["💡","懐中電灯","キャンドル","ランプ","消火器","ドラム缶","金袋","円札","ドル札","ユーロ札","ポンド札","飛んでいるお金","クレジットカード","コイン","チャート上昇","チャート下落","棒グラフ","クリップボード","ノート","カレンダー1","カレンダー2","カレンダー3","ゴミ箱","フォルダ1","フォルダ2","インデックス","インデックスボックス","キャビネット","ピン","プッシュピン","はさみ","クリップ1","クリップ2","ペン","万年筆","筆","クレヨン","メモ","鉛筆","虫眼鏡1","虫眼鏡2","鍵1","鍵2","南京錠","開いた南京錠"] },
+  { label: "😀", name: "Smileys", emojis: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"] },
+  { label: "❤️", name: "Hearts & Love", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","💌","💋","👋","👌","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏"] },
+  { label: "🎉", name: "Celebration", emojis: ["🎉","🎊","🎈","🎁","🎀","🎂","🍰","🧁","🍾","🍷","🍸","🍹","🍺","🍻","🥂","🥃","🍽️","🍴","🥄","🔪","🥢","🧂","🍳","🍲","🥘","🍱","🍛","🍜","🍝","🍠","🍢","🍣","🍤","🍥","🥟","🥠","🥮","🍙","🍚","🍘","🍗","🍖","🌭","🍔","🍟","🍕","🥪","🥙","🧆","🌮","🌯","🥗","🥘","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥠","🥮","🍢","🍡","🍧","🍨","🍦","🍰","🎂","🧁","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🌰","🥜","🍯"] },
+  { label: "🐶", name: "Animals", emojis: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🐢","🐍","🦎","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦌","🦙","🐐","🐕","🐩","🦮","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿️","🦔"] },
+  { label: "🌍", name: "Nature", emojis: ["🌍","🌎","🌏","🌐","🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘","🌙","🌚","🌝","🌛","🌜","⭐","🌟","✨","⚡","☄️","💥","🔥","🌪️","🌈","☀️","🌤️","⛅","🌥️","☁️","🌦️","🌧️","⛈️","🌩️","🌨️","❄️","☃️","⛄","🌬️","💨","💧","💦","☔"] },
+  { label: "⚽", name: "Sports", emojis: ["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎳","🏓","🏸","🏒","🏑","🥍","🏏","🥅","⛳","⛸️","🎣","🎽","🎿","⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🏌️","🏇","🧘","🏄","🏊","🤽","🚣","🧗","🚴","🚵","🎯","🪀","🪃","🎪","🎨","🎬","🎤","🎧","🎼","🎹","🥁","🎷","🎺","🎸","🪕","🎻","🎲","♟️","🎮","🎰","🧩"] },
+  { label: "🚗", name: "Travel", emojis: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🏍️","🛵","🦯","🦽","🦼","🛺","🚲","🛴","🛹","🛼","🚏","⛽","🚨","🚥","🚦","🛑","🚧","⚓","⛵","🛶","🚤","🛳️","⛴️","🛥️","🚢","🚀","🛸","✈️","🛩️","🛫","🛬","🛰️","🚁","🌍","🌎","🌏","💺","🧳"] },
+  { label: "💡", name: "Objects", emojis: ["💡","🔦","🕯️","🪔","🧯","🛢️","💸","💵","💴","💶","💷","💰","💳","🧾","✉️","📩","📨","📤","📥","📦","🏷️","📪","📫","📬","📭","📮","📯","📜","📃","📄","📑","🗂️","🗃️","🗳️","🗄️","📋","📁","📂","🗞️","📰","📓","📔","📒","📕","📗","📘","📙","📚","📖","🧷","🔖","🔗","📎","🖇️","📐","📏","🧮","📌","📍","✂️","🖊️","🖋️","✒️","🖌️","🖍️","📝"] },
 ];
 
 const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏","🔥","👏"];
@@ -41,7 +41,7 @@ const EmojiPicker = ({ onSelect, onClose }) => {
       {!search && <div style={EP.catName}>{EMOJI_CATEGORIES[activeCategory].name}</div>}
       <div style={EP.grid}>
         {filtered.map((emoji, i) => (
-          <button key={i} style={EP.emojiBtn} onClick={() => onSelect(emoji)} onMouseDown={e => e.stopPropagation()}>{emoji}</button>
+          <button key={i} style={EP.emojiBtn} onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(emoji); }} onMouseDown={e => e.stopPropagation()}>{emoji}</button>
         ))}
         {filtered.length === 0 && <div style={EP.noResult}>No emoji found</div>}
       </div>
@@ -95,6 +95,32 @@ const renderMentions = (text, currentUserName, staffList = []) => {
     }
     return part;
   });
+};
+
+const AudioPlayer = ({ fileUrl }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+  
+  const handlePlayPause = (e) => {
+    e.stopPropagation();
+    if (!audioRef.current) {
+      audioRef.current = new Audio(fileUrl);
+      audioRef.current.onended = () => { setIsPlaying(false); };
+    }
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+  
+  return (
+    <button onClick={handlePlayPause} style={{ background: "none", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 20, color: "#fff", padding: 0, flexShrink: 0 }}>
+      {isPlaying ? "⏸️" : "▶️"}
+    </button>
+  );
 };
 
 const ChatBox = () => {
@@ -812,7 +838,12 @@ const ChatBox = () => {
       {/* ── SIDEBAR ── */}
       <div style={{ ...S.sidebar, display: isMobile && viewMode !== "none" ? "none" : "flex" }}>
         <div style={S.sidebarHeader}>
-          <div style={S.sidebarTitle}><span style={{ fontWeight: 700, fontSize: 18, color: "#e9edef" }}>Chats</span></div>
+          <div style={S.sidebarTitle}>
+            <span style={S.sidebarTitleText}>Chats</span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button style={{ ...S.headerBtn, fontSize: 18 }}>⋯</button>
+            </div>
+          </div>
           <div style={S.searchWrap}>
             <span style={S.searchIcon}>🔍</span>
             <input placeholder="Search chats..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={S.searchInput} />
@@ -822,8 +853,11 @@ const ChatBox = () => {
           {currentUser?.role === "admin" && (
             <div style={{ ...S.sidebarItem, ...(viewMode === "all" ? S.sidebarItemActive : {}) }}
               onClick={() => { setViewMode("all"); setSelectedUser(null); setSelectedDepartment(null); markAsRead(null, { teamChat: true }); }}>
-              <div style={{ ...S.avatar, background: "linear-gradient(135deg,#f59e0b,#d97706)", width: 40, height: 40 }}>🏢</div>
-              <div style={S.sidebarItemInfo}><div style={S.sidebarItemName}>Team Chat</div></div>
+              <div style={{ ...S.avatar, background: "linear-gradient(135deg, #f59e0b, #d97706)", width: 44, height: 44, fontSize: 20 }}>🏢</div>
+              <div style={S.sidebarItemInfo}>
+                <div style={S.sidebarItemName}>Team Chat</div>
+                <div style={S.sidebarItemPreview}>{typeof lastMessages["all"] === "string" ? lastMessages["all"].substring(0, 40) : "No messages yet"}</div>
+              </div>
               {unreadCounts["all"] > 0 && <div style={S.badge}>{unreadCounts["all"]}</div>}
             </div>
           )}
@@ -842,8 +876,11 @@ const ChatBox = () => {
           {deptSectionOpen && filteredDepts.map(dept => (
             <div key={dept._id} style={{ ...S.sidebarItem, ...(selectedDepartment?._id === dept._id ? S.sidebarItemActive : {}) }}
               onClick={() => { setViewMode("department"); setSelectedDepartment(dept); setSelectedUser(null); loadGroupInfo(dept); markAsRead(null, { departmentId: dept._id }); }}>
-              <div style={{ ...S.avatar, background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", width: 38, height: 38 }}>{getInitials(dept.name)}</div>
-              <div style={S.sidebarItemInfo}><div style={S.sidebarItemName}>{dept.name}</div></div>
+              <div style={{ ...S.avatar, background: "linear-gradient(135deg, #8b5cf6, #6d28d9)", width: 44, height: 44, fontSize: 16 }}>{getInitials(dept.name)}</div>
+              <div style={S.sidebarItemInfo}>
+                <div style={S.sidebarItemName}>{dept.name}</div>
+                <div style={S.sidebarItemPreview}>{typeof lastMessages[`department:${dept._id}`] === "string" ? lastMessages[`department:${dept._id}`].substring(0, 40) : "No messages yet"}</div>
+              </div>
               {(unreadCounts[`department:${dept._id}`] || 0) > 0 && <div style={S.badge}>{unreadCounts[`department:${dept._id}`]}</div>}
             </div>
           ))}
@@ -854,10 +891,13 @@ const ChatBox = () => {
             <div key={staff._id} style={{ ...S.sidebarItem, ...(selectedUser === staff._id ? S.sidebarItemActive : {}) }}
               onClick={() => { setViewMode("private"); setSelectedUser(staff._id); setSelectedDepartment(null); markAsRead(staff._id); }}>
               <div style={S.avatarWrap}>
-                <div style={{ ...S.avatar, background: "linear-gradient(135deg,#3b82f6,#1d4ed8)", width: 38, height: 38 }}>{getInitials(staff.name)}</div>
-                <div style={{ ...S.onlineDot, background: onlineStatus[staff._id]?.online ? "#22c55e" : "#64748b" }} />
+                <div style={{ ...S.avatar, background: "linear-gradient(135deg, #3b82f6, #1d4ed8)", width: 44, height: 44, fontSize: 16 }}>{getInitials(staff.name)}</div>
+                <div style={{ ...S.onlineDot, background: onlineStatus[staff._id]?.online ? "#31a24c" : "#64748b" }} />
               </div>
-              <div style={S.sidebarItemInfo}><div style={S.sidebarItemName}>{staff.name}</div></div>
+              <div style={S.sidebarItemInfo}>
+                <div style={S.sidebarItemName}>{staff.name}</div>
+                <div style={S.sidebarItemPreview}>{typeof lastMessages[staff._id] === "string" ? lastMessages[staff._id].substring(0, 40) : "No messages yet"}</div>
+              </div>
               {(unreadCounts[staff._id] || 0) > 0 && <div style={S.badge}>{unreadCounts[staff._id]}</div>}
             </div>
           ))}
@@ -867,19 +907,24 @@ const ChatBox = () => {
       {/* ── MAIN CHAT AREA ── */}
       <div style={{ ...S.main, display: isMobile && viewMode === "none" ? "none" : "flex" }}>
         {viewMode === "none" ? (
-          <div style={S.welcome}><div style={{ fontSize: 72, opacity: 0.3 }}>💬</div></div>
+          <div style={S.welcome}>
+            <div style={S.welcomeIcon}>💬</div>
+            <div style={S.welcomeText}>Select a chat to start messaging</div>
+            <div style={S.welcomeSub}>Choose a contact or group from the list</div>
+          </div>
         ) : (
           <>
-            <div style={S.chatHeader}>
+            <div style={{ ...S.chatHeader, position: "relative" }}>
               <div style={S.chatHeaderInfo}>
-                <div style={{ ...S.avatar, width: 38, height: 38, background: "#6b7280" }}>
+                <div style={{ ...S.avatar, width: 40, height: 40, fontSize: 16 }}>
                   {selectedDepartment ? getInitials(selectedDepartment.name) : viewMode === "all" ? "🏢" : getInitials(staffList.find(s => s._id === selectedUser)?.name || "")}
                 </div>
-                <div>
-                  <div style={{ fontWeight: 600, color: "#e9edef" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={S.chatHeaderName}>
                     {selectedDepartment ? selectedDepartment.name : viewMode === "all" ? "Team Chat" : staffList.find(s => s._id === selectedUser)?.name}
                   </div>
-                  {typingNames.length > 0 && <div style={{ fontSize: 11, color: "#8888aa", fontStyle: "italic" }}>{typingNames.join(", ")} typing...</div>}
+                  {typingNames.length > 0 && <div style={S.chatHeaderStatus}>{typingNames.join(", ")} typing...</div>}
+                  {!typingNames.length && onlineStatus[selectedUser]?.online && <div style={S.chatHeaderStatus}>Online</div>}
                 </div>
               </div>
               {showSearch && (
@@ -889,7 +934,7 @@ const ChatBox = () => {
                 <button style={S.headerBtn} onClick={() => setShowSearch(!showSearch)}>🔍</button>
                 <button style={S.headerBtn} onClick={() => setShowStarred(!showStarred)}>⭐</button>
                 {selectedDepartment && <button style={S.headerBtn} onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
-                <button style={S.headerBtn} onClick={() => setShowMuteMenu(!showMuteMenu)}>
+                <button style={{ ...S.headerBtn, position: "relative" }} onClick={() => setShowMuteMenu(!showMuteMenu)}>
                   {isChatMuted(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all") ? "🔕" : "🔔"}
                 </button>
                 <button style={S.headerBtn} onClick={() => setShowScheduleModal(!showScheduleModal)}>⏰</button>
@@ -921,11 +966,10 @@ const ChatBox = () => {
                             const isVideo = isVideoFile(file.originalName || file.path);
                             const isImage = isImageFile(file.originalName || file.path);
                             const fileUrl = `http://localhost:5000/${file.path}`;
+                            
                             return (
                               <div key={fidx} onClick={e => e.stopPropagation()}>
-                                {isAudio && (
-                                  <button style={{ background: "none", border: "none", borderRadius: "50%", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 24, color: "#6366f1", padding: 0 }} onClick={(e) => { e.stopPropagation(); const audio = new Audio(fileUrl); audio.play(); }} title="Play voice note">▶️</button>
-                                )}
+                                {isAudio && <AudioPlayer fileUrl={fileUrl} />}
                                 {isVideo && <video controls style={{ width: "100%", maxWidth: 300, borderRadius: 6 }} src={fileUrl} />}
                                 {isImage && <img src={fileUrl} alt="shared" style={{ maxWidth: 300, borderRadius: 6, cursor: "pointer" }} />}
                                 {!isAudio && !isVideo && !isImage && (
@@ -1075,7 +1119,7 @@ const ChatBox = () => {
               </div>
             )}
             {showMuteMenu && (
-              <div style={{ position: "absolute", top: 60, left: 16, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 200, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 180 }}>
+              <div style={{ position: "absolute", top: 50, right: 16, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 200, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 180 }}>
                 <button onClick={() => muteChat(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all", 0)} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔔 Unmute</button>
                 <button onClick={() => muteChat(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all", 1)} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 1 hour</button>
                 <button onClick={() => muteChat(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all", 8)} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>🔕 Mute 8 hours</button>
@@ -1199,14 +1243,11 @@ const ChatBox = () => {
                 <div style={{ background: "#1e1e2e", borderRadius: 16, padding: "32px", width: "90%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", gap: 24 }}>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 48, marginBottom: 12 }}>🎙️</div>
-                    <div style={{ fontSize: 18, fontWeight: 600, color: "#e9edef", marginBottom: 4 }}>Record Voice Note</div>
-                    <div style={{ fontSize: 13, color: "#8888aa" }}>Tap to record your message</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <div style={{ background: "rgba(99,102,241,0.1)", borderRadius: 12, padding: "20px", textAlign: "center", border: "2px solid rgba(99,102,241,0.3)" }}>
                       <div style={{ fontSize: 32, marginBottom: 8 }}>{voiceRecording ? "🔴" : "⭕"}</div>
                       <div style={{ fontSize: 24, fontWeight: 700, color: "#6366f1", fontFamily: "monospace" }}>{formatDuration(voiceDuration)}</div>
-                      <div style={{ fontSize: 12, color: "#8888aa", marginTop: 8 }}>{voiceRecording ? "Recording..." : voiceBlob ? "Ready to send" : "Not recording"}</div>
                     </div>
                     <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
                       <button onClick={voiceRecording ? stopVoiceRecording : startVoiceRecording} style={{ background: voiceRecording ? "#ef4444" : "#6366f1", border: "none", color: "#fff", padding: "12px 28px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }}>
@@ -1214,12 +1255,6 @@ const ChatBox = () => {
                       </button>
                     </div>
                   </div>
-                  {voiceBlob && (
-                    <div style={{ background: "rgba(34,197,94,0.1)", borderRadius: 12, padding: "16px", border: "1px solid rgba(34,197,94,0.3)" }}>
-                      <div style={{ fontSize: 12, color: "#22c55e", fontWeight: 600, marginBottom: 8 }}>✓ Voice note recorded</div>
-                      <div style={{ fontSize: 13, color: "#cbd5e1" }}>Duration: {formatDuration(voiceDuration)}</div>
-                    </div>
-                  )}
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={discardVoiceNote} style={{ flex: 1, background: "#35354f", border: "none", color: "#cbd5e1", padding: "12px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600 }}>Cancel</button>
                     <button onClick={sendVoiceNote} disabled={!voiceBlob} style={{ flex: 1, background: voiceBlob ? "#6366f1" : "#35354f", border: "none", color: voiceBlob ? "#fff" : "#8888aa", padding: "12px", borderRadius: 8, cursor: voiceBlob ? "pointer" : "not-allowed", fontSize: 14, fontWeight: 600 }}>Send</button>
@@ -1229,10 +1264,10 @@ const ChatBox = () => {
             )}
             <div style={S.inputBar}>
               <input type="file" multiple onChange={e => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} style={{ display: "none" }} id="fileInput" />
-              <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.headerBtn, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>📎 Attach</button>
-              <button onClick={() => setShowVoiceModal(true)} style={{ ...S.headerBtn, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>🎙️ Voice</button>
-              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.headerBtn, fontSize: 14, display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
-                😊 Emoji
+              <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.actionBtn }}>📎</button>
+              <button onClick={() => setShowVoiceModal(true)} style={{ ...S.actionBtn }}>🎙️</button>
+              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn, position: "relative" }}>
+                😊
                 {showEmojiPicker && <EmojiPicker onSelect={e => { setText(text + e); setShowEmojiPicker(false); }} onClose={() => setShowEmojiPicker(false)} />}
               </button>
               <textarea ref={inputRef} style={S.textInput} value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} placeholder="Type a message..." />
@@ -1253,59 +1288,87 @@ const ChatBox = () => {
   );
 };
 
-const WA_SIDEBAR_BG   = "#1e1e2e";
-const WA_SIDEBAR_HDR  = "#2a2a3e";
-const WA_SIDEBAR_ACT  = "#35354f";
-const WA_CHAT_BG      = "#16161f";
-const WA_BUBBLE_OUT   = "#3a3a5c";
-const WA_BUBBLE_IN    = "#2a2a3e";
-const WA_TEXT         = "#e2e2f0";
-const WA_TEXT_SUB     = "#8888aa";
-const WA_HEADER_BG    = "#2a2a3e";
-const WA_INPUT_BG     = "#35354f";
-const WA_DIVIDER      = "#35354f";
+// WhatsApp-inspired color scheme
+const WA_SIDEBAR_BG   = "#111b21";
+const WA_SIDEBAR_HDR  = "#202c33";
+const WA_SIDEBAR_ACT  = "#2a3f4b";
+const WA_CHAT_BG      = "#0a0e13";
+const WA_BUBBLE_OUT   = "#005c4b";
+const WA_BUBBLE_IN    = "#1f2c34";
+const WA_TEXT         = "#e9edef";
+const WA_TEXT_SUB     = "#8a8a8e";
+const WA_HEADER_BG    = "#202c33";
+const WA_INPUT_BG     = "#2a3f4b";
+const WA_DIVIDER      = "#2a3f4b";
+const WA_ACCENT       = "#00a884";
 
 const S = {
-  root: { display: "flex", height: "100vh", background: WA_CHAT_BG, fontFamily: "sans-serif", overflow: "hidden" },
+  root: { display: "flex", height: "100vh", background: WA_CHAT_BG, fontFamily: "'Segoe UI', Helvetica, Arial, sans-serif", overflow: "hidden" },
   center: { display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: WA_CHAT_BG },
-  spinner: { width: 40, height: 40, border: "4px solid #35354f", borderTop: "4px solid #9090c0", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-  sidebar: { width: 360, background: WA_SIDEBAR_BG, borderRight: `1px solid ${WA_DIVIDER}`, flexDirection: "column" },
-  sidebarHeader: { background: WA_SIDEBAR_HDR, padding: "10px 16px", display: "flex", flexDirection: "column", gap: 8 },
-  sidebarTitle: { display: "flex", alignItems: "center" },
-  searchInput: { width: "100%", padding: "8px 12px", borderRadius: 8, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none" },
+  spinner: { width: 40, height: 40, border: "4px solid #2a3f4b", borderTop: "4px solid #00a884", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
+  
+  // Sidebar styles
+  sidebar: { width: 360, background: WA_SIDEBAR_BG, borderRight: `1px solid ${WA_DIVIDER}`, flexDirection: "column", display: "flex" },
+  sidebarHeader: { background: WA_SIDEBAR_HDR, padding: "16px", display: "flex", flexDirection: "column", gap: 12, borderBottom: `1px solid ${WA_DIVIDER}` },
+  sidebarTitle: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  sidebarTitleText: { fontWeight: 700, fontSize: 20, color: WA_TEXT },
+  searchInput: { width: "100%", padding: "10px 16px", borderRadius: 24, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none", fontSize: 14 },
   searchWrap: { position: "relative" },
-  searchIcon: { position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: WA_TEXT_SUB },
-  sidebarList: { flex: 1, overflowY: "auto" },
-  sidebarItem: { display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", cursor: "pointer", borderBottom: `1px solid ${WA_DIVIDER}` },
+  searchIcon: { position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: WA_TEXT_SUB, fontSize: 16 },
+  sidebarList: { flex: 1, overflowY: "auto", overflowX: "hidden" },
+  sidebarItem: { display: "flex", alignItems: "center", gap: 12, padding: "8px 8px", margin: "0 8px", cursor: "pointer", borderRadius: 8, transition: "background 0.2s" },
   sidebarItemActive: { background: WA_SIDEBAR_ACT },
-  sectionHeader: { padding: "10px 16px", cursor: "pointer", background: WA_SIDEBAR_HDR },
-  sidebarItemInfo: { flex: 1 },
-  sidebarItemName: { fontSize: 15, color: WA_TEXT },
-  badge: { background: "#6366f1", color: "#fff", borderRadius: 10, padding: "2px 7px", fontSize: 11 },
-  avatarWrap: { position: "relative" },
-  onlineDot: { position: "absolute", bottom: 0, right: 0, width: 10, height: 10, borderRadius: "50%", border: "2px solid #1e1e2e" },
-  avatar: { width: 46, height: 46, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" },
-  main: { flex: 1, flexDirection: "column", background: WA_CHAT_BG },
-  welcome: { flex: 1, alignItems: "center", justifyContent: "center" },
-  chatHeader: { display: "flex", alignItems: "center", padding: "10px 16px", background: WA_HEADER_BG, borderBottom: `1px solid ${WA_DIVIDER}` },
-  chatHeaderInfo: { display: "flex", alignItems: "center", gap: 12, flex: 1 },
-  chatHeaderActions: { display: "flex", gap: 8 },
-  headerBtn: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: WA_TEXT_SUB },
-  messagesList: { flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 12 },
-  msgRow: { display: "flex" },
-  msgSenderName: { fontSize: 12, fontWeight: 700, color: "#a5b4fc", marginBottom: 4 },
-  bubble: { padding: "8px 12px", borderRadius: 8, maxWidth: "70%" },
-  bubbleOwn: { background: WA_BUBBLE_OUT, color: WA_TEXT },
-  bubbleOther: { background: WA_BUBBLE_IN, color: WA_TEXT },
-  msgText: { fontSize: 14 },
-  msgMeta: { textAlign: "right", marginTop: 4 },
-  msgTime: { fontSize: 11, color: WA_TEXT_SUB },
-  inputBar: { display: "flex", padding: "16px", background: WA_HEADER_BG, gap: 12 },
-  textInput: { flex: 1, padding: "10px", borderRadius: 8, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none", resize: "none" },
-  sendBtn: { background: "#6366f1", color: "#fff", border: "none", borderRadius: "50%", width: 40, height: 40, cursor: "pointer" },
-  jitsiOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.8)", zIndex: 1000 },
+  sidebarItemHover: { background: "rgba(255,255,255,0.05)" },
+  sectionHeader: { padding: "12px 16px", cursor: "pointer", background: "transparent", fontSize: 13, fontWeight: 700, color: WA_TEXT_SUB, textTransform: "uppercase", letterSpacing: "0.5px" },
+  sidebarItemInfo: { flex: 1, minWidth: 0 },
+  sidebarItemName: { fontSize: 15, color: WA_TEXT, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  sidebarItemPreview: { fontSize: 13, color: WA_TEXT_SUB, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 },
+  badge: { background: WA_ACCENT, color: "#fff", borderRadius: 12, padding: "4px 8px", fontSize: 12, fontWeight: 600, minWidth: 20, textAlign: "center" },
+  avatarWrap: { position: "relative", flexShrink: 0 },
+  onlineDot: { position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "#31a24c", border: `3px solid ${WA_SIDEBAR_BG}` },
+  avatar: { width: 50, height: 50, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 18, background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+  
+  // Main chat area
+  main: { flex: 1, flexDirection: "column", background: WA_CHAT_BG, display: "flex" },
+  welcome: { flex: 1, alignItems: "center", justifyContent: "center", display: "flex", flexDirection: "column" },
+  welcomeIcon: { fontSize: 100, marginBottom: 20, opacity: 0.3 },
+  welcomeText: { fontSize: 20, color: WA_TEXT, fontWeight: 500, marginBottom: 8 },
+  welcomeSub: { fontSize: 14, color: WA_TEXT_SUB },
+  
+  // Chat header
+  chatHeader: { display: "flex", alignItems: "center", padding: "12px 16px", background: WA_HEADER_BG, borderBottom: `1px solid ${WA_DIVIDER}`, justifyContent: "space-between" },
+  chatHeaderInfo: { display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 },
+  chatHeaderName: { fontWeight: 600, color: WA_TEXT, fontSize: 15 },
+  chatHeaderStatus: { fontSize: 12, color: WA_TEXT_SUB, marginTop: 2 },
+  chatHeaderActions: { display: "flex", gap: 8, alignItems: "center" },
+  headerBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: WA_TEXT_SUB, padding: "8px", borderRadius: 50, transition: "background 0.2s" },
+  headerBtnHover: { background: "rgba(255,255,255,0.1)" },
+  
+  // Messages
+  messagesList: { flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8, backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"><defs><pattern id=\"pattern\" x=\"0\" y=\"0\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><text x=\"50\" y=\"50\" font-size=\"80\" fill=\"rgba(255,255,255,0.02)\" text-anchor=\"middle\" dominant-baseline=\"middle\">💬</text></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"%230a0e13\"/><rect width=\"100%\" height=\"100%\" fill=\"url(%23pattern)\"/></svg>')" },
+  msgRow: { display: "flex", marginBottom: 4 },
+  msgRowOwn: { justifyContent: "flex-end" },
+  msgRowOther: { justifyContent: "flex-start" },
+  msgSenderName: { fontSize: 12, fontWeight: 700, color: WA_ACCENT, marginBottom: 4, paddingLeft: 8 },
+  bubble: { padding: "8px 12px", borderRadius: 8, maxWidth: "55%", wordWrap: "break-word" },
+  bubbleOwn: { background: WA_BUBBLE_OUT, color: WA_TEXT, borderBottomRightRadius: 4 },
+  bubbleOther: { background: WA_BUBBLE_IN, color: WA_TEXT, borderBottomLeftRadius: 4 },
+  msgText: { fontSize: 14, lineHeight: 1.4 },
+  msgMeta: { display: "flex", alignItems: "center", gap: 4, marginTop: 4, justifyContent: "flex-end" },
+  msgTime: { fontSize: 12, color: "rgba(255,255,255,0.6)" },
+  msgStatus: { fontSize: 12 },
+  
+  // Input area
+  inputBar: { display: "flex", padding: "12px 16px", background: WA_HEADER_BG, gap: 12, alignItems: "flex-end", borderTop: `1px solid ${WA_DIVIDER}` },
+  inputActions: { display: "flex", gap: 8 },
+  actionBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: WA_ACCENT, padding: "8px", borderRadius: 50, transition: "background 0.2s" },
+  textInput: { flex: 1, padding: "10px 16px", borderRadius: 20, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none", resize: "none", fontSize: 14, maxHeight: 100 },
+  sendBtn: { background: WA_ACCENT, color: "#fff", border: "none", borderRadius: "50%", width: 40, height: 40, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, transition: "background 0.2s" },
+  
+  // Jitsi
+  jitsiOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.95)", zIndex: 1000 },
   jitsiContainer: { position: "relative", width: "90%", height: "90%", margin: "2% auto" },
-  jitsiEndBtn: { position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", padding: "10px 20px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }
+  jitsiEndBtn: { position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", padding: "12px 24px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }
 };
 
 export default ChatBox;

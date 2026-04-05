@@ -25,7 +25,7 @@ const messageSchema = new mongoose.Schema({
   senderName: { type: String, required: true },
   senderRole: { type: String, required: true },
   receiverId: { type: String, required: true },
-  text: { type: String, required: true },
+  text: { type: String, default: "" },
   isEdited: { type: Boolean, default: false },
   isDeleted: { type: Boolean, default: false },
   readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -181,6 +181,16 @@ router.get("/messages", verifyUser, async (req, res) => {
 router.post("/message", verifyUser, upload.array('files', 10), async (req, res) => {
   try {
     const { text, receiverId } = req.body;
+    const files = req.files ? req.files.map(file => ({
+      path: file.path,
+      originalName: file.originalname,
+      uploadedAt: new Date()
+    })) : [];
+
+    // Validate: must have either text or files
+    if (!text?.trim() && files.length === 0) {
+      return res.status(400).json({ message: "Message must contain text or files" });
+    }
 
     // If staff is sending to a department, verify it's their own
     if (req.user.role === 'staff' && receiverId?.startsWith('department:')) {
@@ -199,12 +209,6 @@ router.post("/message", verifyUser, upload.array('files', 10), async (req, res) 
         }
       }
     }
-
-    const files = req.files ? req.files.map(file => ({
-      path: file.path,
-      originalName: file.originalname,
-      uploadedAt: new Date()
-    })) : [];
 
     let replyTo = null;
     if (req.body.replyToId) {
@@ -229,7 +233,7 @@ router.post("/message", verifyUser, upload.array('files', 10), async (req, res) 
       forwardedFrom: req.body.forwardedFrom || null,
     });
 
-    console.log(`[message saved] senderId=${req.user.id} receiverId=${receiverId} text="${msg.text?.substring(0,20)}"`);
+    console.log(`[message saved] senderId=${req.user.id} receiverId=${receiverId} text="${msg.text?.substring(0,20)}" files=${files.length}`);
     res.json(msg);
   } catch (err) {
     console.error('Error sending message:', err);
