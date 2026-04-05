@@ -5,5 +5,15 @@
     }
   },
   "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/build"
+  "outputDirectory": "frontend/build",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
