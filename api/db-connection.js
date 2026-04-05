@@ -29,6 +29,9 @@ async function connectToDatabase() {
   }
 
   try {
+    console.log('Attempting MongoDB connection...');
+    console.log('URI (masked):', uri.replace(/:[^@]*@/, ':****@'));
+    
     // Create new connection
     const client = new MongoClient(uri, mongoOptions);
     await client.connect();
@@ -42,7 +45,11 @@ async function connectToDatabase() {
     console.log('MongoDB connected successfully');
     return { client, db };
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('MongoDB connection error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
     throw error;
   }
 }
