@@ -93,7 +93,7 @@ app.get('/api/test', async (req, res) => {
 setInterval(async () => {
   try {
     const ScheduledMessage = mongoose.model('ScheduledMessage');
-    const Message = mongoose.model('Message');
+    const Message = require('./models/Message');
     const due = await ScheduledMessage.find({ sent: false, scheduledAt: { $lte: new Date() } });
     for (const sm of due) {
       await Message.create({
