@@ -22,8 +22,16 @@ export const AuthProvider = ({ children }) => {
     
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        // Validate token is not expired or corrupted
+        const userData = JSON.parse(storedUser);
+        if (userData && userData.email) {
+          setToken(storedToken);
+          setUser(userData);
+        } else {
+          // Invalid user data, clear it
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         localStorage.removeItem('token');
