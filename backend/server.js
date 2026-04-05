@@ -69,6 +69,26 @@ app.use('/api/company-staff', companyStaffRoutes);
 const configRoutes = require('./routes/config');
 app.use('/api/config', configRoutes);
 
+// ── Test MongoDB Connection ──
+app.get('/api/test', async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) {
+      return res.status(500).json({ error: 'Database not connected' });
+    }
+    const collections = await db.listCollections().toArray();
+    const testCollection = await db.collection('test').find().toArray();
+    res.status(200).json({ 
+      success: true, 
+      message: 'MongoDB connection successful',
+      collections: collections.map(c => c.name),
+      testData: testCollection 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ── Scheduled message dispatcher (runs every 30s) ──
 setInterval(async () => {
   try {
