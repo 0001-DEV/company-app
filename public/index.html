@@ -1,16 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Company App - Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company App - Identifiner</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Company App is Working!</h1>
-    <p>If you can see this, the Vercel deployment is working.</p>
-    <p>Test API endpoints:</p>
-    <ul>
-        <li><a href="/api/test">/api/test</a></li>
-        <li><a href="/api/hello">/api/hello</a></li>
-        <li><a href="/api/index">/api/index</a></li>
-    </ul>
+    <div class="container">
+        <div class="logo">🏢</div>
+        <h1>Welcome to Identifiner</h1>
+        <p>Company Management System</p>
+        <div class="button-container">
+            <button onclick="goToAdminLogin()" class="btn admin-btn">
+                <span class="btn-icon">👑</span>
+                <div>
+                    <div class="btn-title">Admin Login</div>
+                    <div class="btn-subtitle">Access admin dashboard</div>
+                </div>
+            </button>
+            <button onclick="goToStaffLogin()" class="btn staff-btn">
+                <span class="btn-icon">👤</span>
+                <div>
+                    <div class="btn-title">Staff Login</div>
+                    <div class="btn-subtitle">Access staff portal</div>
+                </div>
+            </button>
+        </div>
+        <p class="api-status">API Status: <a href="/api/test">✅ Test Connection</a></p>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
