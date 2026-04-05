@@ -27,8 +27,39 @@
                 </div>
             </button>
         </div>
-        <p class="api-status">API Status: <a href="/api/test">✅ Test Connection</a></p>
+        <p class="api-status">
+            <div id="api-status">
+                <span class="status-indicator status-offline"></span>
+                Checking API status...
+            </div>
+        </p>
     </div>
     <script src="script.js"></script>
+    <script>
+        // Check API status
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/test-simple');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('api-status').innerHTML = `
+                        <span class="status-indicator status-online"></span>
+                        API Online - ${data.userStats.total} users (${data.userStats.admins} admins, ${data.userStats.staff} staff)
+                    `;
+                } else {
+                    throw new Error('API returned error');
+                }
+            } catch (error) {
+                document.getElementById('api-status').innerHTML = `
+                    <span class="status-indicator status-offline"></span>
+                    API Offline - Please check connection
+                `;
+            }
+        }
+
+        // Check API status on page load
+        checkApiStatus();
+    </script>
 </body>
 </html>
