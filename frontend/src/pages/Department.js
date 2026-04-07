@@ -84,8 +84,8 @@ const Department = () => {
     const token = localStorage.getItem('token');
     try {
       const [deptRes, staffRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/departments', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('http://localhost:5000/api/admin/all-staff', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/admin/departments', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/admin/all-staff', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       const depts = await deptRes.json();
       setDepartments(depts);
@@ -112,8 +112,8 @@ const Department = () => {
     const token = localStorage.getItem('token');
     try {
       const url = data._id
-        ? `http://localhost:5000/api/admin/edit-department/${data._id}`
-        : 'http://localhost:5000/api/admin/create-department';
+        ? `/api/admin/edit-department/${data._id}`
+        : '/api/admin/create-department';
       const res = await fetch(url, {
         method: data._id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -137,7 +137,7 @@ const Department = () => {
     if (!window.confirm('Delete this department?')) return;
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/delete-department/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/admin/delete-department/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error('Delete failed');
       setDepartments(prev => prev.filter(d => d._id !== id));
       showToast('Department deleted!');

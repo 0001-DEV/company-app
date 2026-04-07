@@ -23,7 +23,7 @@ const WeeklyReport = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/reports/current', {
+      const res = await fetch('/api/reports/current', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -62,7 +62,7 @@ const WeeklyReport = () => {
     try {
       setSubmitting(true);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/reports/submit', {
+      const res = await fetch('/api/reports/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

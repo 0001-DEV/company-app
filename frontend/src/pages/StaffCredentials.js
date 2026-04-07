@@ -19,7 +19,7 @@ const PasswordGate = ({ onSuccess, onCancel }) => {
     setChecking(true); setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/verify-password', {
+      const res = await fetch('/api/admin/verify-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ password: pw })
@@ -199,7 +199,7 @@ function StaffCredentials() {
       return;
     }
     try {
-      const res = await fetch('http://localhost:5000/api/admin/staff-credentials', {
+      const res = await fetch('/api/admin/staff-credentials', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -221,7 +221,7 @@ function StaffCredentials() {
       const body = { email: data.email };
       if (data.password) body.password = data.password;
 
-      const res = await fetch(`http://localhost:5000/api/admin/staff-credentials/${id}`, {
+      const res = await fetch(`/api/admin/staff-credentials/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body)
@@ -244,7 +244,7 @@ function StaffCredentials() {
     if (!window.confirm(`Delete staff member "${name}"? This cannot be undone.`)) return;
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/delete-staff/${id}`, {
+      const res = await fetch(`/api/admin/delete-staff/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

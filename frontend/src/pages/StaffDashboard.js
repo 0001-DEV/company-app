@@ -332,7 +332,7 @@ const StaffDashboard = () => {
                         <div key={i} style={s.fileCard}>
                           <div style={s.fileCardTop}>
                             <div style={s.fileIconBig}>{icon}</div>
-                            <a href={`http://localhost:5000/${file.path}`} target="_blank" rel="noopener noreferrer" style={s.fileName}>
+                            <a href={`/${file.path}`} target="_blank" rel="noopener noreferrer" style={s.fileName}>
                               {name.length > 28 ? name.substring(0, 28) + '…' : name}
                             </a>
                             <div style={s.fileDate}>{new Date(file.uploadedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>

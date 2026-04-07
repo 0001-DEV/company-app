@@ -55,7 +55,7 @@ const StaffDetails = () => {
     const fetchStaff = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`http://localhost:5000/api/admin/staff/${id}`, {
+        const res = await fetch(`/api/admin/staff/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch staff');
@@ -207,7 +207,7 @@ const StaffDetails = () => {
                   const icon = fileIcon(name);
                   const date = new Date(file.uploadedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                   return (
-                    <a key={i} href={`http://localhost:5000/${file.path}`} target="_blank" rel="noopener noreferrer" style={S.fileCard}>
+                    <a key={i} href={`/${file.path}`} target="_blank" rel="noopener noreferrer" style={S.fileCard}>
                       <div style={S.fileIconWrap}>{icon}</div>
                       <div style={S.fileName}>{name.length > 26 ? name.substring(0, 26) + '…' : name}</div>
                       <div style={S.fileDate}>{date}</div>

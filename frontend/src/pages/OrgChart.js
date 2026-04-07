@@ -12,8 +12,8 @@ export default function OrgChart() {
     const fetchData = async () => {
       try {
         const [deptRes, staffRes] = await Promise.all([
-          fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } }),
-          fetch("http://localhost:5000/api/admin/all-staff", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/admin/all-staff", { headers: { Authorization: `Bearer ${token()}` } }),
         ]);
         const depts = deptRes.ok ? await deptRes.json() : [];
         const staffList = staffRes.ok ? await staffRes.json() : [];

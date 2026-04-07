@@ -17,8 +17,8 @@ const BirthdayNotification = ({ userRole }) => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = userRole === 'admin' 
-        ? 'http://localhost:5000/api/admin/upcoming-birthdays'
-        : 'http://localhost:5000/api/staff/upcoming-birthdays';
+        ? '/api/admin/upcoming-birthdays'
+        : '/api/staff/upcoming-birthdays';
       
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -43,7 +43,7 @@ const BirthdayNotification = ({ userRole }) => {
   const sendBirthdayWishAutomatically = async (staffId, staffName) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/send-birthday-wish/${staffId}`, {
+      const response = await fetch(`/api/admin/send-birthday-wish/${staffId}`, {
         method: 'POST',
         headers: { 
           Authorization: `Bearer ${token}`,

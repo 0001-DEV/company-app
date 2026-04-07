@@ -19,7 +19,7 @@ export default function PollWidget({ departmentId, currentUser, isGroupAdmin }) 
 
   const fetchPolls = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/features/polls?departmentId=${departmentId}`, {
+      const res = await fetch(`/api/features/polls?departmentId=${departmentId}`, {
         headers: { Authorization: `Bearer ${token()}` }
       });
       if (res.ok) setPolls(await res.json());
@@ -32,7 +32,7 @@ export default function PollWidget({ departmentId, currentUser, isGroupAdmin }) 
     if (!question.trim() || validOpts.length < 2) return;
     setSaving(true);
     try {
-      const res = await fetch("http://localhost:5000/api/features/polls", {
+      const res = await fetch("/api/features/polls", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ question, options: validOpts, departmentId, scope: "department" })
@@ -47,7 +47,7 @@ export default function PollWidget({ departmentId, currentUser, isGroupAdmin }) 
 
   const handleVote = async (pollId, optionIndex) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/features/polls/${pollId}/vote`, {
+      const res = await fetch(`/api/features/polls/${pollId}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ optionIndex })
@@ -60,7 +60,7 @@ export default function PollWidget({ departmentId, currentUser, isGroupAdmin }) 
   };
 
   const handleDelete = async (pollId) => {
-    await fetch(`http://localhost:5000/api/features/polls/${pollId}`, {
+    await fetch(`/api/features/polls/${pollId}`, {
       method: "DELETE", headers: { Authorization: `Bearer ${token()}` }
     });
     setPolls(prev => prev.filter(p => p._id !== pollId));

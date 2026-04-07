@@ -25,7 +25,7 @@ export default function Announcements() {
   const token = () => localStorage.getItem("token");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } })
+    fetch("/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } })
       .then(r => r.ok ? r.json() : null).then(u => setCurrentUser(u));
     fetchAnnouncements();
   }, []);
@@ -33,14 +33,14 @@ export default function Announcements() {
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/features/announcements", { headers: { Authorization: `Bearer ${token()}` } });
+      const res = await fetch("/api/features/announcements", { headers: { Authorization: `Bearer ${token()}` } });
       if (res.ok) setAnnouncements(await res.json());
     } catch (_) {}
     setLoading(false);
   };
 
   const markRead = async (id) => {
-    await fetch(`http://localhost:5000/api/features/announcements/${id}/read`, {
+    await fetch(`/api/features/announcements/${id}/read`, {
       method: "POST", headers: { Authorization: `Bearer ${token()}` }
     });
     setAnnouncements(prev => prev.map(a => a._id === id && !a.readBy.includes(currentUser?.id)
@@ -53,7 +53,7 @@ export default function Announcements() {
   };
 
   const handleReact = async (id, emoji) => {
-    const res = await fetch(`http://localhost:5000/api/features/announcements/${id}/react`, {
+    const res = await fetch(`/api/features/announcements/${id}/react`, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
       body: JSON.stringify({ emoji })
     });
@@ -68,7 +68,7 @@ export default function Announcements() {
     if (!form.title.trim() || !form.body.trim()) return;
     setPosting(true);
     try {
-      const res = await fetch("http://localhost:5000/api/features/announcements", {
+      const res = await fetch("/api/features/announcements", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify(form)
       });
@@ -84,7 +84,7 @@ export default function Announcements() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this announcement?")) return;
-    await fetch(`http://localhost:5000/api/features/announcements/${id}`, {
+    await fetch(`/api/features/announcements/${id}`, {
       method: "DELETE", headers: { Authorization: `Bearer ${token()}` }
     });
     setAnnouncements(prev => prev.filter(a => a._id !== id));
@@ -101,7 +101,7 @@ export default function Announcements() {
     setReadersLoading(true);
     setReadersModal({ ann, data: null });
     try {
-      const res = await fetch(`http://localhost:5000/api/extras/announcements/${ann._id}/readers`, {
+      const res = await fetch(`/api/extras/announcements/${ann._id}/readers`, {
         headers: { Authorization: `Bearer ${token()}` }
       });
       if (res.ok) {

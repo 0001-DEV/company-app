@@ -28,7 +28,7 @@ export default function AuditLog() {
       setLoading(true);
       try {
         const params = new URLSearchParams({ page, limit: 50, ...(filter ? { filter } : {}) });
-        const res = await fetch(`http://localhost:5000/api/extras/audit?${params}`, {
+        const res = await fetch(`/api/extras/audit?${params}`, {
           headers: { Authorization: `Bearer ${token()}` }
         });
         if (res.status === 403) { navigate("/home"); return; }

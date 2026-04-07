@@ -47,7 +47,7 @@ const StaffAssignmentModal = ({ onClose, onSubmit, staffList }) => {
     const fetchCurrentAccess = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch('http://localhost:5000/api/admin/workbank/access/get', {
+        const res = await fetch('/api/admin/workbank/access/get', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -216,7 +216,7 @@ const UploadedWorks = () => {
   const fetchStaff = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/admin/workbank/staff-list', {
+      const res = await fetch('/api/admin/workbank/staff-list', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setStaffList(await res.json());
@@ -228,7 +228,7 @@ const UploadedWorks = () => {
   const handleStaffAssignment = async (selectedStaffIds) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/admin/workbank/access/update', {
+      const res = await fetch('/api/admin/workbank/access/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ staffIds: selectedStaffIds })
@@ -257,7 +257,7 @@ const UploadedWorks = () => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/staff-login'); return; }
     try {
-      const res = await fetch('http://localhost:5000/api/admin/all-uploaded-files', {
+      const res = await fetch('/api/admin/all-uploaded-files', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setFiles(await res.json());
@@ -270,7 +270,7 @@ const UploadedWorks = () => {
     if (!window.confirm(`Move "${fileName}" to recycle bin?`)) return;
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/delete-staff-file/${staffId}/${fileId}`, {
+      const res = await fetch(`/api/admin/delete-staff-file/${staffId}/${fileId}`, {
         method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) { showToast('File moved to recycle bin'); fetchFiles(); }
@@ -357,21 +357,21 @@ const UploadedWorks = () => {
               <button onClick={() => setViewFile(null)} style={S.previewClose}>✕</button>
             </div>
             {/\.(jpg|jpeg|png|gif|webp)$/i.test(viewFile.fileName) ? (
-              <img src={`http://localhost:5000/${viewFile.filePath}`} alt={viewFile.fileName}
+              <img src={`/${viewFile.filePath}`} alt={viewFile.fileName}
                 style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 8 }} />
             ) : /\.(mp4|mov|webm)$/i.test(viewFile.fileName) ? (
               <video controls style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 8 }}>
-                <source src={`http://localhost:5000/${viewFile.filePath}`} />
+                <source src={`/${viewFile.filePath}`} />
               </video>
             ) : /\.(mp3|wav|ogg|webm)$/i.test(viewFile.fileName) ? (
               <audio controls style={{ width: '100%', marginTop: 20 }}>
-                <source src={`http://localhost:5000/${viewFile.filePath}`} />
+                <source src={`/${viewFile.filePath}`} />
               </audio>
             ) : (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-lighter, #94a3b8)' }}>
                 <div style={{ fontSize: 64, marginBottom: 16 }}>{getFileIcon(viewFile.fileName)}</div>
                 <p>Preview not available for this file type.</p>
-                <a href={`http://localhost:5000/${viewFile.filePath}`} download style={S.dlBtn}>⬇ Download to view</a>
+                <a href={`/${viewFile.filePath}`} download style={S.dlBtn}>⬇ Download to view</a>
               </div>
             )}
           </div>
@@ -410,7 +410,7 @@ const UploadedWorks = () => {
                     const token = localStorage.getItem('token');
                     try {
                       const res = await fetch(
-                        `http://localhost:5000/api/admin/rename-staff-file/${renameModal.staffId}/${renameModal.fileId}`,
+                        `/api/admin/rename-staff-file/${renameModal.staffId}/${renameModal.fileId}`,
                         {
                           method: 'PUT',
                           headers: {
@@ -575,7 +575,7 @@ const UploadedWorks = () => {
                       </div>
                       <div style={S.fileActions}>
                         <button style={S.previewBtn} onClick={() => setViewFile(file)} title="Preview">👁</button>
-                        <a href={`http://localhost:5000/${file.filePath}`} download style={S.dlBtnSmall} title="Download">⬇</a>
+                        <a href={`/${file.filePath}`} download style={S.dlBtnSmall} title="Download">⬇</a>
                         <button
                           style={S.renameBtn}
                           onClick={() => { setRenameModal({ staffId: file.staffId, fileId: file.fileId, fileName: file.fileName || '' }); setRenameValue(file.fileName || ''); }}

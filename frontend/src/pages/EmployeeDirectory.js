@@ -16,8 +16,8 @@ export default function EmployeeDirectory() {
     const load = async () => {
       try {
         const [meRes, staffRes] = await Promise.all([
-          fetch("http://localhost:5000/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } }),
-          fetch("http://localhost:5000/api/admin/all-staff", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/admin/all-staff", { headers: { Authorization: `Bearer ${token()}` } }),
         ]);
         if (meRes.ok) setCurrentUser(await meRes.json());
         if (staffRes.ok) setStaff(await staffRes.json());
@@ -45,7 +45,7 @@ export default function EmployeeDirectory() {
   const exportToExcel = async () => {
     try {
       const t = token();
-      const res = await fetch('http://localhost:5000/api/admin/export-staff', {
+      const res = await fetch('/api/admin/export-staff', {
         headers: { Authorization: `Bearer ${t}` }
       });
       if (!res.ok) { alert('Export failed. Please try again.'); return; }

@@ -28,7 +28,7 @@ export default function Tasks() {
   const token = () => localStorage.getItem("token");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } })
+    fetch("/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } })
       .then(r => r.ok ? r.json() : null).then(u => { setCurrentUser(u); });
     fetchTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,7 +37,7 @@ export default function Tasks() {
   useEffect(() => {
     if (!currentUser) return;
     if (currentUser.role === "admin") {
-      fetch("http://localhost:5000/api/chat/users", { headers: { Authorization: `Bearer ${token()}` } })
+      fetch("/api/chat/users", { headers: { Authorization: `Bearer ${token()}` } })
         .then(r => r.ok ? r.json() : []).then(setStaffList);
     }
   }, [currentUser]);
@@ -45,7 +45,7 @@ export default function Tasks() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/features/tasks", { headers: { Authorization: `Bearer ${token()}` } });
+      const res = await fetch("/api/features/tasks", { headers: { Authorization: `Bearer ${token()}` } });
       if (res.ok) setTasks(await res.json());
     } catch (_) {}
     setLoading(false);
@@ -73,7 +73,7 @@ export default function Tasks() {
     try {
       const assignedToNames = staffList.filter(s => form.assignedTo.includes(s._id)).map(s => s.name);
       const body = { ...form, assignedToNames };
-      const url = editTask ? `http://localhost:5000/api/features/tasks/${editTask._id}` : "http://localhost:5000/api/features/tasks";
+      const url = editTask ? `/api/features/tasks/${editTask._id}` : "/api/features/tasks";
       const method = editTask ? "PUT" : "POST";
       const res = await fetch(url, {
         method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
@@ -90,7 +90,7 @@ export default function Tasks() {
 
   const updateStatus = async (taskId, status) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/features/tasks/${taskId}`, {
+      const res = await fetch(`/api/features/tasks/${taskId}`, {
         method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ status })
       });
@@ -100,7 +100,7 @@ export default function Tasks() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this task?")) return;
-    await fetch(`http://localhost:5000/api/features/tasks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } });
+    await fetch(`/api/features/tasks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } });
     setTasks(prev => prev.filter(t => t._id !== id));
     showToast("Task deleted.", "success");
   };

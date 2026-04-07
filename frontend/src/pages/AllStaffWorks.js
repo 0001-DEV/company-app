@@ -53,7 +53,7 @@ const AllStaffWorks = () => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/staff-login'); return; }
     try {
-      const res = await fetch('http://localhost:5000/api/staff/all-staff-files', {
+      const res = await fetch('/api/staff/all-staff-files', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) { setFiles(await res.json()); }
@@ -110,26 +110,26 @@ const AllStaffWorks = () => {
                 <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 14, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{viewFile.fileName}</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <a href={`http://localhost:5000/${viewFile.filePath}`} download style={S.modalDl}>⬇ Download</a>
+                <a href={`/${viewFile.filePath}`} download style={S.modalDl}>⬇ Download</a>
                 <button onClick={() => setViewFile(null)} style={S.modalClose}>✕</button>
               </div>
             </div>
             <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
               {isImage(viewFile.fileName) ? (
-                <img src={`http://localhost:5000/${viewFile.filePath}`} alt={viewFile.fileName} style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: 10, objectFit: 'contain' }} />
+                <img src={`/${viewFile.filePath}`} alt={viewFile.fileName} style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: 10, objectFit: 'contain' }} />
               ) : isVideo(viewFile.fileName) ? (
                 <video controls style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: 10 }}>
-                  <source src={`http://localhost:5000/${viewFile.filePath}`} />
+                  <source src={`/${viewFile.filePath}`} />
                 </video>
               ) : isAudio(viewFile.fileName) ? (
                 <audio controls style={{ width: '100%' }}>
-                  <source src={`http://localhost:5000/${viewFile.filePath}`} />
+                  <source src={`/${viewFile.filePath}`} />
                 </audio>
               ) : (
                 <div style={{ textAlign: 'center', color: 'var(--text-lighter, #94a3b8)' }}>
                   <div style={{ fontSize: 72, marginBottom: 16 }}>{getFileIcon(viewFile.fileName)}</div>
                   <p style={{ marginBottom: 20 }}>Preview not available for this file type.</p>
-                  <a href={`http://localhost:5000/${viewFile.filePath}`} download style={S.bigDl}>⬇ Download File</a>
+                  <a href={`/${viewFile.filePath}`} download style={S.bigDl}>⬇ Download File</a>
                 </div>
               )}
             </div>
@@ -169,7 +169,7 @@ const AllStaffWorks = () => {
                     const token = localStorage.getItem('token');
                     try {
                       const res = await fetch(
-                        `http://localhost:5000/api/admin/rename-staff-file/${renameModal.staffId}/${renameModal.fileId}`,
+                        `/api/admin/rename-staff-file/${renameModal.staffId}/${renameModal.fileId}`,
                         {
                           method: 'PUT',
                           headers: {
@@ -346,7 +346,7 @@ const AllStaffWorks = () => {
                           {/* Card actions */}
                           <div style={S.fileCardActions}>
                             <button style={S.previewBtn} onClick={() => setViewFile(file)}>👁 Preview</button>
-                            <a href={`http://localhost:5000/${file.filePath}`} download style={S.dlBtn}>⬇ Download</a>
+                            <a href={`/${file.filePath}`} download style={S.dlBtn}>⬇ Download</a>
                             <button
                               style={S.renameBtn}
                               onClick={() => { setRenameModal({ staffId: file.staffId, fileId: file.fileId, fileName: file.fileName || '' }); setRenameValue(file.fileName || ''); }}

@@ -61,7 +61,7 @@ function AllDepartments() {
   const fetchDepartments = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/admin/departments', {
+      const res = await fetch('/api/admin/departments', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -81,7 +81,7 @@ function AllDepartments() {
     try {
       if (editingData) {
         // Edit department
-        await fetch(`http://localhost:5000/api/admin/departments/${editingData._id}`, {
+        await fetch(`/api/admin/departments/${editingData._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(data)
@@ -90,7 +90,7 @@ function AllDepartments() {
         setToast({ message: 'Department updated!', type: 'success' });
       } else {
         // Add new department
-        const res = await fetch('http://localhost:5000/api/admin/departments', {
+        const res = await fetch('/api/admin/departments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(data)
@@ -111,7 +111,7 @@ function AllDepartments() {
     const token = localStorage.getItem('token');
     if (!window.confirm('Are you sure?')) return;
     try {
-      await fetch(`http://localhost:5000/api/admin/departments/${id}`, {
+      await fetch(`/api/admin/departments/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

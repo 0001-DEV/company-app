@@ -21,10 +21,10 @@ export default function ScheduleBoard() {
     const load = async () => {
       try {
         const [meRes, deptRes, staffRes, schedRes] = await Promise.all([
-          fetch("http://localhost:5000/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } }),
-          fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } }),
-          fetch("http://localhost:5000/api/admin/all-staff", { headers: { Authorization: `Bearer ${token()}` } }),
-          fetch("http://localhost:5000/api/extras/schedules", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/chat/me", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/admin/all-staff", { headers: { Authorization: `Bearer ${token()}` } }),
+          fetch("/api/extras/schedules", { headers: { Authorization: `Bearer ${token()}` } }),
         ]);
         if (meRes.ok) setCurrentUser(await meRes.json());
         if (deptRes.ok) setDepartments(await deptRes.json());
@@ -43,7 +43,7 @@ export default function ScheduleBoard() {
 
   const refreshDepartments = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } });
+      const res = await fetch("/api/admin/departments", { headers: { Authorization: `Bearer ${token()}` } });
       if (res.ok) setDepartments(await res.json());
     } catch (_) {}
   };
@@ -75,7 +75,7 @@ export default function ScheduleBoard() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch("http://localhost:5000/api/extras/schedules", {
+      const res = await fetch("/api/extras/schedules", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify(form),
       });
@@ -90,7 +90,7 @@ export default function ScheduleBoard() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this schedule?")) return;
-    await fetch(`http://localhost:5000/api/extras/schedules/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } });
+    await fetch(`/api/extras/schedules/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } });
     setSchedules(prev => prev.filter(s => s._id !== id));
   };
 

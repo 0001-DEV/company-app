@@ -34,9 +34,9 @@ export default function DepartmentDetail() {
     const load = async () => {
       try {
         const [deptRes, staffRes, allDeptsRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/admin/departments`, { headers }),
-          fetch(`http://localhost:5000/api/admin/all-staff`, { headers }),
-          fetch(`http://localhost:5000/api/admin/departments`, { headers }),
+          fetch(`/api/admin/departments`, { headers }),
+          fetch(`/api/admin/all-staff`, { headers }),
+          fetch(`/api/admin/departments`, { headers }),
         ]);
         const depts = deptRes.ok ? await deptRes.json() : [];
         const allStaff = staffRes.ok ? await staffRes.json() : [];

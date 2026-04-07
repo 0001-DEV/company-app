@@ -22,7 +22,7 @@ const AdminWeeklyReports = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/reports/all-current', {
+      const res = await fetch('/api/reports/all-current', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -41,7 +41,7 @@ const AdminWeeklyReports = () => {
   const fetchDepartments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/departments', {
+      const res = await fetch('/api/admin/departments', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -242,7 +242,7 @@ const AdminWeeklyReports = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
                   {report.user?.profilePicture ? (
                     <img 
-                      src={`http://localhost:5000${report.user.profilePicture}?t=${Date.now()}`}
+                      src={`${report.user.profilePicture}?t=${Date.now()}`}
                       alt={report.user?.name}
                       style={{
                         width: '40px',
@@ -335,7 +335,7 @@ const AdminWeeklyReports = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 {selectedReport.user?.profilePicture ? (
                   <img 
-                    src={`http://localhost:5000${selectedReport.user.profilePicture}?t=${Date.now()}`}
+                    src={`${selectedReport.user.profilePicture}?t=${Date.now()}`}
                     alt={selectedReport.user?.name}
                     style={{
                       width: '60px',

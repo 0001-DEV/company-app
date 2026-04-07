@@ -250,7 +250,7 @@ const ChatBox = () => {
 
   useEffect(() => {
     if (!currentUser) return;
-    const beat = async () => { try { const token = localStorage.getItem("token"); await fetch("http://localhost:5000/api/chat/heartbeat", { method: "POST", headers: { Authorization: `Bearer ${token}` } }); } catch (_) {} };
+    const beat = async () => { try { const token = localStorage.getItem("token"); await fetch("/api/chat/heartbeat", { method: "POST", headers: { Authorization: `Bearer ${token}` } }); } catch (_) {} };
     beat(); const iv = setInterval(beat, 20000); return () => clearInterval(iv);
   }, [currentUser]);
 
@@ -260,7 +260,7 @@ const ChatBox = () => {
       try {
         const token = localStorage.getItem("token");
         const ids = staffList.map(s => s._id).join(",");
-        const res = await fetch(`http://localhost:5000/api/chat/online-status?ids=${ids}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/chat/online-status?ids=${ids}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setOnlineStatus(await res.json());
       } catch (_) {}
     };
@@ -273,7 +273,7 @@ const ChatBox = () => {
       try {
         const token = localStorage.getItem("token");
         const ids = staffList.map(s => s._id).join(",");
-        const res = await fetch(`http://localhost:5000/api/features/status?ids=${ids}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/features/status?ids=${ids}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setPeerStatuses(await res.json());
       } catch (_) {}
     };
@@ -290,7 +290,7 @@ const ChatBox = () => {
     const fetchTyping = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5000/api/chat/typing?conversationKey=${getConvKey()}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/chat/typing?conversationKey=${getConvKey()}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setTypingNames(await res.json());
       } catch (_) {}
     };
@@ -302,7 +302,7 @@ const ChatBox = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) { setError("Please log in first to use chat"); setLoading(false); return; }
-        const response = await fetch("http://localhost:5000/api/chat/me", { headers: { Authorization: `Bearer ${token}` } });
+        const response = await fetch("/api/chat/me", { headers: { Authorization: `Bearer ${token}` } });
         if (response.ok) { setCurrentUser(await response.json()); }
         else { const d = await response.json(); setError(`Authentication failed: ${d.message || "Unknown error"}`); }
       } catch (err) { setError(`Error connecting to server: ${err.message}`); }
@@ -317,14 +317,14 @@ const ChatBox = () => {
       setStaffLoading(true);
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/chat/users", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("/api/chat/users", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setStaffList(await res.json());
       } catch (err) { console.error(err); } finally { setStaffLoading(false); }
     };
     const fetchDepartments = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("/api/admin/departments", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setDepartments(await res.json());
       } catch (err) { console.error(err); }
     };
@@ -343,7 +343,7 @@ const ChatBox = () => {
     const fetchUnread = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/chat/unread-counts", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("/api/chat/unread-counts", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setUnreadCounts(await res.json());
       } catch (err) {}
     };
@@ -355,7 +355,7 @@ const ChatBox = () => {
     const fetchLast = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/chat/last-messages", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("/api/chat/last-messages", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setLastMessages(await res.json());
       } catch (err) {}
     };
@@ -367,7 +367,7 @@ const ChatBox = () => {
     const loadMessages = async () => {
       try {
         const token = localStorage.getItem("token");
-        let url = "http://localhost:5000/api/chat/messages";
+        let url = "/api/chat/messages";
         if (viewMode === "private" && selectedUser) url += `?userId=${selectedUser}`;
         else if (viewMode === "department" && selectedDepartment) url += `?departmentId=${selectedDepartment._id}`;
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -382,7 +382,7 @@ const ChatBox = () => {
     const fetchStarred = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/chat/starred", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("/api/chat/starred", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setStarredMessages(await res.json());
       } catch (_) {}
     };
@@ -394,7 +394,7 @@ const ChatBox = () => {
     const fetchPins = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5000/api/chat/pins?departmentId=${selectedDepartment._id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/chat/pins?departmentId=${selectedDepartment._id}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setPinnedMessages(await res.json());
       } catch (_) {}
     };
@@ -406,7 +406,7 @@ const ChatBox = () => {
     const fetchMedia = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5000/api/chat/media?departmentId=${selectedDepartment._id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/chat/media?departmentId=${selectedDepartment._id}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setMediaMessages(await res.json());
       } catch (_) {}
     };
@@ -443,7 +443,7 @@ const ChatBox = () => {
     const poll = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/chat/call/incoming", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("/api/chat/call/incoming", { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) return;
         const call = await res.json();
         const current = incomingCallRef.current;
@@ -466,7 +466,7 @@ const ChatBox = () => {
     const poll = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5000/api/chat/call/status/${activeCall.callId}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/chat/call/status/${activeCall.callId}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const { status } = await res.json();
           if (status === "accepted") {
@@ -494,11 +494,11 @@ const ChatBox = () => {
     try {
       const token = localStorage.getItem("token");
       const body = userId ? { userId } : opts;
-      await fetch("http://localhost:5000/api/chat/messages/mark-read", {
+      await fetch("/api/chat/messages/mark-read", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(body)
       });
-      const res = await fetch("http://localhost:5000/api/chat/unread-counts", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/chat/unread-counts", { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) setUnreadCounts(await res.json());
     } catch (_) {}
   };
@@ -508,7 +508,7 @@ const ChatBox = () => {
     setMyStatus(newStatus);
     try {
       const token = localStorage.getItem("token");
-      await fetch("http://localhost:5000/api/features/status", {
+      await fetch("/api/features/status", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(newStatus)
       });
@@ -517,7 +517,7 @@ const ChatBox = () => {
 
   const reloadMessages = async () => {
     const token = localStorage.getItem("token");
-    let url = "http://localhost:5000/api/chat/messages";
+    let url = "/api/chat/messages";
     if (viewMode === "private" && selectedUser) url += `?userId=${selectedUser}`;
     else if (viewMode === "department" && selectedDepartment) url += `?departmentId=${selectedDepartment._id}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -536,7 +536,7 @@ const ChatBox = () => {
       formData.append("receiverId", receiverId);
       if (replyingTo) formData.append("replyToId", replyingTo._id);
       selectedFiles.forEach(f => formData.append("files", f));
-      const res = await fetch("http://localhost:5000/api/chat/message", {
+      const res = await fetch("/api/chat/message", {
         method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData,
       });
       if (res.ok) { setText(""); setSelectedFiles([]); setReplyingTo(null); reloadMessages(); }
@@ -549,7 +549,7 @@ const ChatBox = () => {
       let convKey = "all";
       if (viewMode === "private" && selectedUser) convKey = `private:${[currentUser.id, selectedUser].sort().join(":")}`;
       else if (viewMode === "department" && selectedDepartment) convKey = `dept:${selectedDepartment._id}`;
-      await fetch("http://localhost:5000/api/chat/typing", {
+      await fetch("/api/chat/typing", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ conversationKey: convKey, isTyping })
       });
@@ -621,7 +621,7 @@ const ChatBox = () => {
     } else return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/chat/call/initiate", {
+      const res = await fetch("/api/chat/call/initiate", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ receiverId, callType: type, roomName })
       });
@@ -638,7 +638,7 @@ const ChatBox = () => {
     if (activeCall) {
       try {
         const token = localStorage.getItem("token");
-        await fetch("http://localhost:5000/api/chat/call/end", {
+        await fetch("/api/chat/call/end", {
           method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ callId: activeCall.callId })
         });
@@ -653,7 +653,7 @@ const ChatBox = () => {
     stopRing();
     try {
       const token = localStorage.getItem("token");
-      await fetch("http://localhost:5000/api/chat/call/respond", {
+      await fetch("/api/chat/call/respond", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ callId: incomingCall.callId, action: "accept" })
       });
@@ -667,7 +667,7 @@ const ChatBox = () => {
     stopRing();
     try {
       const token = localStorage.getItem("token");
-      await fetch("http://localhost:5000/api/chat/call/respond", {
+      await fetch("/api/chat/call/respond", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ callId: incomingCall.callId, action: "decline" })
       });
@@ -678,7 +678,7 @@ const ChatBox = () => {
   const handleReact = async (msgId, emoji) => {
     try {
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/chat/messages/${msgId}/react`, {
+      await fetch(`/api/chat/messages/${msgId}/react`, {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ emoji })
       });
@@ -689,7 +689,7 @@ const ChatBox = () => {
   const handlePin = async (msgId) => {
     try {
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/chat/messages/${msgId}/pin`, {
+      await fetch(`/api/chat/messages/${msgId}/pin`, {
         method: "PUT", headers: { Authorization: `Bearer ${token}` }
       });
       reloadMessages();
@@ -699,7 +699,7 @@ const ChatBox = () => {
   const handleStar = async (msgId) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/chat/messages/${msgId}/star`, {
+      const res = await fetch(`/api/chat/messages/${msgId}/star`, {
         method: "POST", headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) { const d = await res.json(); setStarredMessages(d.starredMessages); }
@@ -709,7 +709,7 @@ const ChatBox = () => {
   const handleReadBy = async (msgId) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/chat/messages/${msgId}/read-by`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/chat/messages/${msgId}/read-by`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const d = await res.json(); setReadByPopup({ msgId, names: d.names }); }
     } catch (_) {}
   };
@@ -717,7 +717,7 @@ const ChatBox = () => {
   const handleDelete = async (msgId) => {
     try {
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/chat/messages/${msgId}`, {
+      await fetch(`/api/chat/messages/${msgId}`, {
         method: "DELETE", headers: { Authorization: `Bearer ${token}` }
       });
       reloadMessages();
@@ -732,7 +732,7 @@ const ChatBox = () => {
       formData.append("text", forwardMsg.text || "");
       formData.append("receiverId", targetId);
       formData.append("forwardedFrom", forwardMsg.senderName);
-      await fetch("http://localhost:5000/api/chat/message", {
+      await fetch("/api/chat/message", {
         method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData
       });
       setForwardMsg(null);
@@ -801,7 +801,7 @@ const ChatBox = () => {
   const loadGroupInfo = async (dept) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/admin/department-members/${dept._id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/admin/department-members/${dept._id}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const d = await res.json();
         setGroupMembers(d.members || []);
@@ -864,7 +864,7 @@ const ChatBox = () => {
           <div style={S.sectionHeader} onClick={() => { 
             if (!deptSectionOpen) {
               const token = localStorage.getItem("token");
-              fetch("http://localhost:5000/api/admin/departments", { headers: { Authorization: `Bearer ${token}` } })
+              fetch("/api/admin/departments", { headers: { Authorization: `Bearer ${token}` } })
                 .then(res => res.ok && res.json())
                 .then(data => data && setDepartments(data))
                 .catch(err => console.error(err));
@@ -965,7 +965,7 @@ const ChatBox = () => {
                             const isAudio = isAudioFile(file.originalName || file.path);
                             const isVideo = isVideoFile(file.originalName || file.path);
                             const isImage = isImageFile(file.originalName || file.path);
-                            const fileUrl = `http://localhost:5000/${file.path}`;
+                            const fileUrl = `/${file.path}`;
                             
                             return (
                               <div key={fidx} onClick={e => e.stopPropagation()}>
@@ -1108,8 +1108,8 @@ const ChatBox = () => {
                       ) : (
                         mediaMessages.map((msg, idx) => (
                           <div key={idx} style={{ marginBottom: 12 }}>
-                            {isImageFile(msg.fileName) && <img src={`http://localhost:5000/${msg.fileName}`} alt="media" style={{ width: "100%", borderRadius: 8 }} />}
-                            {isVideoFile(msg.fileName) && <video src={`http://localhost:5000/${msg.fileName}`} style={{ width: "100%", borderRadius: 8 }} controls />}
+                            {isImageFile(msg.fileName) && <img src={`/${msg.fileName}`} alt="media" style={{ width: "100%", borderRadius: 8 }} />}
+                            {isVideoFile(msg.fileName) && <video src={`/${msg.fileName}`} style={{ width: "100%", borderRadius: 8 }} controls />}
                           </div>
                         ))
                       )}
@@ -1141,7 +1141,7 @@ const ChatBox = () => {
                     let receiverId = "all";
                     if (viewMode === "private" && selectedUser) receiverId = selectedUser;
                     else if (viewMode === "department" && selectedDepartment) receiverId = `department:${selectedDepartment._id}`;
-                    await fetch("http://localhost:5000/api/chat/schedule", {
+                    await fetch("/api/chat/schedule", {
                       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                       body: JSON.stringify({ text: scheduleText, receiverId, scheduledAt: new Date(scheduleAt).toISOString() })
                     });

@@ -14,7 +14,7 @@ const RecycleBin = () => {
   const fetchDeletedFiles = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/recycle-bin', {
+      const response = await fetch('/api/admin/recycle-bin', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -34,7 +34,7 @@ const RecycleBin = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/restore-file/${staffId}/${fileId}`, {
+      const response = await fetch(`/api/admin/restore-file/${staffId}/${fileId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -57,7 +57,7 @@ const RecycleBin = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/permanent-delete/${staffId}/${fileId}`, {
+      const response = await fetch(`/api/admin/permanent-delete/${staffId}/${fileId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

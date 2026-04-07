@@ -36,7 +36,7 @@ const StockManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/stock/all', {
+      const res = await fetch('/api/stock/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setStocks(await res.json());
@@ -50,7 +50,7 @@ const StockManagement = () => {
   const fetchStaff = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/chat/users', {
+      const res = await fetch('/api/chat/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setStaffList(await res.json());
@@ -70,7 +70,7 @@ const StockManagement = () => {
         alert('Please login first');
         return;
       }
-      const res = await fetch('http://localhost:5000/api/stock/create', {
+      const res = await fetch('/api/stock/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: newStockName, quantity: parseInt(newStockQty), unit: newStockUnit })
@@ -110,7 +110,7 @@ const StockManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = transactionType === 'add' ? 'add' : 'deduct';
-      const res = await fetch(`http://localhost:5000/api/stock/${selectedStock._id}/${endpoint}`, {
+      const res = await fetch(`/api/stock/${selectedStock._id}/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ quantity: parseInt(quantity), reason })
@@ -131,7 +131,7 @@ const StockManagement = () => {
     if (!selectedStock || !selectedMonitor) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/stock/${selectedStock._id}/assign-monitor`, {
+      const res = await fetch(`/api/stock/${selectedStock._id}/assign-monitor`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ monitorId: selectedMonitor })
@@ -151,7 +151,7 @@ const StockManagement = () => {
     if (!selectedStock || !editStockName.trim()) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/stock/${selectedStock._id}/update-name`, {
+      const res = await fetch(`/api/stock/${selectedStock._id}/update-name`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: editStockName.trim() })
@@ -178,7 +178,7 @@ const StockManagement = () => {
       const formData = new FormData();
       formData.append('file', file);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/stock/upload-excel', {
+      const res = await fetch('/api/stock/upload-excel', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -225,7 +225,7 @@ const StockManagement = () => {
     try {
       const token = localStorage.getItem('token');
       console.log('Exporting for month:', selectedMonth, 'year:', selectedYear);
-      const res = await fetch(`http://localhost:5000/api/stock/export/${selectedMonth}/${selectedYear}`, {
+      const res = await fetch(`/api/stock/export/${selectedMonth}/${selectedYear}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('Response status:', res.status);

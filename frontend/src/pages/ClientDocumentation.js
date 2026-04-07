@@ -67,7 +67,7 @@ const ClientDocumentation = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/client-documents/all', {
+      const res = await fetch('/api/client-documents/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -86,8 +86,8 @@ const ClientDocumentation = () => {
       const token = localStorage.getItem('token');
       // If staff, get only assigned companies; if admin, get all
       const endpoint = userRole === 'admin' 
-        ? 'http://localhost:5000/api/mapping/all'
-        : 'http://localhost:5000/api/mapping/my-companies';
+        ? '/api/mapping/all'
+        : '/api/mapping/my-companies';
       
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -106,8 +106,8 @@ const ClientDocumentation = () => {
       const token = localStorage.getItem('token');
       // If staff, get only assigned companies; if admin, get all
       const endpoint = userRole === 'admin' 
-        ? 'http://localhost:5000/api/mapping/all'
-        : 'http://localhost:5000/api/mapping/my-companies';
+        ? '/api/mapping/all'
+        : '/api/mapping/my-companies';
       
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -124,7 +124,7 @@ const ClientDocumentation = () => {
   const fetchStaff = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/chat/users', {
+      const res = await fetch('/api/chat/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -148,7 +148,7 @@ const ClientDocumentation = () => {
   const fetchRecycleBin = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/client-documents/recycle-bin', {
+      const res = await fetch('/api/client-documents/recycle-bin', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -163,7 +163,7 @@ const ClientDocumentation = () => {
   const fetchHistory = async (docId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/${docId}/history`, {
+      const res = await fetch(`/api/client-documents/${docId}/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -180,7 +180,7 @@ const ClientDocumentation = () => {
   const fetchCompanyDocuments = async (companyId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/company/${companyId}`, {
+      const res = await fetch(`/api/client-documents/company/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -228,7 +228,7 @@ const ClientDocumentation = () => {
       formData.append('cardType', selectedCardType);
 
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/client-documents/upload', {
+      const res = await fetch('/api/client-documents/upload', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -258,7 +258,7 @@ const ClientDocumentation = () => {
   const handleExport = async (docId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/export/${docId}`, {
+      const res = await fetch(`/api/client-documents/export/${docId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -283,7 +283,7 @@ const ClientDocumentation = () => {
       const companyName = company ? company.companyName : 'company';
       
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/export-company/${companyId}`, {
+      const res = await fetch(`/api/client-documents/export-company/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -303,7 +303,7 @@ const ClientDocumentation = () => {
     if (!window.confirm('Move to recycle bin?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/${docId}`, {
+      const res = await fetch(`/api/client-documents/${docId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -323,7 +323,7 @@ const ClientDocumentation = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/client-documents/manual-entry', {
+      const res = await fetch('/api/client-documents/manual-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -359,7 +359,7 @@ const ClientDocumentation = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/mapping/create', {
+      const res = await fetch('/api/mapping/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: newClientName.trim() })
@@ -386,7 +386,7 @@ const ClientDocumentation = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/${selectedDoc._id}/update`, {
+      const res = await fetch(`/api/client-documents/${selectedDoc._id}/update`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -418,7 +418,7 @@ const ClientDocumentation = () => {
   const handleRestoreFromRecycleBin = async (docId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/${docId}/restore`, {
+      const res = await fetch(`/api/client-documents/${docId}/restore`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -439,7 +439,7 @@ const ClientDocumentation = () => {
     if (!window.confirm('Delete this company?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/mapping/${companyId}`, {
+      const res = await fetch(`/api/mapping/${companyId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -456,7 +456,7 @@ const ClientDocumentation = () => {
   const handleRestoreCompany = async (companyId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/mapping/${companyId}/restore`, {
+      const res = await fetch(`/api/mapping/${companyId}/restore`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -473,7 +473,7 @@ const ClientDocumentation = () => {
     if (!window.confirm('Permanently delete this document?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/${docId}/permanent`, {
+      const res = await fetch(`/api/client-documents/${docId}/permanent`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -490,7 +490,7 @@ const ClientDocumentation = () => {
     if (!window.confirm('Permanently delete this company?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/mapping/${companyId}/permanent`, {
+      const res = await fetch(`/api/mapping/${companyId}/permanent`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -511,7 +511,7 @@ const ClientDocumentation = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/${selectedDoc._id}/assign-job`, {
+      const res = await fetch(`/api/client-documents/${selectedDoc._id}/assign-job`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ job: jobInput })
@@ -543,7 +543,7 @@ const ClientDocumentation = () => {
       });
 
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/${selectedDoc._id}/assign-staff`, {
+      const res = await fetch(`/api/client-documents/${selectedDoc._id}/assign-staff`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ staffIds: selectedStaff, staffNames })
@@ -575,7 +575,7 @@ const ClientDocumentation = () => {
       });
 
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/company-staff/assign`, {
+      const res = await fetch(`/api/company-staff/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ 
@@ -602,7 +602,7 @@ const ClientDocumentation = () => {
   const handleGenerateCardUsageReport = async (companyId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/client-documents/card-usage-report/${companyId}`, {
+      const res = await fetch(`/api/client-documents/card-usage-report/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -615,7 +615,7 @@ const ClientDocumentation = () => {
         if (host.includes('localhost') || host.includes('127.0.0.1')) {
           // Get the machine's IP address from the backend
           try {
-            const ipRes = await fetch('http://localhost:5000/api/config/machine-ip');
+            const ipRes = await fetch('/api/config/machine-ip');
             if (ipRes.ok) {
               const ipData = await ipRes.json();
               host = `${ipData.ip}:3000`;

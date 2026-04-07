@@ -18,7 +18,7 @@ function NoticeBoard({ isAdmin }) {
 
   const fetchNotices = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/notices', {
+      const res = await fetch('/api/notices', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setNotices(await res.json());
@@ -31,7 +31,7 @@ function NoticeBoard({ isAdmin }) {
   const handlePost = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/notices', {
+      const res = await fetch('/api/notices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title, body, priority })
@@ -47,7 +47,7 @@ function NoticeBoard({ isAdmin }) {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this notice?')) return;
     try {
-      await fetch(`http://localhost:5000/api/notices/${id}`, {
+      await fetch(`/api/notices/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
