@@ -10,7 +10,7 @@ const mockDb = {
     {
       _id: 'admin1',
       email: 'admin@xtremecr8ivity.com',
-      password: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5YmMxSUmGEJiq', // admin123 hashed
+      password: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5YmMxSUmGEJiq', // bcrypt hash of 'admin123'
       role: 'admin',
       name: 'Admin User',
       createdAt: new Date()
