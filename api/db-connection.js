@@ -40,10 +40,18 @@ async function connectToDatabase() {
     return { client: cachedClient, db: cachedDb };
   }
 
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
   
   if (!uri) {
-    throw new Error('MONGODB_URI environment variable not set');
+    console.warn('⚠️ MONGODB_URI environment variable not set');
+    console.warn('Using mock database for testing');
+    console.warn('To use real MongoDB, set MONGODB_URI in Vercel environment variables');
+    
+    // Return mock database wrapper
+    return {
+      client: null,
+      db: createMockDbWrapper(mockDb)
+    };
   }
 
   try {
@@ -59,10 +67,10 @@ async function connectToDatabase() {
     cachedClient = client;
     cachedDb = db;
     
-    console.log('MongoDB connected successfully');
+    console.log('✅ MongoDB connected successfully');
     return { client, db };
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
+    console.error('❌ MongoDB connection error:', error.message);
     console.log('Falling back to mock database for testing...');
     
     // Return mock database wrapper
