@@ -191,7 +191,14 @@ app.get('/api/staff/test', (req, res) => {
 
 // Database connection
 const PORT = process.env.PORT || 5000;
-mongoose.connect(process.env.MONGO_URI)
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+
+if (!mongoUri) {
+  console.error('❌ MONGODB_URI environment variable not set');
+  console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('MONGO') || k.includes('DB')));
+}
+
+mongoose.connect(mongoUri)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.log('❌ MongoDB connection error:', err));
 

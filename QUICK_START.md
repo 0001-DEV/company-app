@@ -1,77 +1,58 @@
-# Quick Start - Deploy in 15 Minutes
+# Quick Start - 3 Steps to Test
 
-## **TL;DR - Fast Track**
-
-### **1. MongoDB Atlas (5 min)**
-```
-1. Go to mongodb.com/cloud/atlas
-2. Sign up → Create free cluster
-3. Create user: admin / [password]
-4. Get connection string
-5. Replace <password> and database name
-```
-
-### **2. Railway Backend (5 min)**
-```
-1. Go to railway.app
-2. Sign in with GitHub
-3. New Project → Deploy from GitHub
-4. Select company-app repo
-5. Set Root Directory: backend
-6. Add env variables:
-   - MONGODB_URI=[from MongoDB]
-   - JWT_SECRET=your_secret_key_here
-   - NODE_ENV=production
-7. Deploy
-8. Copy public URL
-```
-
-### **3. Vercel Frontend (5 min)**
-```
-1. Go to vercel.com
-2. Sign in with GitHub
-3. New Project → Import company-app
-4. Root Directory: frontend
-5. Add env variable:
-   - REACT_APP_API_URL=[Railway URL from step 2]
-6. Deploy
-7. Share the URL!
-```
-
----
-
-## **Your Live Links**
-
-After deployment:
-- **Frontend:** `https://your-app.vercel.app` ← Share this!
-- **Backend:** `https://your-backend.railway.app`
-- **Database:** MongoDB Atlas (cloud)
-
----
-
-## **Common Issues**
-
-| Issue | Fix |
-|-------|-----|
-| CORS error | Update CORS_ORIGIN in Railway to match Vercel URL |
-| DB connection fails | Check MongoDB connection string and password |
-| Build fails | Run `npm install` locally, check for errors |
-| 502 error | Wait 30 seconds, backend might be starting |
-
----
-
-## **Update Your App**
-
+## Terminal 1: Backend
 ```bash
-git add -A
-git commit -m "Your changes"
-git push
+cd backend
+npm start
 ```
+Wait for: `✅ Server running on port 5000`
 
-Both Vercel and Railway auto-deploy on push! ✨
+## Terminal 2: Frontend
+```bash
+cd frontend
+npm start
+```
+Automatically opens: `http://localhost:3000`
+
+## Test Login
+- Email: `admin@xtremecr8ivity.com`
+- Password: `admin123`
 
 ---
 
-## **Need Help?**
+## If You See Errors
 
-See `DEPLOYMENT_GUIDE.md` for detailed instructions.
+### "Cannot find module"
+```bash
+npm install
+```
+
+### "Unexpected token '<'"
+- Backend not running
+- Check Terminal 1 for errors
+
+### "bad auth: Authentication failed"
+- MongoDB credentials wrong
+- Check MongoDB Atlas user: `admin` / `Opulence16`
+
+### "Proxy error: Could not proxy request"
+- Backend not running on port 5000
+- Check Terminal 1
+
+---
+
+## Verify Backend Works
+```
+http://localhost:5000/api/test
+```
+
+Should show JSON response with collections list.
+
+---
+
+## Test Logout
+1. After login, you'll see admin dashboard
+2. Go back to `http://localhost:3000`
+3. Click "Logout" button
+4. Confirm logout
+5. Login page appears again

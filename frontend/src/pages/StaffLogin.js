@@ -42,25 +42,7 @@ function StaffLogin() {
       const result = await login({ email, password }, 'staff');
 
       if (result.success) {
-        // Fetch latest notice and show popup
-        try {
-          const noticeRes = await fetch("/api/notices", {
-            headers: getAuthHeader()
-          });
-          if (noticeRes.ok) {
-            const notices = await noticeRes.json();
-            if (notices.length > 0) {
-              const latest = notices[0];
-              setNoticePopup(latest);
-              setTimeout(() => {
-                setNoticePopup(null);
-                navigate("/staff-dashboard");
-              }, 3000);
-              return;
-            }
-          }
-        } catch (_) {}
-
+        // Skip notices fetch - just redirect to dashboard
         navigate("/staff-dashboard");
       } else {
         setError(result.error || "Login failed");

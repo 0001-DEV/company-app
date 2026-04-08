@@ -38,7 +38,7 @@ router.post("/login", async (req, res) => {
     res.json({
       message: "Staff login successful",
       token,
-      staff: { id: staff._id, name: staff.name, email: staff.email }
+      staff: { id: staff._id, name: staff.name, email: staff.email, role: "staff" }
     });
 
   } catch (err) {

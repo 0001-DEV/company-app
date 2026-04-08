@@ -8,8 +8,9 @@ import card3 from "../assets/cards/CARD 3.jpeg";
 
 function LoginSelector() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [currentImage, setCurrentImage] = useState(0);
+  const [showLogoutPrompt, setShowLogoutPrompt] = useState(false);
   
   const images = [card0, card1, card2, card3];
 
@@ -23,6 +24,12 @@ function LoginSelector() {
       }
     }
   }, [isAuthenticated, user, navigate]);
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logout();
+    setShowLogoutPrompt(false);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,6 +59,27 @@ function LoginSelector() {
 
       {/* Login Card */}
       <div style={styles.loginCard} className="login-card-inner">
+        {/* Logout Prompt */}
+        {showLogoutPrompt && (
+          <div style={styles.logoutPrompt}>
+            <p>You are currently logged in. Logout to access the login page?</p>
+            <div style={styles.promptButtons}>
+              <button 
+                onClick={handleLogout}
+                style={styles.confirmButton}
+              >
+                Yes, Logout
+              </button>
+              <button 
+                onClick={() => setShowLogoutPrompt(false)}
+                style={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         <div style={styles.logoSection}>
           <div style={styles.logo}>🏢</div>
           <h1 style={styles.title}>Welcome to Identifiner</h1>
@@ -59,43 +87,58 @@ function LoginSelector() {
         </div>
 
         <div style={styles.buttonContainer}>
-          <button
-            onClick={() => navigate("/admin-login")}
-            style={styles.adminButton}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(30, 64, 175, 0.5)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(30, 64, 175, 0.3)';
-            }}
-          >
-            <span style={styles.buttonIcon}>👑</span>
-            <div>
-              <div style={styles.buttonTitle}>Admin Login</div>
-              <div style={styles.buttonSubtitle}>Access admin dashboard</div>
-            </div>
-          </button>
+          {isAuthenticated() ? (
+            <button
+              onClick={() => setShowLogoutPrompt(true)}
+              style={styles.logoutButton}
+            >
+              <span style={styles.buttonIcon}>🚪</span>
+              <div>
+                <div style={styles.buttonTitle}>Logout</div>
+                <div style={styles.buttonSubtitle}>Clear session and login again</div>
+              </div>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/admin-login")}
+                style={styles.adminButton}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(30, 64, 175, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(30, 64, 175, 0.3)';
+                }}
+              >
+                <span style={styles.buttonIcon}>👑</span>
+                <div>
+                  <div style={styles.buttonTitle}>Admin Login</div>
+                  <div style={styles.buttonSubtitle}>Access admin dashboard</div>
+                </div>
+              </button>
 
-          <button
-            onClick={() => navigate("/staff-login")}
-            style={styles.staffButton}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(5, 150, 105, 0.5)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.3)';
-            }}
-          >
-            <span style={styles.buttonIcon}>👤</span>
-            <div>
-              <div style={styles.buttonTitle}>Staff Login</div>
-              <div style={styles.buttonSubtitle}>Access staff portal</div>
-            </div>
-          </button>
+              <button
+                onClick={() => navigate("/staff-login")}
+                style={styles.staffButton}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(5, 150, 105, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.3)';
+                }}
+              >
+                <span style={styles.buttonIcon}>👤</span>
+                <div>
+                  <div style={styles.buttonTitle}>Staff Login</div>
+                  <div style={styles.buttonSubtitle}>Access staff portal</div>
+                </div>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Indicators */}
@@ -159,6 +202,40 @@ const styles = {
     backdropFilter: "blur(10px)",
     border: "1px solid rgba(255, 255, 255, 0.5)"
   },
+  logoutPrompt: {
+    background: "#fef3c7",
+    border: "2px solid #f59e0b",
+    borderRadius: "12px",
+    padding: "20px",
+    marginBottom: "30px",
+    textAlign: "center"
+  },
+  promptButtons: {
+    display: "flex",
+    gap: "10px",
+    justifyContent: "center",
+    marginTop: "15px"
+  },
+  confirmButton: {
+    padding: "10px 20px",
+    background: "#ef4444",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600",
+    transition: "all 0.3s ease"
+  },
+  cancelButton: {
+    padding: "10px 20px",
+    background: "#6b7280",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600",
+    transition: "all 0.3s ease"
+  },
   logoSection: {
     marginBottom: "40px"
   },
@@ -214,6 +291,22 @@ const styles = {
     gap: "15px",
     transition: "all 0.3s ease",
     boxShadow: "0 4px 15px rgba(5, 150, 105, 0.3)"
+  },
+  logoutButton: {
+    width: "100%",
+    padding: "20px",
+    background: "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontSize: "18px",
+    fontWeight: "600",
+    display: "flex",
+    alignItems: "center",
+    gap: "15px",
+    transition: "all 0.3s ease",
+    boxShadow: "0 4px 15px rgba(220, 38, 38, 0.3)"
   },
   buttonIcon: {
     fontSize: "32px"

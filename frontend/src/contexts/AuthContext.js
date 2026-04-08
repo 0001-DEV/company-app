@@ -17,6 +17,19 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state from localStorage
   useEffect(() => {
+    // DEVELOPMENT MODE: Set to true to always start with fresh login
+    const DEVELOPMENT_MODE = true; // Change to false to enable auto-login
+    
+    if (DEVELOPMENT_MODE) {
+      // Clear localStorage on app startup for fresh login each time
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      console.log('🔄 Development mode: Cleared cached authentication');
+      setLoading(false);
+      return;
+    }
+
+    // Production mode: Load cached authentication
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     
@@ -41,11 +54,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (credentials, loginType = 'auth') => {
+  const login = async (credentials, loginType = 'admin') => {
     try {
-      const endpoint = loginType === 'admin' ? '/api/admin-login' : 
-                     loginType === 'staff' ? '/api/staff-login' : 
-                     '/api/auth-login';
+      const endpoint = loginType === 'admin' ? '/api/admin/login' : '/api/staff/login';
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -80,21 +91,25 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Call logout API if token exists
+      // Logout API call is optional - just clear local session
       if (token) {
-        await fetch('/api/auth-logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+        } catch (error) {
+          // API call failed, but that's okay - we'll still logout locally
+          console.log('Logout API not available, clearing local session');
+        }
       }
     } catch (error) {
-      console.error('Logout API error:', error);
-      // Continue with local logout even if API fails
+      console.error('Logout error:', error);
     }
 
-    // Clear local state
+    // Always clear local state regardless of API response
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);
