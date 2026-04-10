@@ -1,13 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import BirthdayNotification from "../components/BirthdayNotification";
+import NoticeBoard from "../components/NoticeBoard";
 
 const card0 = "/cards/CARD 0.jpeg";
 const card1 = "/cards/CARD 1.jpeg";
 const card2 = "/cards/CARD 2.jpeg";
 const card3 = "/cards/CARD 3.jpeg";
-import BirthdayNotification from "../components/BirthdayNotification";
-import NoticeBoard from "../components/NoticeBoard";
 
 function Home() {
   const navigate = useNavigate();
