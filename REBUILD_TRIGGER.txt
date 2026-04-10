@@ -1,0 +1,3 @@
+Force rebuild - April 8, 2026 16:25 UTC
+This file triggers a fresh build on Vercel with the latest code.
+Latest commit: 9ff776e
