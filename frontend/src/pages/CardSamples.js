@@ -1,52 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import card0 from '../assets/cards/CARD 0.jpeg';
-import card1 from '../assets/cards/CARD 1.jpeg';
-import card2 from '../assets/cards/CARD 2.jpeg';
-import card3 from '../assets/cards/CARD 3.jpeg';
-import cardMaint  from '../assets/cards/CARD MAINT.jpeg';
-import cardMaint0 from '../assets/cards/CARD MAINT 0.jpeg';
-import cardMaint1 from '../assets/cards/CARD MAINT 1.jpeg';
-import cod  from '../assets/cards/cod.jpeg';
-import cod0 from '../assets/cards/cod0.jpeg';
-import cod1 from '../assets/cards/cod1.jpeg';
-import matEggshell    from '../assets/cards/eggshell-plastic-id-card.jpg';
-import matNubis       from '../assets/cards/Nubis Plastic ID Card.jpg';
-import matTranslux    from '../assets/cards/Translux -Transparent Plastic ID Card.jpg';
-import matClassicLustre from '../assets/cards/Classic Lustre Plastic ID Card.png';
-import matMetal from '../assets/cards/METAL CARD.jpeg';
-import matBamboo from '../assets/cards/BAMBOO CARD.jpeg';
+const card0 = '/cards/CARD 0.jpeg';
+const card1 = '/cards/CARD 1.jpeg';
+const card2 = '/cards/CARD 2.jpeg';
+const card3 = '/cards/CARD 3.jpeg';
+const cardMaint  = '/cards/CARD MAINT.jpeg';
+const cardMaint0 = '/cards/CARD MAINT 0.jpeg';
+const cardMaint1 = '/cards/CARD MAINT 1.jpeg';
+const cod  = '/cards/cod.jpeg';
+const cod0 = '/cards/cod0.jpeg';
+const cod1 = '/cards/cod1.jpeg';
+const matEggshell    = '/cards/eggshell-plastic-id-card.jpg';
+const matNubis       = '/cards/Nubis Plastic ID Card.jpg';
+const matTranslux    = '/cards/Translux -Transparent Plastic ID Card.jpg';
+const matClassicLustre = '/cards/Classic Lustre Plastic ID Card.png';
+const matMetal = '/cards/METAL CARD.jpeg';
+const matBamboo = '/cards/BAMBOO CARD.jpeg';
 
 // Duplex Card Samples
-import duplex0 from '../assets/cards/CARD 0.jpeg';
-import duplex1 from '../assets/cards/CARD 1.jpeg';
-import duplex2 from '../assets/cards/CARD 2.jpeg';
-import duplex3 from '../assets/cards/CARD 3.jpeg';
+const duplex0 = '/cards/CARD 0.jpeg';
+const duplex1 = '/cards/CARD 1.jpeg';
+const duplex2 = '/cards/CARD 2.jpeg';
+const duplex3 = '/cards/CARD 3.jpeg';
 
 // De-Titan Card Samples
-import titan0 from '../assets/cards/DE-TITAN CARD SAMPLES.0.jpeg';
-import titan1 from '../assets/cards/DE-TITAN CARD SAMPLES.1.jpeg';
-import titan2 from '../assets/cards/DE-TITAN CARD SAMPLES.jpeg';
+const titan0 = '/cards/DE-TITAN CARD SAMPLES.0.jpeg';
+const titan1 = '/cards/DE-TITAN CARD SAMPLES.1.jpeg';
+const titan2 = '/cards/DE-TITAN CARD SAMPLES.jpeg';
 
 // Bamboo Card Samples
-import bamboo0 from '../assets/cards/BAMBOO CARD.0.jpeg';
-import bamboo1 from '../assets/cards/BAMBOO CARD.1.jpeg';
-import bamboo2 from '../assets/cards/BAMBOO CARD.jpeg';
+const bamboo0 = '/cards/BAMBOO CARD.0.jpeg';
+const bamboo1 = '/cards/BAMBOO CARD.1.jpeg';
+const bamboo2 = '/cards/BAMBOO CARD.jpeg';
 
 // Other assets
-import lanyard0 from '../assets/cards/LANYARD.0.jpeg';
-import activities0 from '../assets/cards/STAFF ACTIVITIES.0.jpeg';
-import activities1 from '../assets/cards/STAFF ACTIVITIES.1.jpeg';
-import activitiesMain from '../assets/cards/STAFF ACTIVITIES.jpeg';
+const lanyard0 = '/cards/LANYARD.0.jpeg';
+const activities0 = '/cards/STAFF ACTIVITIES.0.jpeg';
+const activities1 = '/cards/STAFF ACTIVITIES.1.jpeg';
+const activitiesMain = '/cards/STAFF ACTIVITIES.jpeg';
 
 // Video Assets
-import videoHowToUse from '../assets/Videos/HOW TO USE OUR SMART CARDS.mp4';
-import videoQRCode from '../assets/Videos/Qrcode card.mp4';
-import videoClassicLustre from '../assets/Videos/classic-lustre.mp4';
-import videoEggShell from '../assets/Videos/Egg-Shell.mp4';
-import videoTranslux from '../assets/Videos/translux.mp4';
-import videoNubix from '../assets/Videos/nubis.mp4';
+const videoHowToUse = '/videos/HOW TO USE OUR SMART CARDS.mp4';
+const videoQRCode = '/videos/Qrcode card.mp4';
+const videoClassicLustre = '/videos/classic-lustre.mp4';
+const videoEggShell = '/videos/Egg-Shell.mp4';
+const videoTranslux = '/videos/translux.mp4';
+const videoNubix = '/videos/nubis.mp4';
 
 const materials = [
   { id:'eggshell',      group:'plastic', name:'Eggshell',       tagline:'Subtle texture, premium feel',      photo:matEggshell,    accent:'#c8a97e', badge:'Eggshell',       badgeBg:'#fdf6ee', badgeColor:'#92400e', description:'A lightly textured plastic finish that mimics the natural feel of an eggshell surface. Soft to the touch, it gives cards a refined, understated luxury that stands out without being loud.', specs:['Textured PVC surface','Matte-like tactile feel','Full-color print support','Durable & water-resistant','Standard CR80 card size'], bestFor:['Executive business cards','Premium ID cards','Corporate branding'] },

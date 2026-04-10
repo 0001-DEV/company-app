@@ -1,10 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import card0 from "../assets/cards/CARD 0.jpeg";
-import card1 from "../assets/cards/CARD 1.jpeg";
-import card2 from "../assets/cards/CARD 2.jpeg";
-import card3 from "../assets/cards/CARD 3.jpeg";
+
+const card0 = "/cards/CARD 0.jpeg";
+const card1 = "/cards/CARD 1.jpeg";
+const card2 = "/cards/CARD 2.jpeg";
+const card3 = "/cards/CARD 3.jpeg";
 import BirthdayNotification from "../components/BirthdayNotification";
 import NoticeBoard from "../components/NoticeBoard";
 
