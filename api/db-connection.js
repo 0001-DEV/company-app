@@ -61,7 +61,8 @@ async function connectToDatabase() {
   }
 
   try {
-    console.log('Attempting MongoDB connection...');
+    console.log('Attempting MongoDB connection with URI:', uri.substring(0, 50) + '...');
+    console.log('Environment NODE_ENV:', process.env.NODE_ENV);
     
     // Create new connection
     const client = new MongoClient(uri, mongoOptions);
@@ -77,6 +78,7 @@ async function connectToDatabase() {
     return { client, db };
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
+    console.error('Full error:', error);
     console.log('Falling back to mock database for testing...');
     
     // Return mock database wrapper
