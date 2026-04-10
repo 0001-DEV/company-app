@@ -79,6 +79,8 @@ async function connectToDatabase() {
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
     console.error('Full error:', error);
+    console.log('⚠️ IMPORTANT: MongoDB Atlas network access may not include Vercel IPs');
+    console.log('⚠️ Go to MongoDB Atlas > Network Access and add 0.0.0.0/0 (allow all IPs)');
     console.log('Falling back to mock database for testing...');
     
     // Return mock database wrapper
