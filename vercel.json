@@ -4,5 +4,11 @@
   "installCommand": "npm install && npm --prefix frontend install",
   "env": {
     "CI": "false"
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
