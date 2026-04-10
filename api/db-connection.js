@@ -40,12 +40,18 @@ async function connectToDatabase() {
     return { client: cachedClient, db: cachedDb };
   }
 
-  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  // Try to get URI from environment variables (Vercel)
+  let uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  
+  // Fallback: hardcode the URI if not in environment (for Vercel deployment)
+  if (!uri) {
+    uri = 'mongodb+srv://admin:Opulence16@company-app.8xwuqud.mongodb.net/company-app?retryWrites=true&w=majority';
+    console.log('⚠️ Using hardcoded MongoDB URI (environment variable not set)');
+  }
   
   if (!uri) {
-    console.warn('⚠️ MONGODB_URI environment variable not set');
+    console.warn('⚠️ MONGODB_URI not available');
     console.warn('Using mock database for testing');
-    console.warn('To use real MongoDB, set MONGODB_URI in Vercel environment variables');
     
     // Return mock database wrapper
     return {
