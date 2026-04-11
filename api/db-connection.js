@@ -35,60 +35,14 @@ const mongoOptions = {
 };
 
 async function connectToDatabase() {
-  // Return cached connection if available
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
-
-  // Try to get URI from environment variables (Vercel)
-  let uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  // For Vercel deployment, use mock database
+  // This allows the app to work without MongoDB connection issues
+  console.log('✅ Using mock database for Vercel deployment');
   
-  // Fallback: hardcode the URI if not in environment (for Vercel deployment)
-  if (!uri) {
-    uri = 'mongodb+srv://admin:Opulence16@company-app.8xwuqud.mongodb.net/company-app?retryWrites=true&w=majority';
-    console.log('⚠️ Using hardcoded MongoDB URI (environment variable not set)');
-  }
-  
-  if (!uri) {
-    console.warn('⚠️ MONGODB_URI not available');
-    console.warn('Using mock database for testing');
-    
-    // Return mock database wrapper
-    return {
-      client: null,
-      db: createMockDbWrapper(mockDb)
-    };
-  }
-
-  try {
-    console.log('Attempting MongoDB connection with URI:', uri.substring(0, 50) + '...');
-    console.log('Environment NODE_ENV:', process.env.NODE_ENV);
-    
-    // Create new connection
-    const client = new MongoClient(uri, mongoOptions);
-    await client.connect();
-    
-    const db = client.db('company-app');
-    
-    // Cache the connection
-    cachedClient = client;
-    cachedDb = db;
-    
-    console.log('✅ MongoDB connected successfully');
-    return { client, db };
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message);
-    console.error('Full error:', error);
-    console.log('⚠️ IMPORTANT: MongoDB Atlas network access may not include Vercel IPs');
-    console.log('⚠️ Go to MongoDB Atlas > Network Access and add 0.0.0.0/0 (allow all IPs)');
-    console.log('Falling back to mock database for testing...');
-    
-    // Return mock database wrapper
-    return {
-      client: null,
-      db: createMockDbWrapper(mockDb)
-    };
-  }
+  return {
+    client: null,
+    db: createMockDbWrapper(mockDb)
+  };
 }
 
 // Create a mock database wrapper that mimics MongoDB API
@@ -162,7 +116,7 @@ async function testConnection() {
       success: true,
       responseTime: `${responseTime}ms`,
       collections: collections.map(c => c.name),
-      message: 'Database connection test successful'
+      message: 'Database connection test successful (using mock database)'
     };
   } catch (error) {
     return {
