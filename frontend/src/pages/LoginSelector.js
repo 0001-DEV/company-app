@@ -39,12 +39,21 @@ function LoginSelector() {
   }, [images.length]);
 
   return (
-    <div style={{
-      ...styles.container,
-      backgroundImage: `url(${images[currentImage]})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center"
-    }} className="ignore-dark">
+    <div style={styles.container} className="ignore-dark">
+      {/* Image Carousel */}
+      {images.map((img, index) => (
+        <img
+          key={index}
+          src={img}
+          alt={`Slide ${index + 1}`}
+          style={{
+            ...styles.carouselImage,
+            opacity: currentImage === index ? 1 : 0,
+            transform: currentImage === index ? 'scale(1.1)' : 'scale(1)'
+          }}
+        />
+      ))}
+      
       {/* Overlay */}
       <div style={styles.overlay}></div>
 
@@ -159,11 +168,17 @@ const styles = {
     position: "relative",
     overflow: "hidden",
     fontFamily: "Arial, sans-serif",
-    background: "#1e40af",
-    transition: "background-image 0.6s ease-in-out"
+    background: "#1e40af"
   },
   carouselImage: {
-    display: "none"
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    transition: "opacity 0.6s ease-in-out, transform 4s ease-in-out",
+    zIndex: 0
   },
   overlay: {
     position: "absolute",
