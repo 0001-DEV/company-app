@@ -16,18 +16,6 @@ function LoginSelector() {
   
   const images = [card0, card1, card2, card3];
 
-  // Debug: Log image paths
-  useEffect(() => {
-    console.log('LoginSelector mounted');
-    console.log('Image paths:', images);
-    images.forEach((img, idx) => {
-      const testImg = new Image();
-      testImg.onload = () => console.log(`✅ Image ${idx} loaded: ${img}`);
-      testImg.onerror = () => console.error(`❌ Image ${idx} failed to load: ${img}`);
-      testImg.src = img;
-    });
-  }, []);
-
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
@@ -45,21 +33,11 @@ function LoginSelector() {
     setShowLogoutPrompt(false);
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % images.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [images.length]);
-
   return (
     <div style={{
       ...styles.container,
-      backgroundImage: `url('${images[currentImage]}')`
+      background: `linear-gradient(135deg, rgba(30, 64, 175, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%), url('/cards/CARD 0.jpeg') center/cover no-repeat`
     }} className="ignore-dark">
-      {/* Overlay */}
-      <div style={styles.overlay}></div>
-
       {/* Login Card */}
       <div style={styles.loginCard} className="login-card-inner">
         {/* Logout Prompt */}
@@ -143,20 +121,6 @@ function LoginSelector() {
             </>
           )}
         </div>
-
-        {/* Indicators */}
-        <div style={styles.indicators}>
-          {images.map((_, index) => (
-            <div
-              key={index}
-              style={{
-                ...styles.indicator,
-                ...(currentImage === index ? styles.indicatorActive : {})
-              }}
-              onClick={() => setCurrentImage(index)}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -171,22 +135,13 @@ const styles = {
     position: "relative",
     overflow: "hidden",
     fontFamily: "Arial, sans-serif",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundAttachment: "fixed",
-    transition: "background-image 0.6s ease-in-out"
+    background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)"
   },
   carouselImage: {
     display: "none"
   },
   overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: "linear-gradient(135deg, rgba(30, 64, 175, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%)",
-    zIndex: 1
+    display: "none"
   },
   loginCard: {
     position: "relative",
