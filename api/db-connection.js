@@ -35,14 +35,33 @@ const mongoOptions = {
 };
 
 async function connectToDatabase() {
-  // For Vercel deployment, use mock database
-  // This allows the app to work without MongoDB connection issues
-  console.log('✅ Using mock database for Vercel deployment');
+  // Check if MongoDB URI is available
+  const mongoUri = process.env.MONGODB_URI;
   
-  return {
-    client: null,
-    db: createMockDbWrapper(mockDb)
-  };
+  if (!mongoUri) {
+    throw new Error('MONGODB_URI environment variable is not set');
+  }
+
+  // Try to connect to real MongoDB
+  try {
+    if (cachedClient && cachedDb) {
+      console.log('✅ Using cached MongoDB connection');
+      return { client: cachedClient, db: cachedDb };
+    }
+
+    console.log('🔄 Connecting to MongoDB Atlas...');
+    const client = new MongoClient(mongoUri, mongoOptions);
+    await client.connect();
+    
+    cachedClient = client;
+    cachedDb = client.db('company-app');
+    
+    console.log('✅ Connected to MongoDB Atlas successfully');
+    return { client: cachedClient, db: cachedDb };
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error.message);
+    throw error;
+  }
 }
 
 // Create a mock database wrapper that mimics MongoDB API
