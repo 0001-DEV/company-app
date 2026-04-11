@@ -191,7 +191,7 @@ const styles = {
     left: 0,
     width: "100%",
     height: "100%",
-    background: "linear-gradient(135deg, rgba(5, 150, 105, 0.7) 0%, rgba(16, 185, 129, 0.7) 100%)",
+    background: "linear-gradient(135deg, rgba(5, 150, 105, 0.3) 0%, rgba(16, 185, 129, 0.3) 100%)",
     zIndex: 1
   },
   loginCard: {
