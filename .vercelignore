@@ -9,6 +9,5 @@ yarn-debug.log
 yarn-error.log
 .DS_Store
 backend/
-cards/
 lib/
 .env
