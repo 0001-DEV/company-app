@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm --prefix frontend run build",
+  "buildCommand": "npm install && npm --prefix frontend install && CI=false npm --prefix frontend run build",
   "outputDirectory": "frontend/build",
   "installCommand": "npm install && npm --prefix frontend install",
   "routes": [
