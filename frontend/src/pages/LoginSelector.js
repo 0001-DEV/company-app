@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-
-// Use public folder URLs for card images
-const card0 = "/cards/CARD 0.jpeg";
-const card1 = "/cards/CARD 1.jpeg";
-const card2 = "/cards/CARD 2.jpeg";
-const card3 = "/cards/CARD 3.jpeg";
+import card0 from "../assets/cards/CARD 0.jpeg";
+import card1 from "../assets/cards/CARD 1.jpeg";
+import card3 from "../assets/cards/CARD 3.jpeg";
 
 function LoginSelector() {
   const navigate = useNavigate();
@@ -14,7 +11,7 @@ function LoginSelector() {
   const [currentImage, setCurrentImage] = useState(0);
   const [showLogoutPrompt, setShowLogoutPrompt] = useState(false);
   
-  const images = [card0, card1, card2, card3];
+  const images = [card0, card1, card3];
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -33,11 +30,24 @@ function LoginSelector() {
     setShowLogoutPrompt(false);
   };
 
+  // Carousel rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [images.length]);
+
   return (
     <div style={{
       ...styles.container,
-      background: `linear-gradient(135deg, rgba(30, 64, 175, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%), url('/cards/CARD 0.jpeg') center/cover no-repeat`
+      backgroundImage: `url(${images[currentImage]})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center"
     }} className="ignore-dark">
+      {/* Overlay */}
+      <div style={styles.overlay}></div>
+
       {/* Login Card */}
       <div style={styles.loginCard} className="login-card-inner">
         {/* Logout Prompt */}
@@ -121,6 +131,20 @@ function LoginSelector() {
             </>
           )}
         </div>
+
+        {/* Indicators */}
+        <div style={styles.indicators}>
+          {images.map((_, index) => (
+            <div
+              key={index}
+              style={{
+                ...styles.indicator,
+                ...(currentImage === index ? styles.indicatorActive : {})
+              }}
+              onClick={() => setCurrentImage(index)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -135,13 +159,20 @@ const styles = {
     position: "relative",
     overflow: "hidden",
     fontFamily: "Arial, sans-serif",
-    background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)"
+    background: "#1e40af",
+    transition: "background-image 0.6s ease-in-out"
   },
   carouselImage: {
     display: "none"
   },
   overlay: {
-    display: "none"
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "linear-gradient(135deg, rgba(30, 64, 175, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%)",
+    zIndex: 1
   },
   loginCard: {
     position: "relative",
