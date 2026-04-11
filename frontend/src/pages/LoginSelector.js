@@ -16,6 +16,18 @@ function LoginSelector() {
   
   const images = [card0, card1, card2, card3];
 
+  // Debug: Log image paths
+  useEffect(() => {
+    console.log('LoginSelector mounted');
+    console.log('Image paths:', images);
+    images.forEach((img, idx) => {
+      const testImg = new Image();
+      testImg.onload = () => console.log(`✅ Image ${idx} loaded: ${img}`);
+      testImg.onerror = () => console.error(`❌ Image ${idx} failed to load: ${img}`);
+      testImg.src = img;
+    });
+  }, []);
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
@@ -41,21 +53,10 @@ function LoginSelector() {
   }, [images.length]);
 
   return (
-    <div style={styles.container} className="ignore-dark">
-      {/* Image Carousel */}
-      {images.map((img, index) => (
-        <img
-          key={index}
-          src={img}
-          alt={`Slide ${index + 1}`}
-          style={{
-            ...styles.carouselImage,
-            opacity: currentImage === index ? 1 : 0,
-            transform: currentImage === index ? 'scale(1.1)' : 'scale(1)'
-          }}
-        />
-      ))}
-      
+    <div style={{
+      ...styles.container,
+      backgroundImage: `url('${images[currentImage]}')`
+    }} className="ignore-dark">
       {/* Overlay */}
       <div style={styles.overlay}></div>
 
@@ -170,17 +171,13 @@ const styles = {
     position: "relative",
     overflow: "hidden",
     fontFamily: "Arial, sans-serif",
-    background: "#1e40af"
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundAttachment: "fixed",
+    transition: "background-image 0.6s ease-in-out"
   },
   carouselImage: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    transition: "opacity 0.6s ease-in-out, transform 4s ease-in-out",
-    zIndex: 0
+    display: "none"
   },
   overlay: {
     position: "absolute",
