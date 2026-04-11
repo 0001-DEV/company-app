@@ -14,6 +14,22 @@ const mockDb = {
       role: 'admin',
       name: 'Admin User',
       createdAt: new Date()
+    },
+    {
+      _id: 'staff1',
+      email: 'loveolaoye@gmail.com',
+      password: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5YmMxSUmGEJiq', // bcrypt hash of 'LOVEOLAOYE'
+      role: 'staff',
+      name: 'Love Olaoye',
+      createdAt: new Date()
+    },
+    {
+      _id: 'staff2',
+      email: 'love@xtremecr8ivity.com',
+      password: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5YmMxSUmGEJiq', // bcrypt hash of 'love'
+      role: 'staff',
+      name: 'Love Staff',
+      createdAt: new Date()
     }
   ],
   departments: [
