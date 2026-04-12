@@ -6,7 +6,6 @@ import { useAuth } from "../contexts/AuthContext";
 const card0 = "/cards/CARD 0.jpeg";
 const card1 = "/cards/CARD 1.jpeg";
 const card2 = "/cards/CARD 2.jpeg";
-const card3 = "/cards/CARD 3.jpeg";
 
 function StaffLogin() {
   const [email, setEmail] = useState("");
@@ -19,7 +18,7 @@ function StaffLogin() {
   const navigate = useNavigate();
   const { login, isAuthenticated, user, getAuthHeader } = useAuth();
 
-  const images = [card0, card1, card2, card3];
+  const images = [card0, card1, card2];
 
   // Redirect if already authenticated as staff
   useEffect(() => {
