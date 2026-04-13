@@ -56,7 +56,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials, loginType = 'admin') => {
     try {
-      const endpoint = loginType === 'admin' ? '/api/admin/login' : '/api/staff/login';
+      // Use local backend for development, Vercel API for production
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const endpoint = isLocalhost 
+        ? (loginType === 'admin' ? 'http://localhost:5000/api/admin/login' : 'http://localhost:5000/api/staff/login')
+        : (loginType === 'admin' ? '/api/admin/login' : '/api/staff/login');
+
+      console.log('🔄 Attempting login to:', endpoint);
+      console.log('📝 Credentials:', { email: credentials.email, password: '***' });
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -66,7 +73,19 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(credentials),
       });
 
-      const data = await response.json();
+      console.log('📊 Response status:', response.status);
+      console.log('📊 Response headers:', response.headers);
+
+      const text = await response.text();
+      console.log('📝 Response text:', text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('❌ Failed to parse JSON:', e);
+        throw new Error(`Server returned invalid JSON: ${text.substring(0, 100)}`);
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
@@ -84,7 +103,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, user: userData };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       return { success: false, error: error.message };
     }
   };

@@ -189,6 +189,58 @@ app.get('/api/staff/test', (req, res) => {
   res.json({ message: 'Staff routes are working!' });
 });
 
+// 🟢 MOCK LOGIN FOR LOCAL TESTING (bypasses MongoDB)
+app.post('/api/admin/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  // Mock credentials for testing
+  if (email === 'admin@xtremecr8ivity.com' && password === 'password123') {
+    const token = 'mock-token-' + Date.now();
+    return res.json({
+      message: 'Admin login successful',
+      token,
+      admin: { 
+        id: 'mock-admin-1', 
+        name: 'Admin User', 
+        email: 'admin@xtremecr8ivity.com', 
+        role: 'admin', 
+        profilePicture: '' 
+      }
+    });
+  }
+  
+  res.status(404).json({ message: 'Admin not found' });
+});
+
+app.post('/api/staff/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  // Mock credentials for testing
+  const staffUsers = [
+    { email: 'loveolaoye@gmail.com', password: 'LOVEOLAOYE', name: 'Love Olaoye' },
+    { email: 'love@xtremecr8ivity.com', password: 'love', name: 'Love Staff' }
+  ];
+  
+  const user = staffUsers.find(u => u.email === email && u.password === password);
+  
+  if (user) {
+    const token = 'mock-token-' + Date.now();
+    return res.json({
+      message: 'Staff login successful',
+      token,
+      staff: { 
+        id: 'mock-staff-1', 
+        name: user.name, 
+        email: user.email, 
+        role: 'staff', 
+        profilePicture: '' 
+      }
+    });
+  }
+  
+  res.status(404).json({ message: 'Staff not found' });
+});
+
 // Database connection
 const PORT = process.env.PORT || 5000;
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
