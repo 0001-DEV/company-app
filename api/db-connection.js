@@ -40,7 +40,8 @@ const mockDb = {
   staff: [],
   messages: [],
   clientdocuments: [],
-  companymappings: []
+  companymappings: [],
+  audit_logs: []
 };
 
 // Connection options optimized for serverless
@@ -54,30 +55,38 @@ async function connectToDatabase() {
   // Check if MongoDB URI is available
   const mongoUri = process.env.MONGODB_URI;
   
-  if (!mongoUri) {
-    throw new Error('MONGODB_URI environment variable is not set');
-  }
-
   // Try to connect to real MongoDB
-  try {
-    if (cachedClient && cachedDb) {
-      console.log('✅ Using cached MongoDB connection');
-      return { client: cachedClient, db: cachedDb };
-    }
+  if (mongoUri) {
+    try {
+      if (cachedClient && cachedDb) {
+        console.log('✅ Using cached MongoDB connection');
+        return { client: cachedClient, db: cachedDb };
+      }
 
-    console.log('🔄 Connecting to MongoDB Atlas...');
-    const client = new MongoClient(mongoUri, mongoOptions);
-    await client.connect();
-    
-    cachedClient = client;
-    cachedDb = client.db('company-app');
-    
-    console.log('✅ Connected to MongoDB Atlas successfully');
-    return { client: cachedClient, db: cachedDb };
-  } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
-    throw error;
+      console.log('🔄 Connecting to MongoDB Atlas...');
+      const client = new MongoClient(mongoUri, mongoOptions);
+      await client.connect();
+      
+      cachedClient = client;
+      cachedDb = client.db('company-app');
+      
+      console.log('✅ Connected to MongoDB Atlas successfully');
+      return { client: cachedClient, db: cachedDb };
+    } catch (error) {
+      console.error('❌ MongoDB connection failed:', error.message);
+      console.log('⚠️  Falling back to mock database');
+      // Fall through to mock database
+    }
+  } else {
+    console.log('⚠️  MONGODB_URI not set, using mock database');
   }
+
+  // Return mock database wrapper
+  console.log('✅ Using mock in-memory database');
+  return { 
+    client: null, 
+    db: createMockDbWrapper(mockDb) 
+  };
 }
 
 // Create a mock database wrapper that mimics MongoDB API
@@ -93,7 +102,12 @@ function createMockDbWrapper(data) {
       find: async (query) => ({
         toArray: async () => data[name] || []
       }),
-      insertOne: async (doc) => ({ insertedId: doc._id || 'mock-id' }),
+      insertOne: async (doc) => {
+        if (!data[name]) data[name] = [];
+        const docWithId = { ...doc, _id: doc._id || `mock-${Date.now()}-${Math.random()}` };
+        data[name].push(docWithId);
+        return { insertedId: docWithId._id };
+      },
       updateOne: async (query, update) => ({ modifiedCount: 1 }),
       deleteOne: async (query) => ({ deletedCount: 1 }),
       countDocuments: async (query) => (data[name] || []).length,
