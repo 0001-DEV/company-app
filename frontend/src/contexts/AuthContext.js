@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }) => {
         : (loginType === 'admin' ? '/api/admin/login' : '/api/staff/login');
 
       console.log('🔄 Attempting login to:', endpoint);
+      console.log('📝 Login type:', loginType);
       console.log('📝 Credentials:', { email: credentials.email, password: '***' });
 
       const response = await fetch(endpoint, {
