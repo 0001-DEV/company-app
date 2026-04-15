@@ -165,7 +165,8 @@ router.post('/create', verifyUser, async (req, res) => {
       companyType: '',
       cardType: '',
       cardsProduced: 0,
-      assignedStaff: [req.user.id]
+      assignedStaff: [req.user.id],
+      createdForClientDocsOnly: true
     });
     await newMapping.save();
     const populated = await CompanyMapping.findById(newMapping._id).populate('assignedStaff', 'name email');
@@ -191,6 +192,7 @@ router.get('/', verifyUser, async (req, res) => {
     }
     
     const mappings = await CompanyMapping.find({ 
+      createdForClientDocsOnly: { $ne: true },
       $or: [
         { isDeleted: false },
         { isDeleted: { $exists: false } }

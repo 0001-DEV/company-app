@@ -33,6 +33,10 @@ const companyMappingSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   
+  // If true, this company was created from Client Documentation
+  // and should not appear on the main Mapping page.
+  createdForClientDocsOnly: { type: Boolean, default: false },
+  
   // Soft delete
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
