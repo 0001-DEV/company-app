@@ -274,16 +274,47 @@ function AllStaff() {
 
   const handleAddOrEdit = async (formData) => {
     const token = localStorage.getItem('token');
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     try {
       const url = editingData
         ? `/api/admin/edit-staff/${editingData._id}`
         : '/api/admin/create-staff';
-      const res = await fetch(url, {
-        method: editingData ? 'PUT' : 'POST',
-        headers: { Authorization: `Bearer ${token}` }, // Remove Content-Type for FormData
-        body: formData
-      });
-      const resData = await res.json();
+
+      let fetchOptions;
+      if (isLocalhost) {
+        fetchOptions = {
+          method: editingData ? 'PUT' : 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        };
+      } else {
+        const plain = {};
+        formData.forEach((value, key) => {
+          if (key === 'profilePicture') return;
+          plain[key] = value;
+        });
+        fetchOptions = {
+          method: editingData ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(plain)
+        };
+      }
+
+      const res = await fetch(url, fetchOptions);
+      const text = await res.text();
+      if (!text) {
+        throw new Error('Server returned empty response');
+      }
+      let resData;
+      try {
+        resData = JSON.parse(text);
+      } catch (parseErr) {
+        throw new Error('Server did not return valid JSON');
+      }
+
       if (!res.ok) throw new Error(resData.message || 'Operation failed');
       
       if (editingData) {
