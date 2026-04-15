@@ -2,12 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import BirthdayNotification from "../components/BirthdayNotification";
-import NoticeBoard from "../components/NoticeBoard";
-
-const card0 = "/cards/CARD 0.jpeg";
-const card1 = "/cards/CARD 1.jpeg";
-const card2 = "/cards/CARD 2.jpeg";
-const card3 = "/cards/CARD 3.jpeg";
 
 function Home() {
   const navigate = useNavigate();
@@ -152,64 +146,13 @@ function Home() {
     { id: "client-docs",   icon: "📄", label: "Client Documentation", path: "/client-documentation" },
     { id: "works",         icon: "📤", label: "Work Bank",          path: "/uploaded-works" },
     { id: "stock",         icon: "📦", label: "Stock Management",    path: "/stock-management" },
-    { id: "progress",      icon: "📊", label: "Client Progress",     path: "/client-progress" },
-    { id: "cards",         icon: "💳", label: "Our Work",          path: "/card-samples" },
     { id: "creds",         icon: "🔒", label: "Staff Credentials",   path: "/staff-credentials" },
     { id: "chat",          icon: "📩", label: "Chat Box",            path: "/chat", badge: hasUnreadMessages },
     { id: "announcements", icon: "📢", label: "Announcements",       path: "/announcements" },
     { id: "tasks",         icon: "📋", label: "Task Board",          path: "/tasks" },
     { id: "directory",     icon: "👤", label: "Employee Directory",  path: "/employee-directory" },
-    { id: "schedule",      icon: "📅", label: "Schedule Board",      path: "/schedule-board" },
     { id: "admin-weekly",  icon: "📊", label: "Weekly Reports",      path: "/admin/weekly-reports" },
-    { id: "audit",         icon: "🔍", label: "Audit Log",           path: "/audit-log" },
-    { id: "orgchart",      icon: "🏗️", label: "Org Chart",           path: "/org-chart" },
     { id: "recycle",       icon: "🗑️", label: "Recycle Bin",         path: "/recycle-bin" },
-  ];
-
-  const cards = [
-    { name: "NFC Smart Cards — tap to share contact, social profiles & links instantly.", image: card2, tag: "NFC" },
-    { name: "Luxurious Business Cards — premium finish that leaves a lasting impression.", image: card1, tag: "Business" },
-    { name: "Staff ID Cards — QR-coded identity cards for secure access & verification.", image: card0, tag: "ID Card" },
-    { name: "Maintenance Cards — durable cards built to endure the test of time.", image: card3, tag: "Maintenance" }
-  ];
-
-  const infoCards = [
-    {
-      icon: "🏆",
-      title: "Nearly a Decade of Excellence",
-      shortText: "Pioneers of luxury cards in Nigeria...",
-      fullText: "As the first card-making outfit to introduce Luxurious Business Cards into the Nigerian business space, we bring almost a decade of experience in strategy, innovation, and design — consistently setting the standard others follow."
-    },
-    {
-      icon: "📲",
-      title: "NFC & QR Smart Cards",
-      shortText: "Tap or scan to connect...",
-      fullText: "Nigeria's first luxury NFC business card maker. Each card is embedded with NFC technology and a unique QR code — tap or scan to instantly share contact info, social profiles, and business links."
-    },
-    {
-      icon: "🪪",
-      title: "Premium ID Card Production",
-      shortText: "Professional identity cards...",
-      fullText: "We design and print high-quality staff ID cards with QR codes for secure identity verification, access control, and professional representation across departments."
-    },
-    {
-      icon: "🎨",
-      title: "Custom Branding & Design",
-      shortText: "Designs that match your brand...",
-      fullText: "With nearly a decade of experience, our design team creates cards that match your brand identity — from color schemes and logos to finishes that make a bold, lasting impression."
-    },
-    {
-      icon: "🔐",
-      title: "Secure Access Management",
-      shortText: "Control who goes where...",
-      fullText: "Each staff card is tied to a digital profile with role-based access. Admins control department permissions, file access, and identity verification from one central dashboard."
-    },
-    {
-      icon: "🚀",
-      title: "Fast Turnaround & Delivery",
-      shortText: "Quick production & delivery...",
-      fullText: "From mapping to printing, our streamlined production process ensures your cards are designed, QR-coded, and delivered with speed — without compromising on quality."
-    }
   ];
 
   const handleLogout = async () => {
@@ -357,10 +300,8 @@ function Home() {
             ))}
           </div>
 
-          {/* Two-column layout: Hero + Notice Board */}
-          <div style={styles.twoCol} className="two-col-layout">
-            {/* Hero Banner */}
-            <div style={styles.heroBanner} className="ignore-dark">
+          {/* Hero Banner */}
+          <div style={{ ...styles.heroBanner, gridColumn: '1 / -1' }} className="ignore-dark">
             <div style={styles.heroText}>
               <h2 style={styles.heroTitle}>Simplifying identity and access,<br />one ID at a time!</h2>
               <p style={styles.heroSub}>
@@ -369,43 +310,6 @@ function Home() {
               </p>
             </div>
             <div style={styles.heroDecor}>🪪</div>
-          </div>
-
-            {/* Notice Board */}
-            <NoticeBoard isAdmin={true} />
-          </div>
-
-          {/* Our Work */}
-          <div style={styles.sectionHeader}>
-            <h3 style={styles.sectionTitle}>Our Work</h3>
-            <span style={styles.sectionLine} />
-          </div>
-          <div style={styles.cardGrid} className="card-grid-4">
-            {cards
-              .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-              .map((card, i) => (
-                <div key={i} className="image-hover-card" style={styles.imageCard}>
-                  <img src={card.image} alt={card.name} className="card-image" />
-                  <div style={styles.cardTag}>{card.tag}</div>
-                  <div className="card-overlay-text">{card.name}</div>
-                </div>
-              ))}
-          </div>
-
-          {/* What Makes Us Different */}
-          <div style={styles.sectionHeader}>
-            <h3 style={styles.sectionTitle}>What Makes Us Different</h3>
-            <span style={styles.sectionLine} />
-          </div>
-          <div style={styles.infoGrid} className="info-grid-3">
-            {infoCards.map((card, i) => (
-              <div key={i} style={styles.infoCard} className="hover-card">
-                <div style={styles.infoCardIcon}>{card.icon}</div>
-                <h4 style={styles.infoCardTitle}>{card.title}</h4>
-                <p className="card-text" style={styles.infoCardText}>{card.shortText}</p>
-                <p className="card-full-text" style={styles.infoCardFull}>{card.fullText}</p>
-              </div>
-            ))}
           </div>
 
           {/* Analytics Overview */}
@@ -622,11 +526,8 @@ const styles = {
   statLabel: { fontSize: "12px", color: 'var(--text-muted, #64748b)', fontWeight: "500", marginTop: "2px" },
   statGreenDot: { width: "12px", height: "12px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981", animation: "pulse 2s infinite", flexShrink: 0 },
 
-  /* Two column layout */
-  twoCol: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "28px", alignItems: "start" },
-
   /* Hero */
-  heroBanner: { background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 60%, #8b5cf6 100%)", borderRadius: "18px", padding: "32px 36px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 8px 30px rgba(59,130,246,0.35)" },
+  heroBanner: { background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 60%, #8b5cf6 100%)", borderRadius: "18px", padding: "32px 36px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 8px 30px rgba(59,130,246,0.35)", marginBottom: "28px" },
   heroText: {},
   heroTitle: { margin: "0 0 12px 0", fontSize: "22px", fontWeight: "800", color: "white", lineHeight: "1.4" },
   heroSub: { margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.85)", maxWidth: "520px", lineHeight: "1.7" },
@@ -636,19 +537,6 @@ const styles = {
   sectionHeader: { display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" },
   sectionTitle: { margin: 0, fontSize: "16px", fontWeight: "700", color: 'var(--text-main, #0f172a)', whiteSpace: "nowrap" },
   sectionLine: { flex: 1, height: "1px", background: "linear-gradient(90deg, #e2e8f0, transparent)" },
-
-  /* Card grid */
-  cardGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "32px" },
-  imageCard: { borderRadius: "14px", overflow: "hidden", height: "180px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", position: "relative" },
-  cardTag: { position: "absolute", top: "10px", left: "10px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "11px", fontWeight: "700", padding: "3px 10px", borderRadius: "20px", backdropFilter: "blur(4px)", zIndex: 2 },
-
-  /* Info cards */
-  infoGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "32px" },
-  infoCard: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', padding: "24px", borderRadius: "16px", boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)", cursor: "pointer", transition: "all 0.3s", border: '1px solid rgba(255, 255, 255, 0.2)' },
-  infoCardIcon: { fontSize: "32px", marginBottom: "12px" },
-  infoCardTitle: { margin: "0 0 8px 0", fontSize: "15px", fontWeight: "700", color: 'var(--text-main, #0f172a)' },
-  infoCardText: { margin: 0, fontSize: "13px", color: 'var(--text-muted, #64748b)', lineHeight: "1.6" },
-  infoCardFull: { margin: 0, fontSize: "13px", color: 'var(--text-muted, #475569)', lineHeight: "1.7" },
 
   /* Chart / Analytics */
   chartBox: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', borderRadius: "16px", padding: "20px 24px", boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)", border: '1px solid rgba(255, 255, 255, 0.2)', marginBottom: "32px" },
