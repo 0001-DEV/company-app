@@ -32,6 +32,7 @@ const StaffDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [hasWorkBankAccess, setHasWorkBankAccess] = useState(false);
+  const [hasMappingAccess, setHasMappingAccess] = useState(false);
   const filesPerPage = 4;
 
   useEffect(() => {
@@ -45,7 +46,7 @@ const StaffDashboard = () => {
       const authHeaders = getAuthHeader();
       if (!authHeaders.Authorization) { navigate('/'); return; }
       try {
-        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes] = await Promise.all([
+        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes, mappingAccessRes] = await Promise.all([
           fetch('/api/chat/me', { headers: authHeaders }),
           fetch('/api/staff/my-profile', { headers: authHeaders }),
           fetch('/api/staff/my-files', { headers: authHeaders }),
@@ -53,6 +54,7 @@ const StaffDashboard = () => {
           fetch('/api/notices', { headers: authHeaders }),
           fetch('/api/staff/my-client-projects', { headers: authHeaders }),
           fetch('/api/admin/workbank/access/check', { headers: authHeaders }),
+          fetch('/api/mapping/access/check', { headers: authHeaders }),
         ]);
         if (!meRes.ok) { navigate('/'); return; }
         // Staff data is already available from auth context, but we can still fetch additional data
@@ -73,6 +75,10 @@ const StaffDashboard = () => {
         if (workBankRes && workBankRes.ok) {
           const data = await workBankRes.json();
           setHasWorkBankAccess(data.hasAccess || false);
+        }
+        if (mappingAccessRes && mappingAccessRes.ok) {
+          const data = await mappingAccessRes.json();
+          setHasMappingAccess(data.hasAccess || false);
         }
         // Check unread announcements
         try {
@@ -149,7 +155,6 @@ const StaffDashboard = () => {
     { id: 'files', icon: '📁', label: 'My Files' },
     { id: 'upload', icon: '📤', label: 'Upload Work' },
     { id: 'clientProjects', icon: '📊', label: 'Monitor Client' },
-    { id: 'mapping', icon: '🗺️', label: 'Mapping', action: () => navigate('/mapping') },
     { id: 'notices', icon: '📋', label: 'Notices', badge: hasNewNotice },
     { id: 'chat', icon: '💬', label: 'Chat', badge: hasUnread, action: () => navigate('/chat') },
     { id: 'announcements', icon: '📢', label: 'Announcements', action: () => navigate('/announcements'), badge: hasNewAnnouncement },
@@ -157,6 +162,7 @@ const StaffDashboard = () => {
     { id: 'directory', icon: '👤', label: 'Employee Directory', action: () => navigate('/employee-directory') },
     { id: 'schedule', icon: '📅', label: 'Schedule Board', action: () => navigate('/schedule-board') },
     { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
+    ...(hasMappingAccess ? [{ id: 'mapping', icon: '🗺️', label: 'Mapping', action: () => navigate('/mapping') }] : []),
     ...(hasWorkBankAccess ? [{ id: 'workbank', icon: '📂', label: 'Work Bank', action: () => navigate('/uploaded-works') }] : []),
     ...(canViewOthers ? [{ id: 'others', icon: '👥', label: "All Staff Works", action: () => navigate('/all-staff-works') }] : []),
   ];
