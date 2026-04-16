@@ -563,7 +563,7 @@ const styles = {
   /* Topbar */
   topbar: { 
     height: "70px", 
-    background: 'rgba(255, 255, 255, 0.95)', 
+    background: 'var(--bg-card, rgba(255, 255, 255, 0.95))', 
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     display: "flex", 
@@ -577,7 +577,7 @@ const styles = {
     left: "240px", 
     right: 0, 
     zIndex: 99,
-    borderBottom: "1px solid rgba(255, 255, 255, 0.18)"
+    borderBottom: "1px solid var(--border-color, rgba(255, 255, 255, 0.18))"
   },
   topbarLeft: {},
   pageTitle: { fontSize: "18px", fontWeight: "700", color: 'var(--text-main, #0f172a)' },

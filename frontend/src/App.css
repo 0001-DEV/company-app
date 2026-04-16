@@ -329,7 +329,7 @@ button:disabled {
   padding: 6px 8px;
   border-radius: 8px;
   font-size: 22px;
-  color: #0f172a;
+  color: var(--text-main, #0f172a);
   line-height: 1;
   transition: background 0.15s;
 }
