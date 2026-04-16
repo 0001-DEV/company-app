@@ -102,8 +102,21 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
                 title="Click to view full picture"
               />
             ) : (
-              <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', border: '3px solid #e5e7eb' }}>
-                👤
+              <div style={{ 
+                width: '100px', 
+                height: '100px', 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontSize: '32px', 
+                fontWeight: '700', 
+                color: 'white', 
+                border: '3px solid white', 
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+              }}>
+                {name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '👤'}
               </div>
             )}
             {!viewOnly && (
@@ -304,15 +317,15 @@ function AllStaff() {
       }
 
       const res = await fetch(url, fetchOptions);
-      const text = await res.text();
-      if (!text) {
-        throw new Error('Server returned empty response');
-      }
       let resData;
       try {
+        const text = await res.text();
+        if (!text) {
+          throw new Error('Server returned empty response');
+        }
         resData = JSON.parse(text);
-      } catch (parseErr) {
-        throw new Error('Server did not return valid JSON');
+      } catch (err) {
+        throw new Error(err.message || 'Server did not return valid JSON');
       }
 
       if (!res.ok) throw new Error(resData.message || 'Operation failed');
@@ -518,7 +531,18 @@ function AllStaff() {
                         title="Click to view profile"
                       />
                     ) : (
-                      <div style={{ ...s.avatar, background: color }}>{initials}</div>
+                      <div style={{ 
+                        ...s.avatar, 
+                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'white', 
+                        fontSize: '14px', 
+                        fontWeight: '700' 
+                      }}>
+                        {initials}
+                      </div>
                     )}
                     <div style={s.cardName}>{member.name}</div>
                     <div style={s.cardEmail}>{member.email}</div>

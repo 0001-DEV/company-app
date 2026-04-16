@@ -134,7 +134,7 @@ const verifyToken = (req, res, next) => {
 // 🗑 Admin deletes a staff
 // routes/admin.js
 // Delete staff route
-router.delete('/delete-staff/:id', verifyToken, async (req, res) => {
+router.delete('/delete-staff/:id', adminAuth, async (req, res) => {
   try {
     const staff = await User.findById(req.params.id);
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
@@ -714,7 +714,7 @@ router.get('/all-uploaded-files', verifyUser, async (req, res) => {
 // ----------------------
 // Toggle staff permission to view others' work
 // ----------------------
-router.put('/toggle-view-permission/:staffId', verifyToken, async (req, res) => {
+router.put('/toggle-view-permission/:staffId', adminAuth, async (req, res) => {
   try {
     const staff = await User.findById(req.params.staffId);
     if (!staff || staff.role !== 'staff') {
@@ -736,7 +736,7 @@ router.put('/toggle-view-permission/:staffId', verifyToken, async (req, res) => 
 // ----------------------
 // Get staff with view permissions
 // ----------------------
-router.get('/staff-with-permissions', verifyToken, async (req, res) => {
+router.get('/staff-with-permissions', adminAuth, async (req, res) => {
   try {
     const staff = await User.find({ role: 'staff' })
       .select('name email canViewOthersWork department profilePicture')
@@ -1081,9 +1081,9 @@ This is an automated birthday wish from Xtreme Cr8ivity. We hope you have a fant
 // ----------------------
 // Verify admin password (for credential page gate)
 // ----------------------
-router.post('/verify-password', verifyToken, async (req, res) => {
+router.post('/verify-password', adminAuth, async (req, res) => {
   try {
-    const admin = await User.findById(req.adminId);
+    const admin = await User.findById(req.user.id);
     if (!admin || admin.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
     const match = await bcrypt.compare(req.body.password, admin.password);
     if (!match) return res.status(401).json({ message: 'Incorrect password' });
@@ -1096,7 +1096,7 @@ router.post('/verify-password', verifyToken, async (req, res) => {
 // ----------------------
 // Get all staff credentials (admin only)
 // ----------------------
-router.get('/staff-credentials', verifyToken, async (req, res) => {
+router.get('/staff-credentials', adminAuth, async (req, res) => {
   try {
     const staff = await User.find({ role: 'staff' })
       .select('name email department createdAt')
@@ -1110,7 +1110,7 @@ router.get('/staff-credentials', verifyToken, async (req, res) => {
 // ----------------------
 // Update staff email/password (admin only)
 // ----------------------
-router.put('/staff-credentials/:id', verifyToken, async (req, res) => {
+router.put('/staff-credentials/:id', adminAuth, async (req, res) => {
   try {
     const { email, password } = req.body;
     const staff = await User.findById(req.params.id);
@@ -1462,7 +1462,7 @@ router.get('/export-client-projects', verifyUser, async (req, res) => {
 // 👥 Work Bank Access Management
 
 // Get all staff for Work Bank access assignment
-router.get('/workbank/staff-list', verifyToken, async (req, res) => {
+router.get('/workbank/staff-list', adminAuth, async (req, res) => {
   try {
     const User = require('../models/User');
     const staff = await User.find({ role: 'staff' }).select('_id name email').sort({ name: 1 });
@@ -1474,7 +1474,7 @@ router.get('/workbank/staff-list', verifyToken, async (req, res) => {
 });
 
 // Update Work Bank page access
-router.post('/workbank/access/update', verifyToken, async (req, res) => {
+router.post('/workbank/access/update', adminAuth, async (req, res) => {
   try {
     const WorkBankAccess = require('../models/WorkBankAccess');
     const { staffIds } = req.body;
@@ -1484,7 +1484,7 @@ router.post('/workbank/access/update', verifyToken, async (req, res) => {
     const access = new WorkBankAccess({
       staffIds: staffIds || [],
       updatedAt: new Date(),
-      updatedBy: req.adminId
+      updatedBy: req.user.id
     });
     await access.save();
     
@@ -1496,7 +1496,7 @@ router.post('/workbank/access/update', verifyToken, async (req, res) => {
 });
 
 // Get Work Bank page access
-router.get('/workbank/access/get', verifyToken, async (req, res) => {
+router.get('/workbank/access/get', adminAuth, async (req, res) => {
   try {
     const WorkBankAccess = require('../models/WorkBankAccess');
     const access = await WorkBankAccess.findOne().sort({ updatedAt: -1 });

@@ -118,7 +118,21 @@ const StaffDetails = () => {
             <div style={{ ...S.avatar, background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)', border: '3px solid rgba(255,255,255,0.5)', overflow: 'hidden' }}>
               {staff.profilePicture ? (
                 <img src={staff.profilePicture} alt={staff.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : initials}
+              ) : (
+                <div style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  color: 'white', 
+                  fontSize: '28px', 
+                  fontWeight: '900' 
+                }}>
+                  {initials}
+                </div>
+              )}
             </div>
             <div>
               <div style={S.heroName}>{staff.name}</div>

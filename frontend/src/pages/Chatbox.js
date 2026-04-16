@@ -934,9 +934,6 @@ const ChatBox = () => {
                 <button style={S.headerBtn} onClick={() => setShowSearch(!showSearch)}>🔍</button>
                 <button style={S.headerBtn} onClick={() => setShowStarred(!showStarred)}>⭐</button>
                 {selectedDepartment && <button style={S.headerBtn} onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
-                <button style={{ ...S.headerBtn, position: "relative" }} onClick={() => setShowMuteMenu(!showMuteMenu)}>
-                  {isChatMuted(viewMode === "private" ? selectedUser : viewMode === "department" ? `department:${selectedDepartment._id}` : "all") ? "🔕" : "🔔"}
-                </button>
                 <button style={S.headerBtn} onClick={() => setShowScheduleModal(!showScheduleModal)}>⏰</button>
                 <button style={S.headerBtn} onClick={() => startCall("voice")}>📞</button>
                 <button style={S.headerBtn} onClick={() => startCall("video")}>📹</button>
@@ -1346,13 +1343,13 @@ const S = {
   
   // Messages
   messagesList: { flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8, backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"><defs><pattern id=\"pattern\" x=\"0\" y=\"0\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><text x=\"50\" y=\"50\" font-size=\"80\" fill=\"rgba(255,255,255,0.02)\" text-anchor=\"middle\" dominant-baseline=\"middle\">💬</text></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"%230a0e13\"/><rect width=\"100%\" height=\"100%\" fill=\"url(%23pattern)\"/></svg>')" },
-  msgRow: { display: "flex", marginBottom: 4 },
+  msgRow: { display: "flex", marginBottom: 4, width: "100%" },
   msgRowOwn: { justifyContent: "flex-end" },
   msgRowOther: { justifyContent: "flex-start" },
-  msgSenderName: { fontSize: 12, fontWeight: 700, color: WA_ACCENT, marginBottom: 4, paddingLeft: 8 },
-  bubble: { padding: "8px 12px", borderRadius: 8, maxWidth: "55%", wordWrap: "break-word" },
-  bubbleOwn: { background: WA_BUBBLE_OUT, color: WA_TEXT, borderBottomRightRadius: 4 },
-  bubbleOther: { background: WA_BUBBLE_IN, color: WA_TEXT, borderBottomLeftRadius: 4 },
+  msgSenderName: { fontSize: 12, fontWeight: 700, color: WA_ACCENT, marginBottom: 4 },
+  bubble: { padding: "8px 12px", borderRadius: 8, maxWidth: "75%", wordWrap: "break-word", boxShadow: "0 1px 0.5px rgba(0,0,0,0.13)" },
+  bubbleOwn: { background: WA_BUBBLE_OUT, color: WA_TEXT, borderBottomRightRadius: 4, marginLeft: "auto" },
+  bubbleOther: { background: WA_BUBBLE_IN, color: WA_TEXT, borderBottomLeftRadius: 4, marginRight: "auto" },
   msgText: { fontSize: 14, lineHeight: 1.4 },
   msgMeta: { display: "flex", alignItems: "center", gap: 4, marginTop: 4, justifyContent: "flex-end" },
   msgTime: { fontSize: 12, color: "rgba(255,255,255,0.6)" },

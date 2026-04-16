@@ -147,31 +147,60 @@ router.post('/', verifyUser, async (req, res) => {
 // Create a new company (simple endpoint for client documentation)
 router.post('/create', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
-    
+    // Allow both admins and staff to create clients for documentation
     const { name } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ message: 'Company name is required' });
     }
 
-    // Check if company already exists
-    const existing = await CompanyMapping.findOne({ companyName: name.trim() });
-    if (existing) {
-      return res.status(400).json({ message: 'Company already exists' });
+    const companyName = name.trim();
+
+    // Check if company already exists (including deleted ones)
+    let company = await CompanyMapping.findOne({ companyName });
+    
+    if (company) {
+      // If company is deleted, restore it
+      if (company.isDeleted) {
+        company.isDeleted = false;
+        company.deletedAt = undefined;
+        company.deletedBy = undefined;
+        company.deletedByName = undefined;
+        
+        // Ensure current user is assigned to it
+        if (!company.assignedStaff.includes(req.user.id)) {
+          company.assignedStaff.push(req.user.id);
+        }
+        
+        await company.save();
+        const populated = await CompanyMapping.findById(company._id).populate('assignedStaff', 'name email');
+        console.log('✅ Deleted company restored and assigned:', populated.companyName);
+        return res.status(200).json(populated);
+      } else {
+        // Company exists and is active. Ensure current user is assigned to it if they aren't already.
+        if (!company.assignedStaff.includes(req.user.id)) {
+          company.assignedStaff.push(req.user.id);
+          await company.save();
+          const populated = await CompanyMapping.findById(company._id).populate('assignedStaff', 'name email');
+          console.log('✅ Current user assigned to existing company:', populated.companyName);
+          return res.status(200).json(populated);
+        }
+        return res.status(400).json({ message: 'Company already exists and is already assigned to you' });
+      }
     }
 
+    // Create a new company if it doesn't exist
     const newMapping = new CompanyMapping({
-      companyName: name.trim(),
+      companyName,
       companyType: '',
       cardType: '',
       cardsProduced: 0,
-      assignedStaff: [req.user.id],
+      assignedStaff: [req.user.id], // Assign the creator
       createdForClientDocsOnly: true
     });
     await newMapping.save();
     const populated = await CompanyMapping.findById(newMapping._id).populate('assignedStaff', 'name email');
     
-    console.log('✅ New company created:', populated);
+    console.log('✅ New company created:', populated.companyName);
     res.status(201).json(populated);
   } catch (err) {
     console.error('Error creating company:', err);
@@ -204,18 +233,20 @@ router.get('/', verifyUser, async (req, res) => {
   }
 });
 
-// Get all companies (for dropdowns - admin only)
+// Get all companies (for dropdowns)
 router.get('/all', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
-    // Include companies where isDeleted is false OR isDeleted doesn't exist (backward compatibility)
-    const companies = await CompanyMapping.find({ 
+    // Return all active companies for both admins and staff
+    // This ensures companies are visible in dropdowns to prevent duplicates
+    const query = { 
       $or: [
         { isDeleted: false },
         { isDeleted: { $exists: false } }
       ]
-    }).select('_id companyName').sort({ companyName: 1 });
-    console.log('🏢 Fetching all companies:', companies.length, 'companies');
+    };
+    
+    const companies = await CompanyMapping.find(query).select('_id companyName').sort({ companyName: 1 });
+    console.log(`🏢 Fetching all companies for ${req.user.role}:`, companies.length, 'companies');
     res.json(companies);
   } catch (err) {
     console.error('Error fetching companies:', err);

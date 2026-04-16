@@ -25,11 +25,31 @@ const upload = multer({
 // Get all client documents (exclude soft deleted)
 router.get('/all', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
-    const documents = await ClientDocument.find({ isDeleted: false })
+    let query = { isDeleted: false };
+    
+    // If not admin, only show documents assigned to the user OR documents for companies assigned to the user
+    if (req.user.role !== 'admin') {
+      const assignedCompanies = await CompanyMapping.find({ 
+        assignedStaff: req.user.id,
+        isDeleted: false 
+      }).select('_id');
+      
+      const companyIds = assignedCompanies.map(c => c._id);
+      
+      query = {
+        isDeleted: false,
+        $or: [
+          { uploadedBy: req.user.id },
+          { assignedStaff: req.user.id },
+          { companyId: { $in: companyIds } }
+        ]
+      };
+    }
+
+    const documents = await ClientDocument.find(query)
       .populate('uploadedBy', 'name')
       .sort({ uploadDate: -1 });
-    console.log('📄 Documents fetched:', documents.length);
+    console.log(`📄 Documents fetched for ${req.user.role}:`, documents.length);
     res.json(documents);
   } catch (err) {
     console.error('Error fetching documents:', err);
@@ -62,35 +82,31 @@ router.post('/upload', verifyUser, upload.single('file'), async (req, res) => {
   try {
     console.log('📤 Upload endpoint hit');
     
-    if (req.user.role !== 'admin') {
-      console.log('❌ User is not admin');
-      return res.status(403).json({ message: 'Admin only' });
-    }
-
     const { companyId, cardType } = req.body;
     if (!companyId) {
-      console.log('❌ No company selected');
       return res.status(400).json({ message: 'Please select a company' });
     }
 
+    // Verify company exists and user has access
+    const company = await CompanyMapping.findById(companyId);
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // If not admin, check if assigned to company
+    if (req.user.role !== 'admin' && !company.assignedStaff.includes(req.user.id)) {
+      return res.status(403).json({ message: 'Access denied. You are not assigned to this company.' });
+    }
+
     if (!cardType) {
-      console.log('❌ No card type selected');
       return res.status(400).json({ message: 'Please select a card type' });
     }
 
     if (!req.file) {
-      console.log('❌ No file uploaded');
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
     console.log('✅ File received:', req.file.filename);
-
-    // Verify company exists
-    const company = await CompanyMapping.findById(companyId);
-    if (!company) {
-      console.log('❌ Company not found');
-      return res.status(404).json({ message: 'Company not found' });
-    }
 
     // Read Excel file
     const workbook = XLSX.readFile(req.file.path);
@@ -98,19 +114,13 @@ router.post('/upload', verifyUser, upload.single('file'), async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet);
 
-    console.log('✅ Excel file read, sheet:', sheetName);
-    console.log('✅ Total rows in sheet:', data.length);
-
     // Count valid rows (non-empty rows)
     const validRows = data.filter(row => {
       return Object.values(row).some(cell => cell !== null && cell !== undefined && cell !== '');
     });
 
     const quantity = validRows.length;
-    console.log('✅ Valid rows (people):', quantity);
-
     if (quantity === 0) {
-      console.log('⚠️ No valid rows found in sheet');
       return res.status(400).json({ message: 'No valid data found in the Excel sheet' });
     }
 
@@ -134,7 +144,6 @@ router.post('/upload', verifyUser, upload.single('file'), async (req, res) => {
       }]
     });
 
-    console.log('✅ Document saved to database');
     res.json({ 
       message: 'File uploaded successfully',
       document: clientDoc,
@@ -146,13 +155,48 @@ router.post('/upload', verifyUser, upload.single('file'), async (req, res) => {
   }
 });
 
+// Get documents for a specific company
+router.get('/company/:companyId', verifyUser, async (req, res) => {
+  try {
+    const company = await CompanyMapping.findById(req.params.companyId);
+    if (!company) return res.status(404).json({ message: 'Company not found' });
+
+    // If not admin, check if assigned to company
+    if (req.user.role !== 'admin' && !company.assignedStaff.includes(req.user.id)) {
+      return res.status(403).json({ message: 'Access denied. You are not assigned to this company.' });
+    }
+    
+    const documents = await ClientDocument.find({ 
+      companyId: req.params.companyId,
+      isDeleted: false 
+    })
+      .populate('uploadedBy', 'name')
+      .sort({ uploadDate: -1 });
+    
+    res.json(documents);
+  } catch (err) {
+    console.error('Error fetching company documents:', err);
+    res.status(500).json({ message: 'Error fetching company documents' });
+  }
+});
+
 // Export single document with history
 router.get('/export/:documentId', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
-
     const document = await ClientDocument.findById(req.params.documentId);
     if (!document) return res.status(404).json({ message: 'Document not found' });
+
+    // If not admin, check if user has access to this document
+    if (req.user.role !== 'admin') {
+      const company = await CompanyMapping.findById(document.companyId);
+      const isAssignedToCompany = company && company.assignedStaff.includes(req.user.id);
+      const isUploader = document.uploadedBy.toString() === req.user.id.toString();
+      const isAssignedToDoc = document.assignedStaff && document.assignedStaff.includes(req.user.id);
+
+      if (!isAssignedToCompany && !isUploader && !isAssignedToDoc) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+    }
 
     // Create summary sheet
     const summaryData = [{
@@ -205,37 +249,23 @@ router.get('/export/:documentId', verifyUser, async (req, res) => {
   }
 });
 
-// Get documents for a specific company
-router.get('/company/:companyId', verifyUser, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
-    
-    const documents = await ClientDocument.find({ 
-      companyId: req.params.companyId,
-      isDeleted: false 
-    })
-      .populate('uploadedBy', 'name')
-      .sort({ uploadDate: -1 });
-    
-    res.json(documents);
-  } catch (err) {
-    console.error('Error fetching company documents:', err);
-    res.status(500).json({ message: 'Error fetching company documents' });
-  }
-});
-
 // Export all documents for a company (summary by card type)
 router.get('/export-company/:companyId', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const company = await CompanyMapping.findById(req.params.companyId);
+    if (!company) return res.status(404).json({ message: 'Company not found' });
+
+    // If not admin, check if assigned to company
+    if (req.user.role !== 'admin' && !company.assignedStaff.includes(req.user.id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
 
     const documents = await ClientDocument.find({ companyId: req.params.companyId, isDeleted: false })
       .sort({ uploadDate: -1 });
     
     if (documents.length === 0) return res.status(404).json({ message: 'No documents found for this company' });
 
-    const company = await CompanyMapping.findById(req.params.companyId);
-    const companyName = company?.companyName || 'Unknown';
+    const companyName = company.companyName || 'Unknown';
 
     // Group documents by card type and calculate totals
     const cardTypeSummary = {};
@@ -349,8 +379,6 @@ router.delete('/:documentId/permanent', verifyUser, async (req, res) => {
 // Manual entry
 router.post('/manual-entry', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
-
     const { companyId, quantity, fileName, cardType } = req.body;
     console.log('📝 Manual entry request:', { companyId, quantity, fileName, cardType });
     
@@ -362,6 +390,11 @@ router.post('/manual-entry', verifyUser, async (req, res) => {
     console.log('🔍 Company found:', company);
     
     if (!company) return res.status(404).json({ message: 'Company not found' });
+
+    // If not admin, check access
+    if (req.user.role !== 'admin' && !company.assignedStaff.includes(req.user.id)) {
+      return res.status(403).json({ message: 'Access denied. You are not assigned to this company.' });
+    }
 
     const clientDoc = await ClientDocument.create({
       companyId,
@@ -393,8 +426,6 @@ router.post('/manual-entry', verifyUser, async (req, res) => {
 // Update document (add or remove cards) with history tracking
 router.put('/:documentId/update', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
-    
     const { action, quantity } = req.body;
     if (!action || !quantity) {
       return res.status(400).json({ message: 'Action and quantity are required' });
@@ -402,6 +433,18 @@ router.put('/:documentId/update', verifyUser, async (req, res) => {
 
     const document = await ClientDocument.findById(req.params.documentId);
     if (!document) return res.status(404).json({ message: 'Document not found' });
+
+    // If not admin, check if user has access to this document
+    if (req.user.role !== 'admin') {
+      const company = await CompanyMapping.findById(document.companyId);
+      const isAssignedToCompany = company && company.assignedStaff.includes(req.user.id);
+      const isUploader = document.uploadedBy.toString() === req.user.id.toString();
+      const isAssignedToDoc = document.assignedStaff && document.assignedStaff.includes(req.user.id);
+
+      if (!isAssignedToCompany && !isUploader && !isAssignedToDoc) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+    }
 
     const quantityNum = parseInt(quantity);
     const previousQuantity = document.quantity;
@@ -443,16 +486,26 @@ router.put('/:documentId/update', verifyUser, async (req, res) => {
 // Assign job to document
 router.put('/:documentId/assign-job', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const document = await ClientDocument.findById(req.params.documentId);
+    if (!document) return res.status(404).json({ message: 'Document not found' });
+
+    // If not admin, check if user has access to this document
+    if (req.user.role !== 'admin') {
+      const company = await CompanyMapping.findById(document.companyId);
+      const isAssignedToCompany = company && company.assignedStaff.includes(req.user.id);
+      const isUploader = document.uploadedBy.toString() === req.user.id.toString();
+
+      if (!isAssignedToCompany && !isUploader) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+    }
     
     const { job } = req.body;
     if (!job) return res.status(400).json({ message: 'Job is required' });
 
-    const document = await ClientDocument.findByIdAndUpdate(
-      req.params.documentId,
-      { assignedJob: job },
-      { new: true }
-    );
+    document.assignedJob = job;
+    await document.save();
+    
     res.json({ message: 'Job assigned', document });
   } catch (err) {
     console.error('Error assigning job:', err);

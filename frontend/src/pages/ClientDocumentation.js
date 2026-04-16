@@ -84,12 +84,8 @@ const ClientDocumentation = () => {
   const fetchCompanies = async () => {
     try {
       const token = localStorage.getItem('token');
-      // If staff, get only assigned companies; if admin, get all
-      const endpoint = userRole === 'admin' 
-        ? '/api/mapping/all'
-        : '/api/mapping/my-companies';
-      
-      const res = await fetch(endpoint, {
+      // Always fetch all companies for the dropdown
+      const res = await fetch('/api/mapping/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -104,12 +100,8 @@ const ClientDocumentation = () => {
   const fetchAllCompanies = async () => {
     try {
       const token = localStorage.getItem('token');
-      // If staff, get only assigned companies; if admin, get all
-      const endpoint = userRole === 'admin' 
-        ? '/api/mapping/all'
-        : '/api/mapping/my-companies';
-      
-      const res = await fetch(endpoint, {
+      // Always fetch all companies for the list
+      const res = await fetch('/api/mapping/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -743,11 +735,7 @@ const ClientDocumentation = () => {
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setShowManualEntry(true)} style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📝 Manual Entry</button>
             <button onClick={handleDownloadTemplate} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📋 Download Template</button>
-            {userRole === 'admin' && (
-              <>
-                <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>➕ Create New Client</button>
-              </>
-            )}
+            <button onClick={() => setShowNewClient(true)} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>➕ Create New Client</button>
           </div>
         </div>
 

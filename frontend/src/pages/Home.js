@@ -2,6 +2,12 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import BirthdayNotification from "../components/BirthdayNotification";
+import logo from "../assets/cards/CR8.png";
+
+const card0 = "/cards/CARD 0.jpeg";
+const card1 = "/cards/CARD 1.jpeg";
+const card2 = "/cards/CARD 2.jpeg";
+const card3 = "/cards/CARD 3.jpeg";
 
 function Home() {
   const navigate = useNavigate();
@@ -147,12 +153,55 @@ function Home() {
     { id: "works",         icon: "📤", label: "Work Bank",          path: "/uploaded-works" },
     { id: "stock",         icon: "📦", label: "Stock Management",    path: "/stock-management" },
     { id: "creds",         icon: "🔒", label: "Staff Credentials",   path: "/staff-credentials" },
-    { id: "chat",          icon: "📩", label: "Chat Box",            path: "/chat", badge: hasUnreadMessages },
     { id: "announcements", icon: "📢", label: "Announcements",       path: "/announcements" },
-    { id: "tasks",         icon: "📋", label: "Task Board",          path: "/tasks" },
-    { id: "directory",     icon: "👤", label: "Employee Directory",  path: "/employee-directory" },
     { id: "admin-weekly",  icon: "📊", label: "Weekly Reports",      path: "/admin/weekly-reports" },
     { id: "recycle",       icon: "🗑️", label: "Recycle Bin",         path: "/recycle-bin" },
+  ];
+
+  const cards = [
+    { name: "NFC Smart Cards — tap to share contact, social profiles & links instantly.", image: card2, tag: "NFC" },
+    { name: "Luxurious Business Cards — premium finish that leaves a lasting impression.", image: card1, tag: "Business" },
+    { name: "Staff ID Cards — QR-coded identity cards for secure access & verification.", image: card0, tag: "ID Card" },
+    { name: "Maintenance Cards — durable cards built to endure the test of time.", image: card3, tag: "Maintenance" }
+  ];
+
+  const infoCards = [
+    {
+      icon: "🏆",
+      title: "Nearly a Decade of Excellence",
+      shortText: "Pioneers of luxury cards in Nigeria...",
+      fullText: "As the first card-making outfit to introduce Luxurious Business Cards into the Nigerian business space, we bring almost a decade of experience in strategy, innovation, and design — consistently setting the standard others follow."
+    },
+    {
+      icon: "📲",
+      title: "NFC & QR Smart Cards",
+      shortText: "Tap or scan to connect...",
+      fullText: "Nigeria's first luxury NFC business card maker. Each card is embedded with NFC technology and a unique QR code — tap or scan to instantly share contact info, social profiles, and business links."
+    },
+    {
+      icon: "🪪",
+      title: "Premium ID Card Production",
+      shortText: "Professional identity cards...",
+      fullText: "We design and print high-quality staff ID cards with QR codes for secure identity verification, access control, and professional representation across departments."
+    },
+    {
+      icon: "🎨",
+      title: "Custom Branding & Design",
+      shortText: "Designs that match your brand...",
+      fullText: "With nearly a decade of experience, our design team creates cards that match your brand identity — from color schemes and logos to finishes that make a bold, lasting impression."
+    },
+    {
+      icon: "🔐",
+      title: "Secure Access Management",
+      shortText: "Control who goes where...",
+      fullText: "Each staff card is tied to a digital profile with role-based access. Admins control department permissions, file access, and identity verification from one central dashboard."
+    },
+    {
+      icon: "🚀",
+      title: "Fast Turnaround & Delivery",
+      shortText: "Quick production & delivery...",
+      fullText: "From mapping to printing, our streamlined production process ensures your cards are designed, QR-coded, and delivered with speed — without compromising on quality."
+    }
   ];
 
   const handleLogout = async () => {
@@ -182,9 +231,11 @@ function Home() {
       }}>
         {/* Brand */}
         <div style={styles.brand}>
-          <div style={styles.brandIcon}>X</div>
+          <div style={styles.brandIcon}>
+            <img src={logo} alt="CR8" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <div>
-            <div style={styles.brandName}>Xtreme Cr8ivity</div>
+            <div style={styles.brandName}>Xtreme Cr8tivity</div>
             <div style={styles.brandSub}>Admin Portal</div>
           </div>
           {isMobile && (
@@ -254,20 +305,6 @@ function Home() {
           </div>
 
           <div style={styles.topbarRight}>
-            {/* Search */}
-            <div style={styles.searchWrapper}>
-              <span style={styles.searchIcon}>🔍</span>
-              <input
-                type="text"
-                placeholder="Search..."
-                style={styles.search}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search && (
-                <button style={styles.clearSearch} onClick={() => setSearch('')}>✕</button>
-              )}
-            </div>
             {admin?.profilePicture ? (
               <img src={admin.profilePicture} alt="Admin" style={{ ...styles.topbarAvatar, objectFit: 'cover' }} />
             ) : (
@@ -436,6 +473,39 @@ function Home() {
             )}
           </div>
 
+          {/* Our Work */}
+          <div style={styles.sectionHeader}>
+            <h3 style={styles.sectionTitle}>Our Work</h3>
+            <span style={styles.sectionLine} />
+          </div>
+          <div style={styles.cardGrid} className="card-grid-4">
+            {cards
+              .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+              .map((card, i) => (
+                <div key={i} className="image-hover-card" style={styles.imageCard}>
+                  <img src={card.image} alt={card.name} className="card-image" />
+                  <div style={styles.cardTag}>{card.tag}</div>
+                  <div className="card-overlay-text">{card.name}</div>
+                </div>
+              ))}
+          </div>
+
+          {/* What Makes Us Different */}
+          <div style={styles.sectionHeader}>
+            <h3 style={styles.sectionTitle}>What Makes Us Different</h3>
+            <span style={styles.sectionLine} />
+          </div>
+          <div style={styles.infoGrid} className="info-grid-3">
+            {infoCards.map((card, i) => (
+              <div key={i} style={styles.infoCard} className="hover-card">
+                <div style={styles.infoCardIcon}>{card.icon}</div>
+                <h4 style={styles.infoCardTitle}>{card.title}</h4>
+                <p className="card-text" style={styles.infoCardText}>{card.shortText}</p>
+                <p className="card-full-text" style={styles.infoCardFull}>{card.fullText}</p>
+              </div>
+            ))}
+          </div>
+
         </div>
       </main>
     </div>
@@ -537,6 +607,19 @@ const styles = {
   sectionHeader: { display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" },
   sectionTitle: { margin: 0, fontSize: "16px", fontWeight: "700", color: 'var(--text-main, #0f172a)', whiteSpace: "nowrap" },
   sectionLine: { flex: 1, height: "1px", background: "linear-gradient(90deg, #e2e8f0, transparent)" },
+
+  /* Card grid */
+  cardGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "32px" },
+  imageCard: { borderRadius: "14px", overflow: "hidden", height: "180px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", position: "relative" },
+  cardTag: { position: "absolute", top: "10px", left: "10px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "11px", fontWeight: "700", padding: "3px 10px", borderRadius: "20px", backdropFilter: "blur(4px)", zIndex: 2 },
+
+  /* Info cards */
+  infoGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "32px" },
+  infoCard: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', padding: "24px", borderRadius: "16px", boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)", cursor: "pointer", transition: "all 0.3s", border: '1px solid rgba(255, 255, 255, 0.2)' },
+  infoCardIcon: { fontSize: "32px", marginBottom: "12px" },
+  infoCardTitle: { margin: "0 0 8px 0", fontSize: "15px", fontWeight: "700", color: 'var(--text-main, #0f172a)' },
+  infoCardText: { margin: 0, fontSize: "13px", color: 'var(--text-muted, #64748b)', lineHeight: "1.6" },
+  infoCardFull: { margin: 0, fontSize: "13px", color: 'var(--text-muted, #475569)', lineHeight: "1.7" },
 
   /* Chart / Analytics */
   chartBox: { background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', borderRadius: "16px", padding: "20px 24px", boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)", border: '1px solid rgba(255, 255, 255, 0.2)', marginBottom: "32px" },

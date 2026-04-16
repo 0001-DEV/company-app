@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import BirthdayNotification from '../components/BirthdayNotification';
+import logo from "../assets/cards/CR8.png";
 import NoticeBoard from '../components/NoticeBoard';
 
 const StaffDashboard = () => {
@@ -155,12 +156,7 @@ const StaffDashboard = () => {
     { id: 'files', icon: '📁', label: 'My Files' },
     { id: 'upload', icon: '📤', label: 'Upload Work' },
     { id: 'clientProjects', icon: '📊', label: 'Monitor Client' },
-    { id: 'notices', icon: '📋', label: 'Notices', badge: hasNewNotice },
-    { id: 'chat', icon: '💬', label: 'Chat', badge: hasUnread, action: () => navigate('/chat') },
     { id: 'announcements', icon: '📢', label: 'Announcements', action: () => navigate('/announcements'), badge: hasNewAnnouncement },
-    { id: 'tasks', icon: '✅', label: 'My Tasks', action: () => navigate('/tasks') },
-    { id: 'directory', icon: '👤', label: 'Employee Directory', action: () => navigate('/employee-directory') },
-    { id: 'schedule', icon: '📅', label: 'Schedule Board', action: () => navigate('/schedule-board') },
     { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
     ...(hasMappingAccess ? [{ id: 'mapping', icon: '🗺️', label: 'Mapping', action: () => navigate('/mapping') }] : []),
     ...(hasWorkBankAccess ? [{ id: 'workbank', icon: '📂', label: 'Work Bank', action: () => navigate('/uploaded-works') }] : []),
@@ -198,9 +194,11 @@ const StaffDashboard = () => {
         } : {})
       }}>
         <div style={s.brand}>
-          <div style={s.brandIcon}>X</div>
+          <div style={s.brandIcon}>
+            <img src={logo} alt="CR8" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <div>
-            <div style={s.brandName}>Xtreme Cr8ivity</div>
+            <div style={s.brandName}>Xtreme Cr8tivity</div>
             <div style={s.brandSub}>Staff Portal</div>
           </div>
           {isMobile && (
