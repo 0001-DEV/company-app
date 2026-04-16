@@ -8,6 +8,22 @@
       "dest": "/api/serve-file?filename=$1"
     },
     {
+      "src": "/api/admin/delete-staff/(?<id>.*)",
+      "dest": "/api/admin/delete-staff.js?id=$id"
+    },
+    {
+      "src": "/api/admin/edit-staff/(?<id>.*)",
+      "dest": "/api/admin/edit-staff.js?id=$id"
+    },
+    {
+      "src": "/api/admin/delete-department/(?<id>.*)",
+      "dest": "/api/admin/delete-department.js?id=$id"
+    },
+    {
+      "src": "/api/admin/edit-department/(?<id>.*)",
+      "dest": "/api/admin/edit-department.js?id=$id"
+    },
+    {
       "handle": "filesystem"
     },
     {

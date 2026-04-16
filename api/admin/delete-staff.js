@@ -1,4 +1,4 @@
-const { withMiddleware } = require('../../middleware');
+const { withMiddleware } = require('../middleware');
 const { ObjectId } = require('mongodb');
 
 const handler = async (req, res) => {
@@ -39,4 +39,3 @@ module.exports = withMiddleware(handler, {
   requireRole: 'admin',
   requireDb: true
 });
-

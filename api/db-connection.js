@@ -66,7 +66,9 @@ async function connectToDatabase() {
       await client.connect();
       
       cachedClient = client;
-      cachedDb = client.db('company-app');
+      // Use the database name from the connection string or fallback to process.env.MONGO_DB_NAME
+      const dbName = process.env.MONGO_DB_NAME || (mongoUri.split('/').pop().split('?')[0]);
+      cachedDb = client.db(dbName || 'company-app');
       
       return { client: cachedClient, db: cachedDb };
     } catch (error) {

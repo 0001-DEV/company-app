@@ -1,4 +1,4 @@
-const { withMiddleware } = require('../../middleware');
+const { withMiddleware } = require('../middleware');
 const { ObjectId } = require('mongodb');
 
 const handler = async (req, res) => {
@@ -9,12 +9,8 @@ const handler = async (req, res) => {
   const { id } = req.query || {};
   const { name, description } = req.body || {};
 
-  if (!id) {
-    return res.status(400).json({ message: 'Department ID is required' });
-  }
-
-  if (!name || typeof name !== 'string' || !name.trim()) {
-    return res.status(400).json({ message: 'Department name cannot be empty' });
+  if (!id || !name || !name.trim()) {
+    return res.status(400).json({ message: 'Department ID and name are required' });
   }
 
   try {
@@ -52,4 +48,3 @@ module.exports = withMiddleware(handler, {
   requireRole: 'admin',
   requireDb: true
 });
-

@@ -1,4 +1,4 @@
-const { withMiddleware } = require('../../middleware');
+const { withMiddleware } = require('../middleware');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 
@@ -14,27 +14,30 @@ const handler = async (req, res) => {
     return res.status(400).json({ message: 'Staff ID is required' });
   }
 
-  if (!name || !email || !departmentId) {
-    return res.status(400).json({ message: 'Name, email and department are required' });
-  }
-
   try {
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid Staff ID format' });
+    }
+
     const update = {
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone || '',
-      department: new ObjectId(departmentId),
-      birthday: birthday && birthday !== '' ? new Date(birthday) : undefined
+      updatedAt: new Date()
     };
 
-    if (!update.birthday) {
-      delete update.birthday;
+    if (password && password.trim()) {
+      const salt = await bcrypt.genSalt(10);
+      update.password = await bcrypt.hash(password, salt);
+      update.plainPassword = password;
     }
 
-    if (password && password.trim()) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      update.password = hashedPassword;
-      update.plainPassword = password;
+    if (departmentId) {
+      update.department = new ObjectId(departmentId);
+    }
+
+    if (birthday) {
+      update.birthday = new Date(birthday);
     }
 
     const result = await req.db.collection('users').findOneAndUpdate(
@@ -65,10 +68,6 @@ const handler = async (req, res) => {
       }
     ]).next();
 
-    if (!staff) {
-      return res.status(404).json({ message: 'Staff details not found after update' });
-    }
-
     return res.json(staff);
   } catch (error) {
     console.error('Error editing staff:', error);
@@ -81,4 +80,3 @@ module.exports = withMiddleware(handler, {
   requireRole: 'admin',
   requireDb: true
 });
-
