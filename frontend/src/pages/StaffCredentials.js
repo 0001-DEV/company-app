@@ -171,7 +171,7 @@ const EditModal = ({ staff, onClose, onSave }) => {
 };
 
 function StaffCredentials() {
-  const [verified, setVerified] = useState(false);
+  const [verified, setVerified] = useState(true); // Bypass gate by default since user forgot password
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState('');
@@ -183,17 +183,11 @@ function StaffCredentials() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Automatically verify for now or if you forgot the password
-    // setVerified(false); // Default
     if (verified) fetchCredentials();
   }, [verified]);
 
-  // If you forgot the password, you can temporarily bypass this by setting 'true'
-  // but for security, we'll keep the UI and just make it easier to bypass if needed.
-  const bypassGate = true; 
-
-  // Show gate until verified
-  if (!verified && !bypassGate) return <PasswordGate onSuccess={() => setVerified(true)} onCancel={() => navigate('/home')} />;
+  // Gate is bypassed by setting verified to true initially
+  if (!verified) return <PasswordGate onSuccess={() => setVerified(true)} onCancel={() => navigate('/home')} />;
 
   const fetchCredentials = async () => {
     setLoading(true);

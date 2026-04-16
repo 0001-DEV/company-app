@@ -166,8 +166,9 @@ router.post('/create', verifyUser, async (req, res) => {
         company.deletedBy = undefined;
         company.deletedByName = undefined;
         
-        // Ensure current user is assigned to it
-        if (!company.assignedStaff.includes(req.user.id)) {
+        // Ensure current user is assigned to it (using string comparison for safety)
+        const isAssigned = company.assignedStaff.some(id => id.toString() === req.user.id);
+        if (!isAssigned) {
           company.assignedStaff.push(req.user.id);
         }
         
@@ -177,7 +178,8 @@ router.post('/create', verifyUser, async (req, res) => {
         return res.status(200).json(populated);
       } else {
         // Company exists and is active. Ensure current user is assigned to it if they aren't already.
-        if (!company.assignedStaff.includes(req.user.id)) {
+        const isAssigned = company.assignedStaff.some(id => id.toString() === req.user.id);
+        if (!isAssigned) {
           company.assignedStaff.push(req.user.id);
           await company.save();
           const populated = await CompanyMapping.findById(company._id).populate('assignedStaff', 'name email');

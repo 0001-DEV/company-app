@@ -93,8 +93,9 @@ router.post('/upload', verifyUser, upload.single('file'), async (req, res) => {
       return res.status(404).json({ message: 'Company not found' });
     }
 
-    // If not admin, check if assigned to company
-    if (req.user.role !== 'admin' && !company.assignedStaff.includes(req.user.id)) {
+    // If not admin, check if assigned to company (using string comparison for safety)
+    const isAssigned = company.assignedStaff.some(id => id.toString() === req.user.id);
+    if (req.user.role !== 'admin' && !isAssigned) {
       return res.status(403).json({ message: 'Access denied. You are not assigned to this company.' });
     }
 
@@ -161,8 +162,9 @@ router.get('/company/:companyId', verifyUser, async (req, res) => {
     const company = await CompanyMapping.findById(req.params.companyId);
     if (!company) return res.status(404).json({ message: 'Company not found' });
 
-    // If not admin, check if assigned to company
-    if (req.user.role !== 'admin' && !company.assignedStaff.includes(req.user.id)) {
+    // If not admin, check if assigned to company (using string comparison for safety)
+    const isAssigned = company.assignedStaff.some(id => id.toString() === req.user.id);
+    if (req.user.role !== 'admin' && !isAssigned) {
       return res.status(403).json({ message: 'Access denied. You are not assigned to this company.' });
     }
     
@@ -189,9 +191,9 @@ router.get('/export/:documentId', verifyUser, async (req, res) => {
     // If not admin, check if user has access to this document
     if (req.user.role !== 'admin') {
       const company = await CompanyMapping.findById(document.companyId);
-      const isAssignedToCompany = company && company.assignedStaff.includes(req.user.id);
+      const isAssignedToCompany = company && company.assignedStaff.some(id => id.toString() === req.user.id);
       const isUploader = document.uploadedBy.toString() === req.user.id.toString();
-      const isAssignedToDoc = document.assignedStaff && document.assignedStaff.includes(req.user.id);
+      const isAssignedToDoc = document.assignedStaff && document.assignedStaff.some(id => id.toString() === req.user.id);
 
       if (!isAssignedToCompany && !isUploader && !isAssignedToDoc) {
         return res.status(403).json({ message: 'Access denied' });
@@ -255,8 +257,9 @@ router.get('/export-company/:companyId', verifyUser, async (req, res) => {
     const company = await CompanyMapping.findById(req.params.companyId);
     if (!company) return res.status(404).json({ message: 'Company not found' });
 
-    // If not admin, check if assigned to company
-    if (req.user.role !== 'admin' && !company.assignedStaff.includes(req.user.id)) {
+    // If not admin, check if assigned to company (using string comparison for safety)
+    const isAssigned = company.assignedStaff.some(id => id.toString() === req.user.id);
+    if (req.user.role !== 'admin' && !isAssigned) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -437,9 +440,9 @@ router.put('/:documentId/update', verifyUser, async (req, res) => {
     // If not admin, check if user has access to this document
     if (req.user.role !== 'admin') {
       const company = await CompanyMapping.findById(document.companyId);
-      const isAssignedToCompany = company && company.assignedStaff.includes(req.user.id);
+      const isAssignedToCompany = company && company.assignedStaff.some(id => id.toString() === req.user.id);
       const isUploader = document.uploadedBy.toString() === req.user.id.toString();
-      const isAssignedToDoc = document.assignedStaff && document.assignedStaff.includes(req.user.id);
+      const isAssignedToDoc = document.assignedStaff && document.assignedStaff.some(id => id.toString() === req.user.id);
 
       if (!isAssignedToCompany && !isUploader && !isAssignedToDoc) {
         return res.status(403).json({ message: 'Access denied' });
@@ -492,7 +495,7 @@ router.put('/:documentId/assign-job', verifyUser, async (req, res) => {
     // If not admin, check if user has access to this document
     if (req.user.role !== 'admin') {
       const company = await CompanyMapping.findById(document.companyId);
-      const isAssignedToCompany = company && company.assignedStaff.includes(req.user.id);
+      const isAssignedToCompany = company && company.assignedStaff.some(id => id.toString() === req.user.id);
       const isUploader = document.uploadedBy.toString() === req.user.id.toString();
 
       if (!isAssignedToCompany && !isUploader) {
