@@ -76,27 +76,23 @@ const upload = multer({ storage: storage });
 const staffAuth = async (req, res, next) => {
   try {
     const authHeader = req.header('Authorization');
-    console.log('Auth header:', authHeader);
     
     const token = authHeader?.replace('Bearer ', '');
     if (!token) {
-      console.log('No token provided');
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    console.log('Token:', token.substring(0, 20) + '...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);
     
     const staff = await User.findById(decoded.id);
-    console.log('Staff found:', staff?.name, 'Role:', staff?.role);
     
-    if (!staff || staff.role !== 'staff') {
-      console.log('Access denied - not a staff member');
+    // Allow both 'staff' and 'admin' for staff routes if they have a valid token
+    if (!staff || (staff.role !== 'staff' && staff.role !== 'admin')) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
     req.staff = staff;
+    req.user = { id: staff._id, name: staff.name, role: staff.role }; // Compatibility with verifyUser
     next();
   } catch (err) {
     console.error('Auth error:', err.message);
@@ -180,15 +176,18 @@ router.post('/upload-general-file', staffAuth, upload.array('files', 10), async 
   try {
     console.log('Upload request received');
     console.log('Staff:', req.staff?.name);
-    console.log('Files:', req.files);
     
     if (!req.files || req.files.length === 0) {
       console.log('No files in request');
       return res.status(400).json({ message: 'No files uploaded' });
     }
 
+    console.log('Files received:', req.files.map(f => f.originalname));
+
     const user = await User.findById(req.staff._id);
-    console.log('User found:', user?.name);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     
     if (!user.uploadedFiles) {
       user.uploadedFiles = [];
@@ -199,18 +198,23 @@ router.post('/upload-general-file', staffAuth, upload.array('files', 10), async 
       user.uploadedFiles.push({
         path: file.path,
         originalName: file.originalname,
+        displayName: file.originalname, // Add default displayName
         comment: '',
         uploadedAt: new Date()
       });
     });
     
     await user.save();
-    console.log('Files saved successfully');
+    console.log('Files saved successfully to user:', user.name);
 
-    res.json({ message: 'Files uploaded successfully', files: req.files });
+    res.json({ 
+      message: 'Files uploaded successfully', 
+      files: req.files,
+      count: req.files.length 
+    });
   } catch (err) {
     console.error('Upload error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Upload failed: ' + err.message });
   }
 });
 
@@ -538,6 +542,84 @@ router.put('/my-client-project/:id', staffAuth, async (req, res) => {
     const savedProject = await project.save();
     await savedProject.populate('monitors', 'name email');
     res.json(savedProject);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ----------------------
+// Get my client projects (assigned only)
+// ----------------------
+router.get('/my-client-projects', staffAuth, async (req, res) => {
+  try {
+    const projects = await ClientProject.find({ monitors: req.staff._id }).populate('monitors', 'name email').sort({ createdAt: -1 });
+    res.json(projects);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ----------------------
+// Update my assigned client project
+// ----------------------
+router.put('/my-client-project/:id', staffAuth, async (req, res) => {
+  try {
+    const { addCardsUsed, addTotalCardsPaid, deductionNote } = req.body;
+    const project = await ClientProject.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    // Verify assignment
+    const isMonitor = project.monitors.some(m => m.toString() === req.staff._id.toString());
+    if (!isMonitor) return res.status(403).json({ message: 'Not assigned to this client' });
+
+    if (addCardsUsed) {
+      const amount = Number(addCardsUsed);
+      project.cardsUsed = (project.cardsUsed || 0) + amount;
+      project.deductionHistory.push({
+        amount,
+        note: deductionNote || 'Staff deduction',
+        date: new Date(),
+        performedBy: req.staff.name
+      });
+    }
+
+    if (addTotalCardsPaid) {
+      const amount = Number(addTotalCardsPaid);
+      project.totalCardsPaid = (project.totalCardsPaid || 0) + amount;
+      project.paymentHistory.push({
+        amount,
+        date: new Date(),
+        performedBy: req.staff.name
+      });
+    }
+
+    await project.save();
+    const populated = await ClientProject.findById(project._id).populate('monitors', 'name email');
+    res.json(populated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ----------------------
+// Get staff profile
+// ----------------------
+router.get('/my-profile', staffAuth, async (req, res) => {
+  try {
+    const staff = await User.findById(req.staff._id).populate('department');
+    res.json(staff);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ----------------------
+// Get staff files
+// ----------------------
+router.get('/my-files', staffAuth, async (req, res) => {
+  try {
+    const staff = await User.findById(req.staff._id).select('uploadedFiles');
+    res.json(staff.uploadedFiles || []);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -100,7 +100,12 @@ router.post("/polls", verifyUser, async (req, res) => {
 router.get("/polls", verifyUser, async (req, res) => {
   try {
     const { departmentId } = req.query;
-    const query = departmentId ? { departmentId } : { scope: "all" };
+    let query = {};
+    if (departmentId) {
+      query = { $or: [{ departmentId }, { scope: "all" }] };
+    } else {
+      query = { scope: "all" };
+    }
     const polls = await Poll.find(query).sort({ createdAt: -1 }).limit(30);
     res.json(polls);
   } catch (err) { res.status(500).json({ message: err.message }); }

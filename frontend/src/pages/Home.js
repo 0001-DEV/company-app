@@ -28,7 +28,7 @@ function Home() {
     { label: "Total Staff",    value: "—", icon: "👥", color: "#3b82f6", path: "/all-staff" },
     { label: "Departments",    value: "—", icon: "🏢", color: "#8b5cf6", path: "/department" },
     { label: "Files Uploaded", value: "—", icon: "📁", color: "#10b981", path: "/uploaded-works" },
-    { label: "Active Chats",   value: "—", icon: "💬", color: "#f59e0b", path: "/chat" },
+    { label: "Active Stocks",  value: "—", icon: "📦", color: "#f59e0b", path: "/stock-management" },
   ]);
 
   // Analytics state
@@ -88,11 +88,15 @@ function Home() {
         const deptData   = deptRes.ok   ? await deptRes.json()   : [];
         const filesData  = filesRes.ok  ? await filesRes.json()  : [];
 
-        setStats(prev => [
+        // Fetch stocks for count
+        const stockRes = await fetch('/api/stock/all', { headers: authHeaders });
+        const stockData = stockRes.ok ? await stockRes.json() : [];
+
+        setStats([
           { label: "Total Staff",    value: staffData.length,  icon: "👥", color: "#3b82f6", path: "/all-staff" },
           { label: "Departments",    value: deptData.length,   icon: "🏢", color: "#8b5cf6", path: "/department" },
           { label: "Files Uploaded", value: filesData.length,  icon: "📁", color: "#10b981", path: "/uploaded-works" },
-          { ...prev[3] },
+          { label: "Active Stocks",  value: stockData.length,  icon: "📦", color: "#f59e0b", path: "/stock-management" },
         ]);
 
         // ── Build analytics ──
@@ -519,7 +523,7 @@ const styles = {
   /* Sidebar */
   sidebar: { 
     width: "240px", 
-    background: "rgba(15, 23, 42, 0.8)", 
+    background: "rgba(15, 23, 42, 0.95)", 
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     color: "white", 
@@ -559,7 +563,7 @@ const styles = {
   /* Topbar */
   topbar: { 
     height: "70px", 
-    background: 'rgba(255, 255, 255, 0.7)', 
+    background: 'rgba(255, 255, 255, 0.95)', 
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     display: "flex", 

@@ -17,7 +17,6 @@ const upload = multer({ storage });
 // Get all stocks
 router.get('/all', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
     const stocks = await Stock.find().populate('monitor', 'name email').sort({ createdAt: -1 });
     res.json(stocks);
   } catch (err) {
@@ -28,21 +27,23 @@ router.get('/all', verifyUser, async (req, res) => {
 // Create new stock
 router.post('/create', verifyUser, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
     const { name, quantity, unit } = req.body;
     
     if (!name || quantity === undefined) {
       return res.status(400).json({ message: 'Name and quantity are required' });
     }
     
+    const stockName = String(name).trim();
+
     // Check if stock already exists
-    const existing = await Stock.findOne({ name: name.trim() });
+    let existing = await Stock.findOne({ name: { $regex: new RegExp('^' + stockName + '$', 'i') } });
+    
     if (existing) {
-      return res.status(400).json({ message: 'Stock with this name already exists' });
+      return res.status(400).json({ message: `Stock with name "${stockName}" already exists` });
     }
     
     const stock = await Stock.create({
-      name: name.trim(),
+      name: stockName,
       currentQuantity: parseInt(quantity),
       unit: unit || 'pcs',
       transactions: [{
@@ -167,11 +168,6 @@ router.post('/upload-excel', verifyUser, upload.single('file'), async (req, res)
   try {
     console.log('📤 Upload Excel endpoint hit');
     
-    if (req.user.role !== 'admin') {
-      console.log('❌ User is not admin');
-      return res.status(403).json({ message: 'Admin only' });
-    }
-    
     if (!req.file) {
       console.log('❌ No file uploaded');
       return res.status(400).json({ message: 'No file uploaded' });
@@ -184,55 +180,51 @@ router.post('/upload-excel', verifyUser, upload.single('file'), async (req, res)
     const data = XLSX.utils.sheet_to_json(worksheet);
     
     console.log('✅ Excel data parsed, rows:', data.length);
-    console.log('Sample row:', data[0]);
     
     const createdStocks = [];
     for (const row of data) {
-      const { name, quantity, unit } = row;
-      console.log('Processing row:', { name, quantity, unit });
+      const name = row.name || row.Name || row.NAME || row['Stock Name'] || row['Item Name'];
+      const quantity = row.quantity || row.Quantity || row.QTY || row.Qty || row.Amount;
+      const unit = row.unit || row.Unit || row.UNIT || 'pcs';
       
       if (!name || quantity === undefined) {
-        console.log('⚠️ Skipping row - missing name or quantity');
         continue;
       }
       
-      let stock = await Stock.findOne({ name: String(name).trim() });
+      const stockName = String(name).trim();
+      const qtyNum = parseInt(quantity);
+      
+      let stock = await Stock.findOne({ name: { $regex: new RegExp('^' + stockName + '$', 'i') } });
       if (!stock) {
-        console.log('Creating new stock:', name);
         stock = await Stock.create({
-          name: String(name).trim(),
-          currentQuantity: parseInt(quantity),
-          unit: unit || 'pcs',
+          name: stockName,
+          currentQuantity: qtyNum,
+          unit: unit,
           transactions: [{
             type: 'add',
-            quantity: parseInt(quantity),
+            quantity: qtyNum,
             reason: 'Imported from Excel',
             addedBy: req.user.id,
             addedByName: req.user.name
           }]
         });
-        console.log('✅ Stock created:', stock.name);
       } else {
-        console.log('Updating existing stock:', name);
-        stock.currentQuantity += parseInt(quantity);
+        stock.currentQuantity += qtyNum;
         stock.transactions.push({
           type: 'add',
-          quantity: parseInt(quantity),
+          quantity: qtyNum,
           reason: 'Imported from Excel',
           addedBy: req.user.id,
           addedByName: req.user.name
         });
         await stock.save();
-        console.log('✅ Stock updated:', stock.name);
       }
       createdStocks.push(stock);
     }
     
-    console.log('✅ Import complete, created/updated:', createdStocks.length, 'stocks');
     res.json({ message: 'Stocks imported successfully', count: createdStocks.length });
   } catch (err) {
     console.error('❌ Error uploading stocks:', err.message);
-    console.error('Stack:', err.stack);
     res.status(500).json({ message: 'Error uploading stocks: ' + err.message });
   }
 });

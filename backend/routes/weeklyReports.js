@@ -24,38 +24,40 @@ const getCurrentWeekAndYear = () => {
 // POST - Save weekly report
 router.post('/submit', verifyUser, async (req, res) => {
   try {
+    console.log('Submitting weekly report for user:', req.user.id);
     const { progress, plans, problems } = req.body;
     const { weekNumber, year } = getCurrentWeekAndYear();
 
     // Check if report already exists for this week
-    const existing = await WeeklyReport.findOne({
+    let report = await WeeklyReport.findOne({
       userId: req.user.id,
       weekNumber,
       year
     });
 
-    if (existing) {
+    if (report) {
+      console.log('Updating existing report');
       // Update existing report
-      existing.progress = progress || '';
-      existing.plans = plans || '';
-      existing.problems = problems || '';
-      existing.updatedAt = new Date();
-      await existing.save();
-      return res.json({ message: 'Report updated successfully', report: existing });
+      report.progress = progress || '';
+      report.plans = plans || '';
+      report.problems = problems || '';
+      report.updatedAt = new Date();
+      await report.save();
+    } else {
+      console.log('Creating new report');
+      // Create new report
+      report = new WeeklyReport({
+        userId: req.user.id,
+        weekNumber,
+        year,
+        progress: progress || '',
+        plans: plans || '',
+        problems: problems || ''
+      });
+      await report.save();
     }
 
-    // Create new report
-    const newReport = new WeeklyReport({
-      userId: req.user.id,
-      weekNumber,
-      year,
-      progress: progress || '',
-      plans: plans || '',
-      problems: problems || ''
-    });
-
-    await newReport.save();
-    res.status(201).json({ message: 'Report submitted successfully', report: newReport });
+    res.status(201).json({ message: 'Report saved successfully', report });
   } catch (err) {
     console.error('Error submitting report:', err);
     res.status(500).json({ message: 'Error submitting report', error: err.message });
@@ -66,6 +68,7 @@ router.post('/submit', verifyUser, async (req, res) => {
 router.get('/current', verifyUser, async (req, res) => {
   try {
     const { weekNumber, year } = getCurrentWeekAndYear();
+    console.log(`Fetching report for user ${req.user.id}, week ${weekNumber}, year ${year}`);
 
     const report = await WeeklyReport.findOne({
       userId: req.user.id,
@@ -74,9 +77,11 @@ router.get('/current', verifyUser, async (req, res) => {
     });
 
     if (!report) {
+      console.log('No report found for this week');
       return res.json({ report: null, weekNumber, year });
     }
 
+    console.log('Report found:', report._id);
     res.json({ report, weekNumber, year });
   } catch (err) {
     console.error('Error fetching report:', err);
@@ -93,15 +98,17 @@ router.get('/all-current', verifyUser, async (req, res) => {
 
     const { weekNumber, year } = getCurrentWeekAndYear();
 
-    // Delete reports older than 1 week (7 days)
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    await WeeklyReport.deleteMany({ createdAt: { $lt: oneWeekAgo } });
+    // Do NOT delete reports here, it's not the right place and can lead to data loss
+    // (Optional) We could have a separate maintenance job for this if needed.
 
     const reports = await WeeklyReport.find({
       weekNumber,
       year
-    }).populate('userId', 'name email department profilePicture').populate('userId.department', 'name');
+    }).populate({
+      path: 'userId',
+      select: 'name email department profilePicture',
+      populate: { path: 'department', select: 'name' }
+    });
 
     // Map userId to user for frontend compatibility
     const formattedReports = reports.map(report => ({
