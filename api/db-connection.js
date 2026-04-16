@@ -59,34 +59,23 @@ async function connectToDatabase() {
   if (mongoUri) {
     try {
       if (cachedClient && cachedDb) {
-        console.log('✅ Using cached MongoDB connection');
         return { client: cachedClient, db: cachedDb };
       }
 
-      console.log('🔄 Connecting to MongoDB Atlas...');
       const client = new MongoClient(mongoUri, mongoOptions);
       await client.connect();
       
       cachedClient = client;
       cachedDb = client.db('company-app');
       
-      console.log('✅ Connected to MongoDB Atlas successfully');
       return { client: cachedClient, db: cachedDb };
     } catch (error) {
       console.error('❌ MongoDB connection failed:', error.message);
-      console.log('⚠️  Falling back to mock database');
-      // Fall through to mock database
+      throw error; // Don't fallback in production
     }
   } else {
-    console.log('⚠️  MONGODB_URI not set, using mock database');
+    throw new Error('MONGODB_URI not set');
   }
-
-  // Return mock database wrapper
-  console.log('✅ Using mock in-memory database');
-  return { 
-    client: null, 
-    db: createMockDbWrapper(mockDb) 
-  };
 }
 
 // Create a mock database wrapper that mimics MongoDB API

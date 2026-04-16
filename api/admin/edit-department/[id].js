@@ -18,6 +18,10 @@ const handler = async (req, res) => {
   }
 
   try {
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid Department ID format' });
+    }
+
     const update = {
       name: name.trim()
     };
@@ -32,11 +36,11 @@ const handler = async (req, res) => {
       { returnDocument: 'after' }
     );
 
-    if (!result.value) {
+    if (!result) {
       return res.status(404).json({ message: 'Department not found' });
     }
 
-    return res.json(result.value);
+    return res.json(result);
   } catch (error) {
     console.error('Error editing department:', error);
     return res.status(500).json({ message: 'Server error' });

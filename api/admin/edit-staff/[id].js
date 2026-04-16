@@ -43,12 +43,12 @@ const handler = async (req, res) => {
       { returnDocument: 'after' }
     );
 
-    if (!result.value) {
+    if (!result) {
       return res.status(404).json({ message: 'Staff not found' });
     }
 
     const staff = await req.db.collection('users').aggregate([
-      { $match: { _id: result.value._id } },
+      { $match: { _id: new ObjectId(id) } },
       {
         $lookup: {
           from: 'departments',
@@ -64,6 +64,10 @@ const handler = async (req, res) => {
         }
       }
     ]).next();
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff details not found after update' });
+    }
 
     return res.json(staff);
   } catch (error) {

@@ -13,6 +13,10 @@ const handler = async (req, res) => {
   }
 
   try {
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid Department ID format' });
+    }
+
     const result = await req.db.collection('departments').deleteOne({
       _id: new ObjectId(id)
     });

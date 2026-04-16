@@ -155,7 +155,7 @@ const StaffDashboard = () => {
   const navItems = [
     { id: 'files', icon: '📁', label: 'My Files' },
     { id: 'upload', icon: '📤', label: 'Upload Work' },
-    { id: 'clientProjects', icon: '📊', label: 'Monitor Client' },
+    ...(clientProjects.length > 0 ? [{ id: 'clientProjects', icon: '📊', label: 'Monitor Client', action: () => navigate('/client-documentation') }] : []),
     { id: 'announcements', icon: '📢', label: 'Announcements', action: () => navigate('/announcements'), badge: hasNewAnnouncement },
     { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
     ...(hasMappingAccess ? [{ id: 'mapping', icon: '🗺️', label: 'Mapping', action: () => navigate('/mapping') }] : []),

@@ -119,7 +119,7 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/client-documentation" element={
-          <ProtectedRoute requiredRole="admin">
+          <ProtectedRoute>
             <ClientDocumentation />
           </ProtectedRoute>
         } />

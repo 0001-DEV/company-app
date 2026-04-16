@@ -1,43 +1,74 @@
 const { withMiddleware } = require('../middleware');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+
+const runMiddleware = (req, res, fn) => {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { name, email, phone, password, departmentId, birthday } = req.body || {};
-
-  if (!name || !email || !password || !departmentId) {
-    return res.status(400).json({ message: 'Name, email, password and department are required' });
-  }
-
   try {
-    const existing = await req.db.collection('users').findOne({ email: email.toLowerCase() });
-    if (existing) {
-      return res.status(400).json({ message: 'A user with this email already exists' });
+    await runMiddleware(req, res, upload.single('profilePicture'));
+
+    const { name, email, phone, password, departmentId, birthday } = req.body || {};
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email and password are required' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const staffDoc = {
+    const userId = new ObjectId();
+    let profilePicturePath = '';
+
+    if (req.file) {
+      const filename = `${Date.now()}-${req.file.originalname}`;
+      await req.db.collection('stored_files').insertOne({
+        _id: new ObjectId(),
+        filename: filename,
+        originalName: req.file.originalname,
+        contentType: req.file.mimetype,
+        data: req.file.buffer,
+        uploadedBy: new ObjectId(req.user.id),
+        uploadedAt: new Date()
+      });
+      profilePicturePath = `/uploads/${filename}`;
+    }
+
+    const newUser = {
+      _id: userId,
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone || '',
       password: hashedPassword,
       plainPassword: password,
       role: 'staff',
-      department: new ObjectId(departmentId),
-      profilePicture: '',
+      department: departmentId ? new ObjectId(departmentId) : null,
+      profilePicture: profilePicturePath,
       birthday: birthday && birthday !== '' ? new Date(birthday) : undefined,
-      createdAt: new Date()
+      createdAt: new Date(),
+      assignedJobs: []
     };
 
-    const insertResult = await req.db.collection('users').insertOne(staffDoc);
+    await req.db.collection('users').insertOne(newUser);
 
-    const staff = await req.db.collection('users').aggregate([
-      { $match: { _id: insertResult.insertedId } },
+    const populatedUser = await req.db.collection('users').aggregate([
+      { $match: { _id: userId } },
       {
         $lookup: {
           from: 'departments',
@@ -54,10 +85,11 @@ const handler = async (req, res) => {
       }
     ]).next();
 
-    return res.status(201).json(staff);
+    res.status(201).json(populatedUser);
+
   } catch (error) {
     console.error('Error creating staff:', error);
-    return res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -67,3 +99,8 @@ module.exports = withMiddleware(handler, {
   requireDb: true
 });
 
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
+};

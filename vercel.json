@@ -4,14 +4,18 @@
   "installCommand": "npm install && npm --prefix frontend install",
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/uploads/(.*)",
+      "dest": "/api/serve-file?filename=$1"
     },
     {
       "handle": "filesystem"
     },
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/((?!api/).*)",
       "dest": "/index.html"
     }
   ]

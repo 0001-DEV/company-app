@@ -37,7 +37,7 @@ const verifyToken = async (req) => {
   const token = authHeader.split(' ')[1];
   const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
   
-  return { id: decoded.id, role: decoded.role };
+  return { id: decoded.id, role: decoded.role, name: decoded.name };
 };
 
 // Get MongoDB connection using optimized connection pooling

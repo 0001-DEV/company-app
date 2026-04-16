@@ -13,6 +13,10 @@ const handler = async (req, res) => {
   }
 
   try {
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid Staff ID format' });
+    }
+    
     const staff = await req.db.collection('users').findOne({
       _id: new ObjectId(id)
     });
