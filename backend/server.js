@@ -107,19 +107,14 @@ setInterval(async () => {
 }, 30000);
 
 // ── Birthday Email Dispatcher (Runs once every 24 hours) ──
-// For testing purposes, we can set a shorter interval or trigger manually.
-// We'll keep a record of who we've already sent emails to today.
-const sentBirthdaysToday = new Set();
+// Sends birthday email once per person per year. If it fails, it terminates (no retry).
+const sentBirthdaysThisYear = new Set(); // Format: "email-year"
 setInterval(async () => {
   try {
     const now = new Date();
+    const currentYear = now.getFullYear();
     const todayStr = `${now.getMonth() + 1}-${now.getDate()}`;
     
-    // Clear the set at midnight
-    if (now.getHours() === 0 && now.getMinutes() === 0) {
-      sentBirthdaysToday.clear();
-    }
-
     const User = mongoose.model('User');
     const staff = await User.find({ role: 'staff' });
 
@@ -136,8 +131,10 @@ setInterval(async () => {
       
       const bday = new Date(user.birthday);
       const bdayStr = `${bday.getMonth() + 1}-${bday.getDate()}`;
+      const sentKey = `${user.email}-${currentYear}`;
       
-      if (todayStr === bdayStr && !sentBirthdaysToday.has(user.email)) {
+      // Only send if it's their birthday today AND we haven't sent it this year
+      if (todayStr === bdayStr && !sentBirthdaysThisYear.has(sentKey)) {
         console.log(`🎂 Sending birthday email to ${user.name} (${user.email})`);
         
         const mailOptions = {
@@ -172,10 +169,13 @@ setInterval(async () => {
 
         try {
           await transporter.sendMail(mailOptions);
-          sentBirthdaysToday.add(user.email);
+          sentBirthdaysThisYear.add(sentKey);
           console.log(`✅ Birthday email sent to ${user.email}`);
         } catch (mailErr) {
-          console.error(`❌ Failed to send email to ${user.email}:`, mailErr.message);
+          // If email fails, mark it as sent anyway to prevent repeated attempts
+          sentBirthdaysThisYear.add(sentKey);
+          console.error(`❌ Failed to send birthday email to ${user.email}:`, mailErr.message);
+          console.log(`⚠️ Email marked as attempted. Will not retry for ${user.name} this year.`);
         }
       }
     }

@@ -17,19 +17,20 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state from localStorage
   useEffect(() => {
-    // DEVELOPMENT MODE: Set to true to always start with fresh login
-    const DEVELOPMENT_MODE = true; // Change to false to enable auto-login
+    // Check if this is the first app load (sessionStorage flag)
+    const isFirstLoad = !sessionStorage.getItem('app_initialized');
     
-    if (DEVELOPMENT_MODE) {
-      // Clear localStorage on app startup for fresh login each time
+    if (isFirstLoad) {
+      // First app load: Clear localStorage and show login page
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      console.log('🔄 Development mode: Cleared cached authentication');
+      sessionStorage.setItem('app_initialized', 'true');
+      console.log('🔄 First app load: Cleared cached authentication, showing login');
       setLoading(false);
       return;
     }
 
-    // Production mode: Load cached authentication
+    // Not first load: Restore session from localStorage (page refresh)
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }) => {
         if (userData && userData.email) {
           setToken(storedToken);
           setUser(userData);
+          console.log('✅ Session restored from localStorage');
         } else {
           // Invalid user data, clear it
           localStorage.removeItem('token');
