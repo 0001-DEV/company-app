@@ -159,14 +159,14 @@ const AdminWeeklyReports = () => {
                   padding: '10px',
                   borderRadius: '8px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.08)',
+                  background: '#2a2a3e',
                   color: '#e0e0e0',
                   fontSize: '14px'
                 }}
               >
-                <option value="">All Departments</option>
+                <option value="" style={{ background: '#2a2a3e', color: '#e0e0e0' }}>All Departments</option>
                 {departments.map(dept => (
-                  <option key={dept._id} value={dept._id}>{dept.name}</option>
+                  <option key={dept._id} value={dept._id} style={{ background: '#2a2a3e', color: '#e0e0e0' }}>{dept.name}</option>
                 ))}
               </select>
             </div>

@@ -207,6 +207,25 @@ router.post('/upload-general-file', staffAuth, upload.array('files', 10), async 
     await user.save();
     console.log('Files saved successfully to user:', user.name);
 
+    // Automatically grant Work Bank access to staff who upload files
+    try {
+      const WorkBankAccess = require('../models/WorkBankAccess');
+      let access = await WorkBankAccess.findOne();
+      if (!access) {
+        access = new WorkBankAccess({ staffIds: [] });
+      }
+      
+      // Add staff ID if not already present
+      if (!access.staffIds.includes(req.staff._id)) {
+        access.staffIds.push(req.staff._id);
+        await access.save();
+        console.log('✅ Work Bank access granted to:', user.name);
+      }
+    } catch (err) {
+      console.error('Error granting Work Bank access:', err);
+      // Don't fail the upload if access grant fails
+    }
+
     res.json({ 
       message: 'Files uploaded successfully', 
       files: req.files,

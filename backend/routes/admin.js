@@ -1495,6 +1495,32 @@ router.post('/workbank/access/update', adminAuth, async (req, res) => {
   }
 });
 
+// Grant Work Bank access to a staff member (called when assigning staff to upload work)
+router.post('/workbank/access/grant/:staffId', adminAuth, async (req, res) => {
+  try {
+    const WorkBankAccess = require('../models/WorkBankAccess');
+    const { staffId } = req.params;
+    
+    // Get or create the access record
+    let access = await WorkBankAccess.findOne();
+    if (!access) {
+      access = new WorkBankAccess({ staffIds: [] });
+    }
+    
+    // Add staff ID if not already present (using string comparison for safety)
+    const staffIdExists = access.staffIds.some(id => id.toString() === staffId.toString());
+    if (!staffIdExists) {
+      access.staffIds.push(staffId);
+      await access.save();
+    }
+    
+    res.json({ message: 'Work Bank access granted', access });
+  } catch (err) {
+    console.error('Error granting Work Bank access:', err);
+    res.status(500).json({ message: 'Error granting Work Bank access' });
+  }
+});
+
 // Get Work Bank page access
 router.get('/workbank/access/get', adminAuth, async (req, res) => {
   try {
@@ -1523,7 +1549,10 @@ router.get('/workbank/access/check', verifyUser, async (req, res) => {
     
     const access = await WorkBankAccess.findOne().sort({ updatedAt: -1 });
     
-    const hasAccess = access && access.staffIds && access.staffIds.includes(req.user.id);
+    // Check if staff ID is in the access list (using string comparison for safety)
+    const hasAccess = access && access.staffIds && access.staffIds.some(id => 
+      id.toString() === req.user.id.toString()
+    );
     res.json({ hasAccess: hasAccess || false });
   } catch (err) {
     console.error('Error checking Work Bank access:', err);

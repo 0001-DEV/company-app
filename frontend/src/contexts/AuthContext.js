@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   // Initialize auth state from localStorage
   useEffect(() => {
     // DEVELOPMENT MODE: Set to true to always start with fresh login
-    const DEVELOPMENT_MODE = true; // Change to false to enable auto-login
+    const DEVELOPMENT_MODE = false; // Change to false to enable auto-login
     
     if (DEVELOPMENT_MODE) {
       // Clear localStorage on app startup for fresh login each time

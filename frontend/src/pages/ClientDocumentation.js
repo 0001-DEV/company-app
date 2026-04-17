@@ -59,9 +59,15 @@ const ClientDocumentation = () => {
     }
     
     fetchDocuments();
-    fetchCompanies();
     fetchStaff();
   }, []);
+
+  // Fetch companies after userRole and userId are set
+  useEffect(() => {
+    if (userRole) {
+      fetchCompanies();
+    }
+  }, [userRole, userId]);
 
   const fetchDocuments = async () => {
     try {
@@ -84,13 +90,25 @@ const ClientDocumentation = () => {
   const fetchCompanies = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Always fetch all companies for the dropdown
+      // Fetch companies - backend will filter for staff if not admin
       const res = await fetch('/api/mapping/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        setCompanies(data);
+        // For staff, filter to only show companies they're assigned to
+        if (userRole !== 'admin' && userId) {
+          const filteredCompanies = data.filter(company => 
+            company.assignedStaff && company.assignedStaff.some(staffId => {
+              // Convert both to strings for proper comparison
+              const staffIdStr = typeof staffId === 'string' ? staffId : staffId.toString();
+              return staffIdStr === userId;
+            })
+          );
+          setCompanies(filteredCompanies);
+        } else {
+          setCompanies(data);
+        }
       }
     } catch (err) {
       console.error('Error fetching companies:', err);
@@ -543,6 +561,10 @@ const ClientDocumentation = () => {
       if (res.ok) {
         alert('Staff assigned successfully');
         fetchDocuments();
+        // Refresh company documents if viewing a specific company
+        if (selectedCompanyViewDropdown) {
+          fetchCompanyDocuments(selectedCompanyViewDropdown);
+        }
         setShowStaffAssign(false);
         setSelectedStaff([]);
         setSelectedDoc(null);
@@ -552,6 +574,7 @@ const ClientDocumentation = () => {
       }
     } catch (err) {
       console.error('Error assigning staff:', err);
+      alert('Error assigning staff');
     }
   };
 
@@ -739,6 +762,44 @@ const ClientDocumentation = () => {
           </div>
         </div>
 
+        {/* Assigned Documents Section (for Staff) */}
+        {userRole !== 'admin' && documents.length > 0 && (
+          <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px', background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.05) 100%)' }}>
+            <h2 style={{ marginTop: 0, color: '#2196F3', fontSize: '20px' }}>📋 Your Assigned Documents</h2>
+            <p style={{ color: '#e0e0e0', marginBottom: '15px', fontSize: '14px' }}>These are the client documents assigned to you for monitoring and documentation.</p>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
+                    <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Client Name</th>
+                    <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
+                    <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>File Name</th>
+                    <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Quantity</th>
+                    <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Date</th>
+                    <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documents.map(doc => (
+                    <tr key={doc._id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      <td style={{ padding: '15px' }}>{doc.companyName}</td>
+                      <td style={{ padding: '15px' }}>{doc.cardType}</td>
+                      <td style={{ padding: '15px' }}>{doc.fileName || 'N/A'}</td>
+                      <td style={{ padding: '15px' }}>{doc.quantity}</td>
+                      <td style={{ padding: '15px' }}>{new Date(doc.uploadDate).toLocaleDateString()}</td>
+                      <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
+                        <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
+                        <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📋 History</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* View Documentation Section */}
         <div style={{ ...glassStyle, padding: '25px', marginBottom: '30px' }}>
           <h2 style={{ marginTop: 0, color: '#fff', fontSize: '20px' }}>📊 View Documentation</h2>
@@ -797,6 +858,7 @@ const ClientDocumentation = () => {
                           <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); }} style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
                           <button onClick={() => { setSelectedDoc(doc); setShowAddRemove(true); setAddRemoveAction('remove'); }} style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
                           <button onClick={() => { setSelectedDoc(doc); setShowJobAssign(true); }} style={{ padding: '6px 10px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>💼 Assign Job</button>
+                          <button onClick={() => { setSelectedDoc(doc); setSelectedStaff(doc.assignedStaff?.map(s => s._id || s) || []); setShowStaffAssign(true); }} style={{ padding: '6px 10px', background: '#FF6F00', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>👥 Assign Staff</button>
                           <button onClick={() => { setSelectedDoc(doc); fetchHistory(doc._id); setShowHistory(true); }} style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📋 History</button>
                           <button onClick={() => handleExport(doc._id)} style={{ padding: '6px 10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📥 Export</button>
                           <button onClick={() => handleDelete(doc._id)} style={{ padding: '6px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🗑️ Delete</button>
@@ -1178,13 +1240,14 @@ const ClientDocumentation = () => {
 
       {/* Staff Assign Modal */}
       {showStaffAssign && selectedDoc && (
-        <div style={modalStyle} onClick={() => setShowStaffAssign(false)}>
+        <div style={modalStyle} onClick={() => { setShowStaffAssign(false); setSelectedStaff([]); }}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginTop: 0, color: '#fff' }}>👥 Assign Staff</h2>
             <p style={{ color: '#e0e0e0' }}>Document: {selectedDoc.fileName}</p>
+            <p style={{ color: '#94a3b8', fontSize: '12px' }}>Currently assigned: {selectedDoc.assignedStaffNames?.join(', ') || 'None'}</p>
             <div style={{ display: 'grid', gap: '10px', marginBottom: '20px', maxHeight: '300px', overflowY: 'auto' }}>
               {staffList.map(staff => (
-                <label key={staff._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e0e0e0', cursor: 'pointer' }}>
+                <label key={staff._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e0e0e0', cursor: 'pointer', padding: '8px', borderRadius: '6px', background: selectedStaff.includes(staff._id) ? 'rgba(76, 175, 80, 0.2)' : 'transparent' }}>
                   <input type="checkbox" checked={selectedStaff.includes(staff._id)} onChange={(e) => {
                     if (e.target.checked) {
                       setSelectedStaff([...selectedStaff, staff._id]);
@@ -1192,13 +1255,14 @@ const ClientDocumentation = () => {
                       setSelectedStaff(selectedStaff.filter(id => id !== staff._id));
                     }
                   }} style={{ cursor: 'pointer' }} />
-                  {staff.name}
+                  <span>{staff.name}</span>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>({staff.email})</span>
                 </label>
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={handleAssignStaff} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✅ Assign</button>
-              <button onClick={() => setShowStaffAssign(false)} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
+              <button onClick={() => { setShowStaffAssign(false); setSelectedStaff([]); }} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Cancel</button>
             </div>
           </div>
         </div>

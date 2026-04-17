@@ -471,7 +471,7 @@ const Mapping = () => {
         .table-scroll::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
       `}</style>
 
-      <TopBar />
+      <TopBar backPath="/staff-dashboard" />
 
       <div style={styles.header}>
         <div style={styles.titleSection}>

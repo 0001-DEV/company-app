@@ -347,7 +347,7 @@ const s = {
   cardMeta: { display: "flex", gap: 6, fontSize: 12, color: 'var(--text-lighter, #94a3b8)', marginTop: 3, flexWrap: "wrap" },
   deleteBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: "4px 6px", borderRadius: 6, color: "#ef4444" },
   cardBody: { padding: "0 20px 20px", borderTop: "1px solid #f1f5f9" },
-  bodyText: { fontSize: 14, color: "#374151", lineHeight: 1.7, margin: "14px 0 16px", whiteSpace: "pre-wrap" },
+  bodyText: { fontSize: 14, color: "#ffffff", lineHeight: 1.7, margin: "14px 0 16px", whiteSpace: "pre-wrap" },
   reactRow: { display: "flex", flexDirection: "column", gap: 8 },
   reactBtn: { padding: "5px 10px", borderRadius: 20, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", transition: "transform 0.15s" },
   reactionSummary: { fontSize: 12, color: 'var(--text-muted, #64748b)', paddingLeft: 2 },

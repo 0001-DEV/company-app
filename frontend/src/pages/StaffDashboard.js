@@ -34,6 +34,7 @@ const StaffDashboard = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [hasWorkBankAccess, setHasWorkBankAccess] = useState(false);
   const [hasMappingAccess, setHasMappingAccess] = useState(false);
+  const [documents, setDocuments] = useState([]);
   const filesPerPage = 4;
 
   useEffect(() => {
@@ -47,7 +48,7 @@ const StaffDashboard = () => {
       const authHeaders = getAuthHeader();
       if (!authHeaders.Authorization) { navigate('/'); return; }
       try {
-        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes, mappingAccessRes] = await Promise.all([
+        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes, mappingAccessRes, docsRes] = await Promise.all([
           fetch('/api/chat/me', { headers: authHeaders }),
           fetch('/api/staff/my-profile', { headers: authHeaders }),
           fetch('/api/staff/my-files', { headers: authHeaders }),
@@ -56,6 +57,7 @@ const StaffDashboard = () => {
           fetch('/api/staff/my-client-projects', { headers: authHeaders }),
           fetch('/api/admin/workbank/access/check', { headers: authHeaders }),
           fetch('/api/mapping/access/check', { headers: authHeaders }),
+          fetch('/api/client-documents/all', { headers: authHeaders }),
         ]);
         if (!meRes.ok) { navigate('/'); return; }
         // Staff data is already available from auth context, but we can still fetch additional data
@@ -80,6 +82,9 @@ const StaffDashboard = () => {
         if (mappingAccessRes && mappingAccessRes.ok) {
           const data = await mappingAccessRes.json();
           setHasMappingAccess(data.hasAccess || false);
+        }
+        if (docsRes && docsRes.ok) {
+          setDocuments(await docsRes.json());
         }
         // Check unread announcements
         try {
@@ -155,6 +160,7 @@ const StaffDashboard = () => {
   const navItems = [
     { id: 'files', icon: '📁', label: 'My Files' },
     { id: 'upload', icon: '📤', label: 'Upload Work' },
+    { id: 'clientDocs', icon: '📄', label: 'Client Documentation' },
     ...(clientProjects.length > 0 ? [{ id: 'clientProjects', icon: '📊', label: 'Monitor Client', action: () => navigate('/client-documentation') }] : []),
     { id: 'announcements', icon: '📢', label: 'Announcements', action: () => navigate('/announcements'), badge: hasNewAnnouncement },
     { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
@@ -260,10 +266,11 @@ const StaffDashboard = () => {
               <div style={s.pageTitle}>
                 {activeNav === 'files' && 'My Work Files'}
                 {activeNav === 'upload' && 'Upload Work'}
+                {activeNav === 'clientDocs' && 'Client Documentation'}
                 {activeNav === 'notices' && 'Notice Board'}
                 {activeNav === 'clientProjects' && 'Monitored Client Projects'}
               </div>
-              <div style={s.pageCrumb}>Staff Dashboard / {activeNav === 'clientProjects' ? 'Monitored Clients' : activeNav === 'files' ? 'Files' : activeNav === 'upload' ? 'Upload' : 'Notices'}</div>            </div>
+              <div style={s.pageCrumb}>Staff Dashboard / {activeNav === 'clientProjects' ? 'Monitored Clients' : activeNav === 'clientDocs' ? 'Client Documentation' : activeNav === 'files' ? 'Files' : activeNav === 'upload' ? 'Upload' : 'Notices'}</div>            </div>
           </div>
           <div style={s.topbarRight}>
             <div style={s.staffBadge}>
@@ -414,6 +421,57 @@ const StaffDashboard = () => {
           {/* ── NOTICES TAB ── */}
           {activeNav === 'notices' && (
             <NoticeBoard isAdmin={false} />
+          )}
+
+          {/* ── CLIENT DOCUMENTATION TAB ── */}
+          {activeNav === 'clientDocs' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={s.uploadCardHeader}>
+                <span style={{ fontSize: '32px' }}>📄</span>
+                <div>
+                  <div style={s.uploadCardTitle}>Client Documentation</div>
+                  <div style={s.uploadCardSub}>View and manage assigned client documents</div>
+                </div>
+              </div>
+
+              {documents.length === 0 ? (
+                <div style={s.empty}>
+                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
+                  <div>No client documents assigned to you currently.</div>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e0e0e0', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.2)', background: 'rgba(255,255,255,0.08)' }}>
+                        <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Client Name</th>
+                        <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Card Type</th>
+                        <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>File Name</th>
+                        <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Quantity</th>
+                        <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Date</th>
+                        <th style={{ padding: '15px', textAlign: 'left', color: '#fff', fontWeight: 'bold' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {documents.map(doc => (
+                        <tr key={doc._id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                          <td style={{ padding: '15px' }}>{doc.companyName}</td>
+                          <td style={{ padding: '15px' }}>{doc.cardType}</td>
+                          <td style={{ padding: '15px' }}>{doc.fileName || 'N/A'}</td>
+                          <td style={{ padding: '15px' }}>{doc.quantity}</td>
+                          <td style={{ padding: '15px' }}>{new Date(doc.uploadDate).toLocaleDateString()}</td>
+                          <td style={{ padding: '15px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                            <button style={{ padding: '6px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➕ Add</button>
+                            <button style={{ padding: '6px 10px', background: '#FF5722', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>➖ Remove</button>
+                            <button style={{ padding: '6px 10px', background: '#00BCD4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>📋 History</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
 
           {/* ── MONITOR CLIENT TAB ── */}

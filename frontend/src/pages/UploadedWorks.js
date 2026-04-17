@@ -193,11 +193,27 @@ const UploadedWorks = () => {
         return;
       }
       
-      // For staff, allow access (will be restricted by backend if needed)
-      setHasWorkBankAccess(true);
-      fetchFiles();
+      // For staff, check actual Work Bank access
+      const accessRes = await fetch('/api/admin/workbank/access/check', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (accessRes.ok) {
+        const accessData = await accessRes.json();
+        if (accessData.hasAccess) {
+          setHasWorkBankAccess(true);
+          fetchFiles();
+        } else {
+          setHasWorkBankAccess(false);
+          setLoading(false);
+        }
+      } else {
+        setHasWorkBankAccess(false);
+        setLoading(false);
+      }
     } catch (err) {
       console.error('Access check error:', err);
+      setHasWorkBankAccess(false);
       setLoading(false);
     }
   };
@@ -287,7 +303,19 @@ const UploadedWorks = () => {
     return acc;
   }, {});
 
-  const staffGroupsList = Object.values(staffGroups);
+  let staffGroupsList = Object.values(staffGroups);
+  
+  // If staff (not admin), show only their own files
+  if (user?.role !== 'admin' && staffGroupsList.length > 0) {
+    const currentStaffGroup = staffGroupsList.find(s => s.staffName === user?.name || s.staffEmail === user?.email);
+    staffGroupsList = currentStaffGroup ? [currentStaffGroup] : staffGroupsList;
+    
+    // Auto-select their own files on first load
+    if (currentStaffGroup && !selectedStaffId) {
+      setTimeout(() => setSelectedStaffId(currentStaffGroup.staffId), 0);
+    }
+  }
+  
   const filteredStaff = staffGroupsList.filter(s =>
     s.staffName.toLowerCase().includes(search.toLowerCase()) ||
     s.staffEmail.toLowerCase().includes(search.toLowerCase()) ||
@@ -334,6 +362,21 @@ const UploadedWorks = () => {
       </div>
     </div>
   );
+
+  // Check if staff has access
+  if (!hasWorkBankAccess && user?.role !== 'admin') {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div style={{ fontSize: 80, marginBottom: 20 }}>🔒</div>
+          <h1 style={{ color: '#f1f5f9', fontSize: 24, marginBottom: 10 }}>Access Denied</h1>
+          <p style={{ color: '#94a3b8', fontSize: 16, marginBottom: 20 }}>You don't have access to the Work Bank yet.</p>
+          <p style={{ color: '#64748b', fontSize: 14 }}>Please contact your administrator to grant you access.</p>
+          <button onClick={() => navigate('/staff-dashboard')} style={{ marginTop: 20, padding: '10px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>← Back to Dashboard</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={S.page} className="ignore-dark">
