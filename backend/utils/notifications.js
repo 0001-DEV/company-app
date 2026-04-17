@@ -10,6 +10,10 @@ const twilio = require('twilio');
 const sendEmail = async (emails, subject, text) => {
   try {
     console.log('📧 Attempting to send emails to:', emails.length, 'recipients');
+    console.log('📧 Email credentials check - USER:', process.env.EMAIL_USER ? '✅ set' : '❌ not set');
+    console.log('📧 Email credentials check - PASS:', process.env.EMAIL_PASS ? '✅ set' : '❌ not set');
+    console.log('📧 Email HOST:', process.env.EMAIL_HOST || 'smtp.gmail.com');
+    console.log('📧 Email PORT:', process.env.EMAIL_PORT || 465);
     
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'your-app-password') {
       console.log('⚠️ Email notification skipped: Credentials not configured in .env. EMAIL_USER:', process.env.EMAIL_USER ? 'set' : 'not set');
@@ -34,11 +38,13 @@ const sendEmail = async (emails, subject, text) => {
     };
 
     console.log('📤 Sending email via:', process.env.EMAIL_HOST || 'smtp.gmail.com');
+    console.log('📤 Recipients:', emails.join(', '));
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Emails sent: %s', info.messageId);
+    console.log('✅ Emails sent successfully. Message ID:', info.messageId);
     return true;
   } catch (error) {
     console.error('❌ Error sending email:', error.message);
+    console.error('❌ Full error:', error);
     return false;
   }
 };

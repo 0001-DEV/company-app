@@ -153,16 +153,25 @@ router.post("/announcements", verifyUser, async (req, res) => {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Admin only" });
     const { title, body, priority } = req.body;
     if (!title || !body) return res.status(400).json({ message: "Title and body required" });
+    
+    console.log('📢 Creating announcement:', { title, priority });
     const ann = await Announcement.create({ title, body, priority: priority || "normal", createdBy: req.user.id, createdByName: req.user.name });
+    console.log('✅ Announcement created with ID:', ann._id);
 
     // Send notifications to ALL users (staff and admins)
+    console.log('📧 Fetching all users for email notification...');
     const allUsers = await User.find().select("email phone name role");
+    console.log(`📧 Found ${allUsers.length} total users`);
+    
     const emails = allUsers.map(u => u.email).filter(e => !!e);
+    console.log(`📧 Found ${emails.length} users with email addresses`);
+    console.log('📧 Email list:', emails);
 
     if (emails.length > 0) {
       const emailSubject = `Announcement: ${title}`;
       const emailBody = `Hello,\n\nA new announcement has been posted:\n\nTitle: ${title}\nPriority: ${priority || "normal"}\n\n${body}\n\nBest regards,\nCompany Admin`;
       
+      console.log('📧 Sending announcement emails...');
       // Await the email sending and log results
       const emailSent = await sendEmail(emails, emailSubject, emailBody);
       if (emailSent) {
@@ -188,7 +197,10 @@ router.post("/announcements", verifyUser, async (req, res) => {
     }
 
     res.status(201).json(ann);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    console.error('❌ Error creating announcement:', err);
+    res.status(500).json({ message: err.message }); 
+  }
 });
 
 router.post("/announcements/:id/read", verifyUser, async (req, res) => {
