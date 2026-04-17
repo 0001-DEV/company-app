@@ -155,20 +155,22 @@ router.post("/announcements", verifyUser, async (req, res) => {
     if (!title || !body) return res.status(400).json({ message: "Title and body required" });
     const ann = await Announcement.create({ title, body, priority: priority || "normal", createdBy: req.user.id, createdByName: req.user.name });
 
-    // Send notifications to all staff members
-    const staff = await User.find({ role: "staff" }).select("email phone name");
-    const emails = staff.map(s => s.email).filter(e => !!e);
+    // Send notifications to ALL users (staff and admins)
+    const allUsers = await User.find().select("email phone name role");
+    const emails = allUsers.map(u => u.email).filter(e => !!e);
 
     if (emails.length > 0) {
       const emailSubject = `Announcement: ${title}`;
       const emailBody = `Hello,\n\nA new announcement has been posted:\n\nTitle: ${title}\nPriority: ${priority || "normal"}\n\n${body}\n\nBest regards,\nCompany Admin`;
       sendEmail(emails, emailSubject, emailBody);
+      console.log(`📧 Announcement email sent to ${emails.length} users`);
     }
 
+    // Send WhatsApp to all users with phone numbers
     const whatsappMessage = `📢 *Announcement: ${title}*\n\n${body}\n\n_Priority: ${priority || "normal"}_`;
-    for (const member of staff) {
-      if (member.phone) {
-        sendWhatsApp(member.phone, whatsappMessage);
+    for (const user of allUsers) {
+      if (user.phone) {
+        sendWhatsApp(user.phone, whatsappMessage);
       }
     }
 
