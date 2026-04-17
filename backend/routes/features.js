@@ -162,16 +162,29 @@ router.post("/announcements", verifyUser, async (req, res) => {
     if (emails.length > 0) {
       const emailSubject = `Announcement: ${title}`;
       const emailBody = `Hello,\n\nA new announcement has been posted:\n\nTitle: ${title}\nPriority: ${priority || "normal"}\n\n${body}\n\nBest regards,\nCompany Admin`;
-      sendEmail(emails, emailSubject, emailBody);
-      console.log(`📧 Announcement email sent to ${emails.length} users`);
+      
+      // Await the email sending and log results
+      const emailSent = await sendEmail(emails, emailSubject, emailBody);
+      if (emailSent) {
+        console.log(`✅ Announcement email successfully sent to ${emails.length} users`);
+      } else {
+        console.log(`⚠️ Announcement email sending failed for ${emails.length} users`);
+      }
+    } else {
+      console.log('⚠️ No email addresses found for announcement notification');
     }
 
     // Send WhatsApp to all users with phone numbers
     const whatsappMessage = `📢 *Announcement: ${title}*\n\n${body}\n\n_Priority: ${priority || "normal"}_`;
+    let whatsappCount = 0;
     for (const user of allUsers) {
       if (user.phone) {
-        sendWhatsApp(user.phone, whatsappMessage);
+        await sendWhatsApp(user.phone, whatsappMessage);
+        whatsappCount++;
       }
+    }
+    if (whatsappCount > 0) {
+      console.log(`✅ WhatsApp announcement sent to ${whatsappCount} users`);
     }
 
     res.status(201).json(ann);

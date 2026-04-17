@@ -106,14 +106,18 @@ setInterval(async () => {
   } catch (_) {}
 }, 30000);
 
-// ── Birthday Email Dispatcher (Runs once every 24 hours) ──
-// Sends birthday email once per person per year. If it fails, it terminates (no retry).
+// ── Birthday Email Dispatcher (Runs at 12:00 AM every day) ──
+// Sends birthday email exactly at midnight for staff with birthdays that day
 const sentBirthdaysThisYear = new Set(); // Format: "email-year"
-setInterval(async () => {
+
+// Function to check and send birthday emails
+const checkAndSendBirthdayEmails = async () => {
   try {
     const now = new Date();
     const currentYear = now.getFullYear();
     const todayStr = `${now.getMonth() + 1}-${now.getDate()}`;
+    
+    console.log(`🎂 Birthday check running at ${now.toLocaleTimeString()}`);
     
     const User = mongoose.model('User');
     const staff = await User.find({ role: 'staff' });
@@ -182,7 +186,29 @@ setInterval(async () => {
   } catch (err) {
     console.error('🔥 Birthday Dispatcher Error:', err);
   }
-}, 3600000); // Check every hour
+};
+
+// Schedule birthday email check to run at 12:00 AM every day
+const scheduleBirthdayEmails = () => {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0); // Set to 12:00 AM
+  
+  const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+  
+  console.log(`⏰ Birthday email scheduler initialized. Next check at ${tomorrow.toLocaleString()}`);
+  
+  // First check at midnight
+  setTimeout(() => {
+    checkAndSendBirthdayEmails();
+    // Then check every 24 hours
+    setInterval(checkAndSendBirthdayEmails, 24 * 60 * 60 * 1000);
+  }, timeUntilMidnight);
+};
+
+// Start the birthday email scheduler
+scheduleBirthdayEmails();
 
 // Test route
 app.get('/api/staff/test', (req, res) => {
