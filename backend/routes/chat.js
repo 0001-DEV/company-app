@@ -635,7 +635,9 @@ router.post("/call/initiate", verifyUser, async (req, res) => {
   const callId = `${req.user.id}-${Date.now()}`;
   activeCalls[callId] = {
     callId, callerId: req.user.id.toString(), callerName: req.user.name,
-    callType, receiverId: receiverId.toString(), roomName, status: "ringing", createdAt: Date.now(), isDepartmentCall: receiverId.toString().startsWith('department:') || receiverId.toString().match(/^[a-f0-9]{24}$/)
+    callType, receiverId: receiverId.toString(), roomName, status: "ringing", createdAt: Date.now(), 
+    isDepartmentCall: receiverId.toString().startsWith('department:'),
+    isTeamCall: receiverId.toString() === 'all'
   };
   // Auto-expire after 60s
   setTimeout(() => { if (activeCalls[callId]?.status === "ringing") delete activeCalls[callId]; }, 60000);
@@ -646,6 +648,11 @@ router.post("/call/initiate", verifyUser, async (req, res) => {
 router.get("/call/incoming", verifyUser, async (req, res) => {
   const myId = req.user.id.toString();
   let call = Object.values(activeCalls).find(c => c.receiverId === myId && c.status === "ringing");
+  
+  // Check for team chat calls (all staff members)
+  if (!call && req.user.role === 'staff') {
+    call = Object.values(activeCalls).find(c => c.isTeamCall && c.status === "ringing");
+  }
   
   // Check for department calls
   if (!call) {
