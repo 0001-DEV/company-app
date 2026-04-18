@@ -964,6 +964,7 @@ const ChatBox = () => {
           <div style={S.sidebarTitle}>
             <span style={S.sidebarTitleText}>Chats</span>
             <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => navigate(currentUser?.role === "admin" ? "/home" : "/staff-dashboard")} style={{ ...S.headerBtn, fontSize: 18 }} title="Go to Dashboard">🏠</button>
               <button style={{ ...S.headerBtn, fontSize: 18 }}>⋯</button>
             </div>
           </div>
@@ -1057,7 +1058,6 @@ const ChatBox = () => {
                 <input type="text" placeholder="Search messages..." value={msgSearchQuery} onChange={e => setMsgSearchQuery(e.target.value)} style={{ padding: "clamp(6px, 1.5vw, 10px) clamp(10px, 2vw, 12px)", background: "#35354f", border: "1px solid #35354f", borderRadius: 6, color: "#e9edef", outline: "none", flex: 1, minWidth: 150, maxWidth: 300, fontSize: "clamp(12px, 2.5vw, 14px)" }} />
               )}
               <div style={S.chatHeaderActions} className="chatbox-header-actions">
-                <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => navigate(currentUser?.role === "admin" ? "/home" : "/staff-dashboard")} title="Go to Dashboard">🏠</button>
                 <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowSearch(!showSearch)}>🔍</button>
                 <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowStarred(!showStarred)}>⭐</button>
                 {selectedDepartment && <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
