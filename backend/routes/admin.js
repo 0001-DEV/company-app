@@ -1598,4 +1598,23 @@ router.get('/workbank/access/check', verifyUser, async (req, res) => {
   }
 });
 
+// DEBUG: Get all workbank access records (for debugging)
+router.get('/workbank/debug/all', adminAuth, async (req, res) => {
+  try {
+    const WorkBankAccess = require('../models/WorkBankAccess');
+    const records = await WorkBankAccess.find().lean();
+    console.log('🔍 DEBUG: All workbank access records:', records);
+    res.json({ 
+      count: records.length,
+      records: records.map(r => ({
+        staffIds: r.staffIds.map(id => id.toString()),
+        updatedAt: r.updatedAt
+      }))
+    });
+  } catch (err) {
+    console.error('Error in debug endpoint:', err);
+    res.status(500).json({ message: 'Error', error: err.message });
+  }
+});
+
 module.exports = router;

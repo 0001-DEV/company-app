@@ -17,10 +17,21 @@ const upload = multer({ storage });
 
 // Helper function to check if user is admin or stock manager
 const isAdminOrStockManager = async (userId) => {
+  console.log('🔍 Checking access for userId:', userId);
   const user = await User.findById(userId);
-  if (user?.role === 'admin') return true;
+  console.log('👤 User found:', user?.name, 'Role:', user?.role);
+  if (user?.role === 'admin') {
+    console.log('✅ User is admin');
+    return true;
+  }
   const manager = await StockManager.findOne({ staffId: userId });
-  return !!manager;
+  console.log('📋 StockManager record:', manager);
+  if (manager) {
+    console.log('✅ User is stock manager');
+    return true;
+  }
+  console.log('❌ User is neither admin nor stock manager');
+  return false;
 };
 
 // Get all stocks
