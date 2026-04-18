@@ -3,6 +3,7 @@ const router = express.Router();
 const { verifyUser } = require('../middleware/auth');
 const Stock = require('../models/Stock');
 const User = require('../models/User');
+const StockManager = require('../models/StockManager');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const path = require('path');
@@ -14,9 +15,21 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Helper function to check if user is admin or stock manager
+const isAdminOrStockManager = async (userId) => {
+  const user = await User.findById(userId);
+  if (user?.role === 'admin') return true;
+  const manager = await StockManager.findOne({ staffId: userId });
+  return !!manager;
+};
+
 // Get all stocks
 router.get('/all', verifyUser, async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     const stocks = await Stock.find().populate('monitor', 'name email').sort({ createdAt: -1 });
     res.json(stocks);
   } catch (err) {
@@ -27,6 +40,10 @@ router.get('/all', verifyUser, async (req, res) => {
 // Create new stock
 router.post('/create', verifyUser, async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     const { name, quantity, unit } = req.body;
     
     if (!name || quantity === undefined) {
@@ -65,6 +82,10 @@ router.post('/create', verifyUser, async (req, res) => {
 // Add stock
 router.post('/:stockId/add', verifyUser, async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     const { quantity, reason } = req.body;
     const stock = await Stock.findById(req.params.stockId);
     
@@ -90,6 +111,10 @@ router.post('/:stockId/add', verifyUser, async (req, res) => {
 // Deduct stock
 router.post('/:stockId/deduct', verifyUser, async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     const { quantity, reason } = req.body;
     const stock = await Stock.findById(req.params.stockId);
     
@@ -166,6 +191,10 @@ router.put('/:stockId/update-name', verifyUser, async (req, res) => {
 // Upload stocks from Excel
 router.post('/upload-excel', verifyUser, upload.single('file'), async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     console.log('📤 Upload Excel endpoint hit');
     
     if (!req.file) {
@@ -232,14 +261,13 @@ router.post('/upload-excel', verifyUser, upload.single('file'), async (req, res)
 // Export stocks for month range to Excel (MUST be before /export/:month/:year)
 router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     console.log('🔍 Range export endpoint hit');
     console.log('User role:', req.user?.role);
     console.log('Params:', req.params);
-    
-    if (req.user.role !== 'admin') {
-      console.log('❌ User is not admin');
-      return res.status(403).json({ message: 'Admin only' });
-    }
     
     const { startMonth, endMonth, year } = req.params;
     const startMonthNum = parseInt(startMonth);
@@ -335,14 +363,13 @@ router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, 
 // Export stocks to Excel
 router.get('/export/:month/:year', verifyUser, async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     console.log('🔍 Export endpoint hit');
     console.log('User role:', req.user?.role);
     console.log('Params:', req.params);
-    
-    if (req.user.role !== 'admin') {
-      console.log('❌ User is not admin');
-      return res.status(403).json({ message: 'Admin only' });
-    }
     
     const { month, year } = req.params;
     const monthNum = parseInt(month);
@@ -428,14 +455,13 @@ router.get('/export/:month/:year', verifyUser, async (req, res) => {
 // Export stocks for entire year to Excel
 router.get('/export/year/:year', verifyUser, async (req, res) => {
   try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
     console.log('🔍 Year export endpoint hit');
     console.log('User role:', req.user?.role);
     console.log('Params:', req.params);
-    
-    if (req.user.role !== 'admin') {
-      console.log('❌ User is not admin');
-      return res.status(403).json({ message: 'Admin only' });
-    }
     
     const { year } = req.params;
     const yearNum = parseInt(year);

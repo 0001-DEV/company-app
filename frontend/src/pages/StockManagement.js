@@ -33,11 +33,15 @@ const StockManagement = () => {
   const [exportEndMonth, setExportEndMonth] = useState(6);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
+  const [showStockManagerModal, setShowStockManagerModal] = useState(false);
+  const [stockManagers, setStockManagers] = useState([]);
+  const [selectedStaffForManager, setSelectedStaffForManager] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchStocks();
     fetchStaff();
+    fetchStockManagers();
   }, []);
 
   const fetchStocks = async () => {
@@ -64,6 +68,18 @@ const StockManagement = () => {
       if (res.ok) setStaffList(await res.json());
     } catch (err) {
       console.error('Error fetching staff:', err);
+    }
+  };
+
+  const fetchStockManagers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/stock-manager/all', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setStockManagers(await res.json());
+    } catch (err) {
+      console.error('Error fetching stock managers:', err);
     }
   };
 
@@ -197,6 +213,53 @@ const StockManagement = () => {
     } catch (err) {
       console.error('Error deleting stock:', err);
       alert('Error deleting stock');
+    }
+  };
+
+  const handleAssignStockManager = async () => {
+    if (!selectedStaffForManager) {
+      alert('Please select a staff member');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/stock-manager/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ staffId: selectedStaffForManager })
+      });
+      if (res.ok) {
+        fetchStockManagers();
+        setSelectedStaffForManager('');
+        alert('✅ Staff member assigned as stock manager');
+      } else {
+        const error = await res.json();
+        alert('Error: ' + (error.message || 'Failed to assign'));
+      }
+    } catch (err) {
+      console.error('Error assigning stock manager:', err);
+      alert('Error assigning stock manager');
+    }
+  };
+
+  const handleRemoveStockManager = async (staffId) => {
+    if (!window.confirm('Remove this staff member from stock managers?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/stock-manager/remove/${staffId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchStockManagers();
+        alert('✅ Stock manager removed');
+      } else {
+        const error = await res.json();
+        alert('Error: ' + (error.message || 'Failed to remove'));
+      }
+    } catch (err) {
+      console.error('Error removing stock manager:', err);
+      alert('Error removing stock manager');
     }
   };
 
@@ -351,6 +414,7 @@ const StockManagement = () => {
           <button style={S.btn} onClick={() => fileInputRef.current?.click()}>📥 Import Excel</button>
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} style={{ display: 'none' }} />
           <button style={S.btn} onClick={handleDownloadTemplate}>📋 Template</button>
+          <button style={S.btn} onClick={() => setShowStockManagerModal(true)}>👥 Manage Managers</button>
           <button style={S.btn} onClick={() => { setExportType('single'); setExportMonth(new Date().getMonth() + 1); setExportYear(new Date().getFullYear()); setShowExportModal(true); }}>📊 Export</button>
           <button style={{ ...S.btn, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} onClick={() => navigate('/home')}>← Back</button>
         </div>
@@ -615,6 +679,52 @@ const StockManagement = () => {
             <div style={{ display: 'flex', gap: 12 }}>
               <button style={{ ...S.btn, flex: 1 }} onClick={() => setShowExportModal(false)}>Cancel</button>
               <button style={{ ...S.btn, ...S.btnPrimary, flex: 1 }} onClick={() => handleExportExcel(exportType)}>Export</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showStockManagerModal && (
+        <div style={S.modal} onClick={() => setShowStockManagerModal(false)}>
+          <div style={S.modalContent} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>👥 Manage Stock Managers</div>
+            
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Assign New Manager</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select value={selectedStaffForManager} onChange={e => setSelectedStaffForManager(e.target.value)} style={{ ...S.select, flex: 1, marginBottom: 0 }}>
+                  <option value="">Select staff member...</option>
+                  {staffList.map(staff => (
+                    <option key={staff._id} value={staff._id}>{staff.name}</option>
+                  ))}
+                </select>
+                <button style={{ ...S.btn, ...S.btnPrimary, padding: '12px 20px' }} onClick={handleAssignStockManager}>Assign</button>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 12, color: '#cbd5e1' }}>Current Managers</label>
+              {stockManagers.length === 0 ? (
+                <div style={{ fontSize: 13, color: '#94a3b8', padding: '12px', background: 'rgba(99,102,241,0.1)', borderRadius: 8 }}>
+                  No stock managers assigned yet
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {stockManagers.map(manager => (
+                    <div key={manager._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#cbd5e1' }}>{manager.staffName}</div>
+                        <div style={{ fontSize: 12, color: '#94a3b8' }}>{manager.staffEmail}</div>
+                      </div>
+                      <button style={{ ...S.btn, background: 'rgba(239,68,68,0.2)', color: '#ef4444', padding: '6px 12px', fontSize: 12 }} onClick={() => handleRemoveStockManager(manager.staffId)}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button style={{ ...S.btn, ...S.btnPrimary, flex: 1 }} onClick={() => setShowStockManagerModal(false)}>Close</button>
             </div>
           </div>
         </div>

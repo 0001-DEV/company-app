@@ -35,6 +35,7 @@ const StaffDashboard = () => {
   const [hasWorkBankAccess, setHasWorkBankAccess] = useState(false);
   const [hasMappingAccess, setHasMappingAccess] = useState(false);
   const [documents, setDocuments] = useState([]);
+  const [isStockManager, setIsStockManager] = useState(false);
   const filesPerPage = 4;
 
   useEffect(() => {
@@ -48,7 +49,7 @@ const StaffDashboard = () => {
       const authHeaders = getAuthHeader();
       if (!authHeaders.Authorization) { navigate('/'); return; }
       try {
-        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes, mappingAccessRes, docsRes] = await Promise.all([
+        const [meRes, profileRes, filesRes, unreadRes, noticeRes, clientProjRes, workBankRes, mappingAccessRes, docsRes, stockManagerRes] = await Promise.all([
           fetch('/api/chat/me', { headers: authHeaders }),
           fetch('/api/staff/my-profile', { headers: authHeaders }),
           fetch('/api/staff/my-files', { headers: authHeaders }),
@@ -58,6 +59,7 @@ const StaffDashboard = () => {
           fetch('/api/admin/workbank/access/check', { headers: authHeaders }),
           fetch('/api/mapping/access/check', { headers: authHeaders }),
           fetch('/api/client-documents/all', { headers: authHeaders }),
+          fetch('/api/stock-manager/check', { headers: authHeaders }),
         ]);
         if (!meRes.ok) { navigate('/'); return; }
         // Staff data is already available from auth context, but we can still fetch additional data
@@ -85,6 +87,10 @@ const StaffDashboard = () => {
         }
         if (docsRes && docsRes.ok) {
           setDocuments(await docsRes.json());
+        }
+        if (stockManagerRes && stockManagerRes.ok) {
+          const data = await stockManagerRes.json();
+          setIsStockManager(data.isStockManager || false);
         }
         // Check unread announcements
         try {
@@ -166,6 +172,7 @@ const StaffDashboard = () => {
     { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
     ...(hasMappingAccess ? [{ id: 'mapping', icon: '🗺️', label: 'Mapping', action: () => navigate('/mapping') }] : []),
     ...(hasWorkBankAccess ? [{ id: 'workbank', icon: '📂', label: 'Work Bank', action: () => navigate('/uploaded-works') }] : []),
+    ...(isStockManager ? [{ id: 'stock', icon: '📦', label: 'Stock Management', action: () => navigate('/stock-management') }] : []),
     ...(canViewOthers ? [{ id: 'others', icon: '👥', label: "All Staff Works", action: () => navigate('/all-staff-works') }] : []),
   ];
 

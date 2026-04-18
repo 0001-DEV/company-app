@@ -57,6 +57,9 @@ app.use('/api/extras', extrasRoutes);
 const stockRoutes = require('./routes/stock');
 app.use('/api/stock', stockRoutes);
 
+const stockManagerRoutes = require('./routes/stockManager');
+app.use('/api/stock-manager', stockManagerRoutes);
+
 const clientDocumentRoutes = require('./routes/clientDocuments');
 app.use('/api/client-documents', clientDocumentRoutes);
 
