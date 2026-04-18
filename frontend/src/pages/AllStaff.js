@@ -264,6 +264,7 @@ function AllStaff() {
         }
         .allstaff-toolbar {
           padding: 12px 16px;
+          margin-top: 56px;
         }
         .allstaff-stats-bar {
           display: none !important;
