@@ -207,6 +207,37 @@ const ChatBox = () => {
   const incomingCallRef = useRef(null);
   const activeCallRef = useRef(null);
 
+  // Handler functions
+  const handleMakeGroupAdmin = async (memberId) => {
+    if (!selectedDepartment) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/admin/department/${selectedDepartment._id}/make-admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ staffId: memberId })
+      });
+      if (res.ok) {
+        loadGroupInfo(selectedDepartment);
+      }
+    } catch (_) {}
+  };
+
+  const handleRemoveGroupAdmin = async (memberId) => {
+    if (!selectedDepartment) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/admin/department/${selectedDepartment._id}/remove-admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ staffId: memberId })
+      });
+      if (res.ok) {
+        loadGroupInfo(selectedDepartment);
+      }
+    } catch (_) {}
+  };
+
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", onResize);
@@ -746,36 +777,6 @@ const ChatBox = () => {
         method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData
       });
       setForwardMsg(null);
-    } catch (_) {}
-  };
-
-  const handleMakeGroupAdmin = async (memberId) => {
-    if (!selectedDepartment) return;
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/admin/department/${selectedDepartment._id}/make-admin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ staffId: memberId })
-      });
-      if (res.ok) {
-        loadGroupInfo(selectedDepartment);
-      }
-    } catch (_) {}
-  };
-
-  const handleRemoveGroupAdmin = async (memberId) => {
-    if (!selectedDepartment) return;
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/admin/department/${selectedDepartment._id}/remove-admin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ staffId: memberId })
-      });
-      if (res.ok) {
-        loadGroupInfo(selectedDepartment);
-      }
     } catch (_) {}
   };
 
