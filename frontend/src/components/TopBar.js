@@ -83,4 +83,39 @@ const s = {
   },
 };
 
+// Mobile responsive styles
+if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+  s.bar = {
+    ...s.bar,
+    padding: '0 12px',
+    minHeight: 'auto',
+    gap: 6,
+  };
+  s.backBtn = {
+    ...s.backBtn,
+    padding: '6px 10px',
+    fontSize: 12,
+  };
+  s.title = {
+    ...s.title,
+    fontSize: 13,
+    maxWidth: '30vw',
+  };
+  s.sub = {
+    ...s.sub,
+    fontSize: 10,
+  };
+  s.actionBtn = {
+    ...s.actionBtn,
+    padding: '6px 10px',
+    fontSize: 11,
+  };
+  s.avatar = {
+    ...s.avatar,
+    width: 30,
+    height: 30,
+    fontSize: 14,
+  };
+}
+
 export default TopBar;

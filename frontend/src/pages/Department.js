@@ -324,6 +324,20 @@ const s = {
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 20 },
   empty: { textAlign: 'center', padding: '80px 20px' },
 
+  /* Mobile responsive */
+  '@media (max-width: 768px)': {
+    grid: { gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 },
+    topbarInner: { padding: '0 16px', height: 56, flexDirection: 'column', gap: 8 },
+    topbarRight: { width: '100%', justifyContent: 'space-between', gap: 8 },
+    addBtn: { padding: '8px 12px', fontSize: 12 },
+    controlRow: { flexDirection: 'column', gap: 12 },
+    searchWrap: { maxWidth: '100%' },
+    statsRow: { width: '100%', justifyContent: 'space-between', gap: 4 },
+    statChip: { padding: '6px 10px', minWidth: 'auto', fontSize: 11 },
+    statVal: { fontSize: 16 },
+    statLbl: { fontSize: 9 }
+  },
+
   /* Card */
   card: { background: 'rgba(31, 41, 55, 0.6)', backdropFilter: 'blur(10px)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', transition: 'all 0.2s', cursor: 'default', position: 'relative' },
   accentStrip: { height: 3, width: '100%' },
