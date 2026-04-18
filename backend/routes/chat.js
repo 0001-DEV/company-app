@@ -635,7 +635,7 @@ router.post("/call/initiate", verifyUser, async (req, res) => {
   const callId = `${req.user.id}-${Date.now()}`;
   activeCalls[callId] = {
     callId, callerId: req.user.id.toString(), callerName: req.user.name,
-    callType, receiverId: receiverId.toString(), roomName, status: "ringing", createdAt: Date.now()
+    callType, receiverId: receiverId.toString(), roomName, status: "ringing", createdAt: Date.now(), isDepartmentCall: receiverId.toString().startsWith('department:') || receiverId.toString().match(/^[a-f0-9]{24}$/)
   };
   // Auto-expire after 60s
   setTimeout(() => { if (activeCalls[callId]?.status === "ringing") delete activeCalls[callId]; }, 60000);
@@ -645,7 +645,22 @@ router.post("/call/initiate", verifyUser, async (req, res) => {
 // Poll for incoming calls
 router.get("/call/incoming", verifyUser, async (req, res) => {
   const myId = req.user.id.toString();
-  const call = Object.values(activeCalls).find(c => c.receiverId === myId && c.status === "ringing");
+  let call = Object.values(activeCalls).find(c => c.receiverId === myId && c.status === "ringing");
+  
+  // Check for department calls
+  if (!call) {
+    try {
+      const userDepts = await Department.find({ members: myId });
+      for (const dept of userDepts) {
+        const deptCall = Object.values(activeCalls).find(c => c.receiverId === dept._id.toString() && c.status === "ringing");
+        if (deptCall) {
+          call = deptCall;
+          break;
+        }
+      }
+    } catch (_) {}
+  }
+  
   res.json(call || null);
 });
 

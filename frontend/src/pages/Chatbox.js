@@ -645,6 +645,12 @@ const ChatBox = () => {
       } catch (_) {}
       setActiveCall(null);
     }
+    if (jitsiApiRef.current) {
+      try {
+        jitsiApiRef.current.dispose();
+        jitsiApiRef.current = null;
+      } catch (_) {}
+    }
     setJitsiRoom(null);
   };
 
@@ -1001,7 +1007,7 @@ const ChatBox = () => {
                 </div>
               </div>
               {showSearch && (
-                <input type="text" placeholder="Search messages..." value={msgSearchQuery} onChange={e => setMsgSearchQuery(e.target.value)} style={{ padding: "6px 12px", background: "#35354f", border: "1px solid #35354f", borderRadius: 6, color: "#e9edef", outline: "none", width: 200 }} />
+                <input type="text" placeholder="Search messages..." value={msgSearchQuery} onChange={e => setMsgSearchQuery(e.target.value)} style={{ padding: "clamp(6px, 1.5vw, 10px) clamp(10px, 2vw, 12px)", background: "#35354f", border: "1px solid #35354f", borderRadius: 6, color: "#e9edef", outline: "none", flex: 1, minWidth: 150, maxWidth: 300, fontSize: "clamp(12px, 2.5vw, 14px)" }} />
               )}
               <div style={S.chatHeaderActions} className="chatbox-header-actions">
                 <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowSearch(!showSearch)}>🔍</button>
