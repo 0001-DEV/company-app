@@ -1412,9 +1412,9 @@ const S = {
     padding: "clamp(12px, 3vw, 16px)", 
     display: "flex", 
     flexDirection: "column", 
-    gap: 12, 
+    gap: "clamp(8px, 2vw, 12px)", 
     borderBottom: `1px solid ${WA_DIVIDER}`,
-    "@media (max-width: 768px)": { padding: "12px" }
+    "@media (max-width: 768px)": { padding: "10px 12px", gap: "8px" }
   },
   sidebarTitle: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   sidebarTitleText: { 
@@ -1425,17 +1425,18 @@ const S = {
   },
   searchInput: { 
     width: "100%", 
-    padding: "clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px)", 
+    padding: "clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px) clamp(8px, 2vw, 10px) clamp(40px, 5vw, 44px)", 
     borderRadius: 24, 
     border: "none", 
     background: WA_INPUT_BG, 
     color: WA_TEXT, 
     outline: "none", 
     fontSize: "clamp(12px, 2.5vw, 14px)",
-    "@media (max-width: 768px)": { padding: "8px 12px", fontSize: "13px" }
+    boxSizing: "border-box",
+    "@media (max-width: 768px)": { padding: "8px 12px 8px 36px", fontSize: "13px" }
   },
-  searchWrap: { position: "relative" },
-  searchIcon: { position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: WA_TEXT_SUB, fontSize: "clamp(14px, 3vw, 16px)" },
+  searchWrap: { position: "relative", width: "100%", display: "flex", alignItems: "center" },
+  searchIcon: { position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: WA_TEXT_SUB, fontSize: "clamp(14px, 3vw, 16px)", pointerEvents: "none" },
   sidebarList: { 
     flex: 1, 
     overflowY: "auto", 
