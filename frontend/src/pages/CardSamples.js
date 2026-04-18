@@ -41,13 +41,13 @@ import activities0 from '../assets/cards/STAFF ACTIVITIES.0.jpeg';
 import activities1 from '../assets/cards/STAFF ACTIVITIES.1.jpeg';
 import activitiesMain from '../assets/cards/STAFF ACTIVITIES.jpeg';
 
-// Video Assets
-const videoHowToUse = '/videos/HOW TO USE OUR SMART CARDS.mp4';
-const videoQRCode = '/videos/Qrcode card.mp4';
-const videoClassicLustre = '/videos/classic-lustre.mp4';
-const videoEggShell = '/videos/Egg-Shell.mp4';
-const videoTranslux = '/videos/translux.mp4';
-const videoNubix = '/videos/nubis.mp4';
+// Video Assets - Using placeholder since videos are not available
+const videoHowToUse = null;
+const videoQRCode = null;
+const videoClassicLustre = null;
+const videoEggShell = null;
+const videoTranslux = null;
+const videoNubix = null;
 
 const materials = [
   { id:'eggshell',      group:'plastic', name:'Eggshell',       tagline:'Subtle texture, premium feel',      photo:matEggshell,    accent:'#c8a97e', badge:'Eggshell',       badgeBg:'#fdf6ee', badgeColor:'#92400e', description:'A lightly textured plastic finish that mimics the natural feel of an eggshell surface. Soft to the touch, it gives cards a refined, understated luxury that stands out without being loud.', specs:['Textured PVC surface','Matte-like tactile feel','Full-color print support','Durable & water-resistant','Standard CR80 card size'], bestFor:['Executive business cards','Premium ID cards','Corporate branding'] },
@@ -258,7 +258,7 @@ export default function CardSamples() {
                     { name: 'Nubix', video: videoNubix, desc: 'Velvety soft-touch luxury' },
                   ].map(v => (
                     <div key={v.name} style={{ ...S.sampleCard, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', borderRadius: 20, overflow: 'hidden' }}>
-                      <div style={{ height: 200, background: '#000', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ height: 200, background: '#000', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {v.video ? (
                           <video 
                             key={v.video}
@@ -272,8 +272,10 @@ export default function CardSamples() {
                             Your browser does not support the video tag.
                           </video>
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: 12 }}>
-                            Video not available
+                          <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+                            <div style={{ fontSize: 32, marginBottom: 8 }}>🎬</div>
+                            <div style={{ fontSize: 12, fontWeight: 600 }}>Video Coming Soon</div>
+                            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{v.name} showcase video</div>
                           </div>
                         )}
                         <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, color: 'white' }}>
@@ -384,9 +386,12 @@ export default function CardSamples() {
                       <div style={{ fontSize: 18, fontWeight: 800, color: '#f9fafb' }}>How to Use: NFC Feature</div>
                       <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>A quick guide to sharing via tap</div>
                     </div>
-                    <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
+                    <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {videoHowToUse ? (
                         <video 
+                          autoPlay
+                          muted
+                          loop
                           controls 
                           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                         >
@@ -394,8 +399,10 @@ export default function CardSamples() {
                           Your browser does not support the video tag.
                         </video>
                       ) : (
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
-                          NFC Tutorial Video not available
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6b7280', background: 'rgba(0,0,0,0.5)' }}>
+                          <div style={{ fontSize: 40, marginBottom: 12 }}>🎬</div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>NFC Tutorial Video</div>
+                          <div style={{ fontSize: 12, marginTop: 4 }}>Coming Soon</div>
                         </div>
                       )}
                     </div>
@@ -407,9 +414,12 @@ export default function CardSamples() {
                       <div style={{ fontSize: 18, fontWeight: 800, color: '#f9fafb' }}>How to Use: QR Code Scanning</div>
                       <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Sharing via camera scan</div>
                     </div>
-                    <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
+                    <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {videoQRCode ? (
                         <video 
+                          autoPlay
+                          muted
+                          loop
                           controls 
                           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                         >
@@ -417,8 +427,10 @@ export default function CardSamples() {
                           Your browser does not support the video tag.
                         </video>
                       ) : (
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
-                          QR Code Tutorial Video not available
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6b7280', background: 'rgba(0,0,0,0.5)' }}>
+                          <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>QR Code Tutorial Video</div>
+                          <div style={{ fontSize: 12, marginTop: 4 }}>Coming Soon</div>
                         </div>
                       )}
                     </div>
