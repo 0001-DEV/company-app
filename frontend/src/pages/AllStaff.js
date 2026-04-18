@@ -502,8 +502,8 @@ function AllStaff() {
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div style={s.statsBar}>
+      {/* Stats bar - hidden on mobile */}
+      <div style={{ ...s.statsBar, display: window.innerWidth > 768 ? 'flex' : 'none' }}>
         <div style={s.statChip}>👥 Total: <b>{staff.length}</b></div>
         <div style={s.statChip}>🔍 Showing: <b>{filteredStaff.length}</b></div>
         <div style={s.statChip}>📄 Page: <b>{currentPage}/{totalPages || 1}</b></div>
