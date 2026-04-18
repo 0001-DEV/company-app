@@ -87,6 +87,7 @@ router.get("/messages", verifyUser, async (req, res) => {
 
     if (req.user.role === "admin") {
       if (userId) {
+        // Private message between admin and specific user
         query = {
           $or: [
             { senderId: req.user.id, receiverId: userId },
@@ -96,11 +97,15 @@ router.get("/messages", verifyUser, async (req, res) => {
           ]
         };
       } else if (departmentId) {
+        // Department messages
         query = { receiverId: `department:${departmentId}` };
+      } else {
+        // Team chat - only messages with receiverId "all"
+        query = { receiverId: "all" };
       }
-      // If no filter, show all messages (team chat)
     } else if (req.user.role === "staff") {
       if (userId) {
+        // Private message between staff and specific user
         query = {
           $or: [
             { senderId: req.user.id, receiverId: userId },
@@ -110,6 +115,7 @@ router.get("/messages", verifyUser, async (req, res) => {
           ]
         };
       } else if (departmentId) {
+        // Department messages - verify staff belongs to department
         const staffUser = await User.findById(req.user.id);
         const staffDeptId = staffUser?.department?.toString();
         if (staffDeptId !== departmentId) {
@@ -117,6 +123,7 @@ router.get("/messages", verifyUser, async (req, res) => {
         }
         query = { receiverId: `department:${departmentId}` };
       } else {
+        // Team chat - only messages with receiverId "all"
         query = { receiverId: "all" };
       }
     }
@@ -343,28 +350,52 @@ router.get("/last-messages", verifyUser, async (req, res) => {
     const lastMessages = {};
     const myId = req.user.id.toString();
 
-    // Fetch all private messages involving this user, sorted newest first
+    // Fetch all messages involving this user, sorted newest first
     const msgs = await Message.find({
       $or: [
         { senderId: req.user.id },
-        { receiverId: myId }
+        { receiverId: myId },
+        { receiverId: "all" },
+        ...(req.user.role === "staff" ? [{ receiverId: /^department:/ }] : [])
       ]
     }).sort({ createdAt: -1 }).limit(500);
 
     for (const msg of msgs) {
       const sid = msg.senderId?.toString();
       const rid = msg.receiverId?.toString();
-      // Skip team/dept messages
-      if (!rid || rid === "all" || rid.startsWith("department:")) continue;
-      const otherId = sid === myId ? rid : sid;
-      if (!otherId || otherId === myId) continue;
-      // Only keep the first (latest) message per conversation partner
-      if (!lastMessages[otherId]) {
-        lastMessages[otherId] = {
-          text: msg.text,
-          createdAt: msg.createdAt,
-          senderId: sid
-        };
+      
+      // Handle private messages
+      if (rid && rid !== "all" && !rid.startsWith("department:")) {
+        const otherId = sid === myId ? rid : sid;
+        if (!otherId || otherId === myId) continue;
+        if (!lastMessages[otherId]) {
+          lastMessages[otherId] = {
+            text: msg.text,
+            createdAt: msg.createdAt,
+            senderId: sid
+          };
+        }
+      }
+      // Handle team chat messages
+      else if (rid === "all") {
+        if (!lastMessages["all"]) {
+          lastMessages["all"] = {
+            text: msg.text,
+            createdAt: msg.createdAt,
+            senderId: sid
+          };
+        }
+      }
+      // Handle department messages
+      else if (rid && rid.startsWith("department:")) {
+        const deptId = rid.replace("department:", "");
+        if (!lastMessages[`department:${deptId}`]) {
+          lastMessages[`department:${deptId}`] = {
+            text: msg.text,
+            createdAt: msg.createdAt,
+            senderId: sid
+          };
+        }
       }
     }
 
