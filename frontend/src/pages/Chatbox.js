@@ -1207,7 +1207,7 @@ const ChatBox = () => {
             <div style={S.welcomeText}>Select a chat to start messaging</div>
             <div style={S.welcomeSub}>Choose a contact or group from the list</div>
           </div>
-        ) : (
+        ) : viewMode === "none" && isMobile ? null : (
           <>
             <div style={{ ...S.chatHeader, position: "relative" }} className="chatbox-header">
               <div style={S.chatHeaderInfo}>
@@ -1661,7 +1661,8 @@ const S = {
       borderBottom: `1px solid ${WA_DIVIDER}`,
       maxHeight: "100%",
       minHeight: "auto",
-      flex: 1
+      flex: 1,
+      height: "100vh"
     }
   },
   sidebarHeader: { 
@@ -1698,7 +1699,8 @@ const S = {
     flex: 1, 
     overflowY: "auto", 
     overflowX: "hidden",
-    "@media (max-width: 768px)": { flex: 1, maxHeight: "none" }
+    "-webkit-overflow-scrolling": "touch",
+    "@media (max-width: 768px)": { flex: 1, maxHeight: "none", overflowY: "auto" }
   },
   sidebarItem: { 
     display: "flex", 
@@ -1860,7 +1862,8 @@ const S = {
     flexDirection: "column", 
     gap: "clamp(6px, 1.5vw, 8px)", 
     backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"><defs><pattern id=\"pattern\" x=\"0\" y=\"0\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><text x=\"50\" y=\"50\" font-size=\"80\" fill=\"rgba(255,255,255,0.02)\" text-anchor=\"middle\" dominant-baseline=\"middle\">💬</text></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"%230a0e13\"/><rect width=\"100%\" height=\"100%\" fill=\"url(%23pattern)\"/></svg>')",
-    "@media (max-width: 768px)": { padding: "12px", gap: "6px", backgroundImage: "none", background: "#2a3f4b" }
+    "-webkit-overflow-scrolling": "touch",
+    "@media (max-width: 768px)": { padding: "12px", gap: "6px", backgroundImage: "none", background: "#2a3f4b", "-webkit-overflow-scrolling": "touch" }
   },
   msgRow: { display: "flex", marginBottom: 4, width: "100%" },
   msgRowOwn: { justifyContent: "flex-end" },

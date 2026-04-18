@@ -111,7 +111,7 @@ setInterval(async () => {
 
 // ── Birthday Email Dispatcher (Runs at 12:00 AM every day) ──
 // Sends birthday email exactly at midnight for staff with birthdays that day
-const sentBirthdaysThisYear = new Set(); // Format: "email-year"
+// Uses database to track sent emails to prevent duplicates on server restart
 
 // Function to check and send birthday emails
 const checkAndSendBirthdayEmails = async () => {
@@ -123,6 +123,7 @@ const checkAndSendBirthdayEmails = async () => {
     console.log(`🎂 Birthday check running at ${now.toLocaleTimeString()}`);
     
     const User = mongoose.model('User');
+    const BirthdayLog = require('./models/BirthdayLog');
     const staff = await User.find({ role: 'staff' });
 
     const transporter = nodemailer.createTransport({
@@ -138,10 +139,17 @@ const checkAndSendBirthdayEmails = async () => {
       
       const bday = new Date(user.birthday);
       const bdayStr = `${bday.getMonth() + 1}-${bday.getDate()}`;
-      const sentKey = `${user.email}-${currentYear}`;
       
-      // Only send if it's their birthday today AND we haven't sent it this year
-      if (todayStr === bdayStr && !sentBirthdaysThisYear.has(sentKey)) {
+      // Only send if it's their birthday today
+      if (todayStr === bdayStr) {
+        // Check if we already sent this year
+        const alreadySent = await BirthdayLog.findOne({ userId: user._id, year: currentYear });
+        
+        if (alreadySent) {
+          console.log(`⏭️  Birthday email already sent to ${user.name} this year`);
+          continue;
+        }
+        
         console.log(`🎂 Sending birthday email to ${user.name} (${user.email})`);
         
         const mailOptions = {
@@ -176,11 +184,26 @@ const checkAndSendBirthdayEmails = async () => {
 
         try {
           await transporter.sendMail(mailOptions);
-          sentBirthdaysThisYear.add(sentKey);
+          // Log the successful send in database
+          await BirthdayLog.create({
+            userId: user._id,
+            email: user.email,
+            year: currentYear,
+            status: 'sent'
+          });
           console.log(`✅ Birthday email sent to ${user.email}`);
         } catch (mailErr) {
-          // If email fails, mark it as sent anyway to prevent repeated attempts
-          sentBirthdaysThisYear.add(sentKey);
+          // Log the failed send in database
+          try {
+            await BirthdayLog.create({
+              userId: user._id,
+              email: user.email,
+              year: currentYear,
+              status: 'failed'
+            });
+          } catch (logErr) {
+            console.error('Failed to log birthday email attempt:', logErr.message);
+          }
           console.error(`❌ Failed to send birthday email to ${user.email}:`, mailErr.message);
           console.log(`⚠️ Email marked as attempted. Will not retry for ${user.name} this year.`);
         }
