@@ -749,6 +749,36 @@ const ChatBox = () => {
     } catch (_) {}
   };
 
+  const handleMakeGroupAdmin = async (memberId) => {
+    if (!selectedDepartment) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/admin/department/${selectedDepartment._id}/make-admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ staffId: memberId })
+      });
+      if (res.ok) {
+        loadGroupInfo(selectedDepartment);
+      }
+    } catch (_) {}
+  };
+
+  const handleRemoveGroupAdmin = async (memberId) => {
+    if (!selectedDepartment) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/admin/department/${selectedDepartment._id}/remove-admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ staffId: memberId })
+      });
+      if (res.ok) {
+        loadGroupInfo(selectedDepartment);
+      }
+    } catch (_) {}
+  };
+
   const startVoiceRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1174,15 +1204,27 @@ const ChatBox = () => {
                         </div>
                       ))}
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#8888aa", marginBottom: 8, marginTop: 16 }}>Members ({groupMembers.length})</div>
-                      {groupMembers.map((member, idx) => (
-                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "#2a2a3e", borderRadius: 6, marginBottom: 6 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>{getInitials(member.name)}</div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, color: "#e9edef", fontWeight: 600 }}>{member.name}</div>
-                            <div style={{ fontSize: 11, color: "#8888aa" }}>{onlineStatus[member._id]?.online ? "🟢 Online" : "⚫ Offline"}</div>
+                      {groupMembers.map((member, idx) => {
+                        const isAdmin = groupAdmins.some(a => a._id === member._id);
+                        return (
+                          <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "#2a2a3e", borderRadius: 6, marginBottom: 6 }}>
+                            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>{getInitials(member.name)}</div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13, color: "#e9edef", fontWeight: 600 }}>{member.name}</div>
+                              <div style={{ fontSize: 11, color: "#8888aa" }}>{onlineStatus[member._id]?.online ? "🟢 Online" : "⚫ Offline"}</div>
+                            </div>
+                            {currentUser?.role === "admin" && (
+                              <div style={{ display: "flex", gap: 4 }}>
+                                {!isAdmin ? (
+                                  <button onClick={() => handleMakeGroupAdmin(member._id)} style={{ background: "rgba(79, 70, 229, 0.2)", color: "#a5b4fc", border: "1px solid rgba(79, 70, 229, 0.4)", borderRadius: 4, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600 }}>Make Admin</button>
+                                ) : (
+                                  <button onClick={() => handleRemoveGroupAdmin(member._id)} style={{ background: "rgba(220, 38, 38, 0.2)", color: "#f87171", border: "1px solid rgba(220, 38, 38, 0.4)", borderRadius: 4, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600 }}>Remove Admin</button>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </>
                   ) : (
                     <div>
