@@ -1,6 +1,7 @@
 // routes/chat.js
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const { verifyUser } = require("../middleware/auth");
 const User = require("../models/User");
 const multer = require("multer");
