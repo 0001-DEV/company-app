@@ -157,6 +157,25 @@ const Department = () => {
         .dept-card:hover .dept-actions { opacity:1 !important; }
         .search-input::placeholder { color: #94a3b8; }
         .search-input:focus { border-color: #4f46e5 !important; outline: none; }
+        
+        @media (max-width: 768px) {
+          .topbar-inner { padding: 0 12px !important; height: auto !important; min-height: 48px !important; flex-direction: column !important; align-items: stretch !important; gap: 8px !important; padding-top: 8px !important; padding-bottom: 8px !important; }
+          .topbar-left { width: 100% !important; gap: 6px !important; justify-content: space-between !important; }
+          .topbar-back { font-size: 11px !important; padding: 4px 6px !important; }
+          .topbar-divider { display: none !important; }
+          .topbar-title { font-size: 13px !important; flex: 1 !important; text-align: center !important; }
+          .topbar-right { width: 100% !important; gap: 6px !important; justify-content: flex-end !important; }
+          .topbar-meta { font-size: 10px !important; display: none !important; }
+          .topbar-add-btn { padding: 6px 12px !important; font-size: 11px !important; white-space: nowrap !important; }
+          
+          .control-row { flex-direction: column !important; gap: 12px !important; margin-bottom: 20px !important; width: 100% !important; }
+          .search-wrap { max-width: 100% !important; width: 100% !important; }
+          .search-input { font-size: 13px !important; padding: 9px 12px 9px 36px !important; }
+          .stats-row { width: 100% !important; gap: 6px !important; justify-content: space-between !important; }
+          .stat-chip { flex: 1 !important; padding: 6px 8px !important; min-width: auto !important; font-size: 11px !important; }
+          .stat-val { font-size: 16px !important; font-weight: 800 !important; }
+          .stat-lbl { font-size: 9px !important; margin-top: 2px !important; }
+        }
       `}</style>
 
       {/* Toast */}
@@ -171,20 +190,20 @@ const Department = () => {
 
       {/* ── STICKY TOPBAR ── */}
       <div style={s.topbar}>
-        <div style={s.topbarInner}>
-          <div style={s.topbarLeft}>
-            <button onClick={() => navigate('/home')} style={s.backBtn}>
+        <div style={s.topbarInner} className="topbar-inner">
+          <div style={s.topbarLeft} className="topbar-left">
+            <button onClick={() => navigate('/home')} style={s.backBtn} className="topbar-back">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
               Dashboard
             </button>
-            <div style={s.topbarDivider} />
+            <div style={s.topbarDivider} className="topbar-divider" />
             <div>
-              <div style={s.topbarTitle}>Departments</div>
+              <div style={s.topbarTitle} className="topbar-title">Departments</div>
             </div>
           </div>
-          <div style={s.topbarRight}>
-            <div style={s.topbarMeta}>{departments.length} depts · {totalStaff} staff</div>
-            <button style={s.addBtn} onClick={() => { setEditingDept(null); setShowModal(true); }}>
+          <div style={s.topbarRight} className="topbar-right">
+            <div style={s.topbarMeta} className="topbar-meta">{departments.length} depts · {totalStaff} staff</div>
+            <button style={s.addBtn} className="topbar-add-btn" onClick={() => { setEditingDept(null); setShowModal(true); }}>
               + New Department
             </button>
           </div>
@@ -195,8 +214,8 @@ const Department = () => {
       <div style={s.body}>
 
         {/* Search + stats row */}
-        <div style={s.controlRow}>
-          <div style={s.searchWrap}>
+        <div style={s.controlRow} className="control-row">
+          <div style={s.searchWrap} className="search-wrap">
             <svg style={s.searchIcon} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
@@ -204,15 +223,15 @@ const Department = () => {
               value={search} onChange={e => setSearch(e.target.value)} style={s.searchInput} />
             {search && <button onClick={() => setSearch('')} style={s.clearBtn}>✕</button>}
           </div>
-          <div style={s.statsRow}>
+          <div style={s.statsRow} className="stats-row">
             {[
               { label: "Departments", value: departments.length },
               { label: "Staff Members", value: totalStaff },
               { label: "Avg. Team Size", value: departments.length ? Math.round(totalStaff / departments.length) : 0 },
             ].map((st, i) => (
-              <div key={i} style={s.statChip}>
-                <span style={s.statVal}>{st.value}</span>
-                <span style={s.statLbl}>{st.label}</span>
+              <div key={i} style={s.statChip} className="stat-chip">
+                <span style={s.statVal} className="stat-val">{st.value}</span>
+                <span style={s.statLbl} className="stat-lbl">{st.label}</span>
               </div>
             ))}
           </div>
@@ -304,26 +323,6 @@ const s = {
   topbarMeta: { fontSize: 13, color: '#6b7280', fontWeight: 500 },
   addBtn: { padding: '9px 20px', background: 'linear-gradient(135deg, #4f46e5, #6366f1)', color: 'white', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.2px', boxShadow: '0 4px 15px rgba(79,70,229,0.4)' },
 
-  /* Mobile responsive topbar */
-  '@media (max-width: 768px)': {
-    topbarInner: { 
-      padding: '0 12px', 
-      height: 'auto',
-      minHeight: 56,
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      gap: 8,
-      paddingTop: 8,
-      paddingBottom: 8
-    },
-    topbarLeft: { width: '100%', gap: 8 },
-    backBtn: { fontSize: 12, padding: '5px 8px' },
-    topbarTitle: { fontSize: 14 },
-    topbarRight: { width: '100%', gap: 8, justifyContent: 'space-between' },
-    topbarMeta: { fontSize: 11, display: 'none' },
-    addBtn: { padding: '8px 14px', fontSize: 12 }
-  },
-
   /* Body */
   body: { maxWidth: 1200, margin: '0 auto', padding: '28px 28px 60px' },
 
@@ -339,43 +338,6 @@ const s = {
   statChip: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 18px', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)', borderRadius: 10, border: '1px solid rgba(255, 255, 255, 0.15)', minWidth: 80 },
   statVal: { fontSize: 20, fontWeight: 900, color: '#f9fafb', lineHeight: 1 },
   statLbl: { fontSize: 10, color: '#6b7280', fontWeight: 600, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' },
-
-  /* Mobile responsive controls */
-  '@media (max-width: 768px)': {
-    controlRow: { 
-      flexDirection: 'column',
-      gap: 12,
-      marginBottom: 20,
-      width: '100%'
-    },
-    searchWrap: { 
-      maxWidth: '100%',
-      width: '100%'
-    },
-    searchInput: { 
-      fontSize: 13,
-      padding: '9px 12px 9px 36px'
-    },
-    statsRow: { 
-      width: '100%',
-      gap: 6,
-      justifyContent: 'space-between'
-    },
-    statChip: { 
-      flex: 1,
-      padding: '6px 8px',
-      minWidth: 'auto',
-      fontSize: 11
-    },
-    statVal: { 
-      fontSize: 16,
-      fontWeight: 800
-    },
-    statLbl: { 
-      fontSize: 9,
-      marginTop: 2
-    }
-  },
 
   /* Grid */
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 20 },
