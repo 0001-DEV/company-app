@@ -1477,12 +1477,21 @@ router.get('/workbank/staff-list', adminAuth, async (req, res) => {
 router.post('/workbank/access/update', adminAuth, async (req, res) => {
   try {
     const WorkBankAccess = require('../models/WorkBankAccess');
+    const mongoose = require('mongoose');
     const { staffIds } = req.body;
+    
+    // Convert staffIds to ObjectIds
+    const objectIds = (staffIds || []).map(id => {
+      if (typeof id === 'string') {
+        return new mongoose.Types.ObjectId(id);
+      }
+      return id;
+    });
     
     // Delete existing access and create new one
     await WorkBankAccess.deleteMany({});
     const access = new WorkBankAccess({
-      staffIds: staffIds || [],
+      staffIds: objectIds,
       updatedAt: new Date(),
       updatedBy: req.user.id
     });
@@ -1499,7 +1508,11 @@ router.post('/workbank/access/update', adminAuth, async (req, res) => {
 router.post('/workbank/access/grant/:staffId', adminAuth, async (req, res) => {
   try {
     const WorkBankAccess = require('../models/WorkBankAccess');
+    const mongoose = require('mongoose');
     const { staffId } = req.params;
+    
+    // Convert to ObjectId
+    const objectId = new mongoose.Types.ObjectId(staffId);
     
     // Get or create the access record
     let access = await WorkBankAccess.findOne();
@@ -1508,9 +1521,9 @@ router.post('/workbank/access/grant/:staffId', adminAuth, async (req, res) => {
     }
     
     // Add staff ID if not already present (using string comparison for safety)
-    const staffIdExists = access.staffIds.some(id => id.toString() === staffId.toString());
+    const staffIdExists = access.staffIds.some(id => id.toString() === objectId.toString());
     if (!staffIdExists) {
-      access.staffIds.push(staffId);
+      access.staffIds.push(objectId);
       await access.save();
     }
     

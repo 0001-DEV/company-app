@@ -492,12 +492,21 @@ router.post('/access/update', verifyUser, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
     
+    const mongoose = require('mongoose');
     const { staffIds } = req.body;
+    
+    // Convert staffIds to ObjectIds
+    const objectIds = (staffIds || []).map(id => {
+      if (typeof id === 'string') {
+        return new mongoose.Types.ObjectId(id);
+      }
+      return id;
+    });
     
     // Delete existing access and create new one
     await MappingAccess.deleteMany({});
     const access = new MappingAccess({
-      staffIds: staffIds || [],
+      staffIds: objectIds,
       updatedAt: new Date(),
       updatedBy: req.user.id
     });
