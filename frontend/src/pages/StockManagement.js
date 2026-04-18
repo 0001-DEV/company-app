@@ -721,29 +721,83 @@ const StockManagement = () => {
             ) : (
               <>
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Month</label>
-                  <select value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))} style={S.select}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
-                      <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
-                    ))}
-                  </select>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Export Type</label>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#cbd5e1' }}>
+                      <input type="radio" name="singleExportType" value="single" checked={exportType === 'single'} onChange={e => setExportType(e.target.value)} />
+                      Single Month
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#cbd5e1' }}>
+                      <input type="radio" name="singleExportType" value="range" checked={exportType === 'range'} onChange={e => setExportType(e.target.value)} />
+                      Month Range
+                    </label>
+                  </div>
                 </div>
 
-                <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Year</label>
-                  <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))} style={S.select}>
-                    {[2024, 2025, 2026].map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
+                {exportType === 'single' ? (
+                  <>
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Month</label>
+                      <select value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))} style={S.select}>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                          <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
-                  <strong>Stock:</strong> {selectedStock.name}<br/>
-                  <strong>Current Quantity:</strong> {selectedStock.currentQuantity} {selectedStock.unit}<br/>
-                  <strong>Transactions:</strong> {selectedStock.transactions?.length || 0}<br/>
-                  <strong>File name:</strong> {selectedStock.name}_{new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' })}_{exportYear}.xlsx
-                </div>
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Year</label>
+                      <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))} style={S.select}>
+                        {[2024, 2025, 2026].map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
+                      <strong>Stock:</strong> {selectedStock.name}<br/>
+                      <strong>Month:</strong> {new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' })} {exportYear}<br/>
+                      <strong>Current Quantity:</strong> {selectedStock.currentQuantity} {selectedStock.unit}<br/>
+                      <strong>File name:</strong> {selectedStock.name}_{new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' })}_{exportYear}.xlsx
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>From Month</label>
+                      <select value={exportStartMonth} onChange={e => setExportStartMonth(parseInt(e.target.value))} style={S.select}>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                          <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>To Month</label>
+                      <select value={exportEndMonth} onChange={e => setExportEndMonth(parseInt(e.target.value))} style={S.select}>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                          <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Year</label>
+                      <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))} style={S.select}>
+                        {[2024, 2025, 2026].map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
+                      <strong>Stock:</strong> {selectedStock.name}<br/>
+                      <strong>Period:</strong> {new Date(exportYear, exportStartMonth - 1).toLocaleString('default', { month: 'long' })} - {new Date(exportYear, exportEndMonth - 1).toLocaleString('default', { month: 'long' })} {exportYear}<br/>
+                      <strong>Current Quantity:</strong> {selectedStock.currentQuantity} {selectedStock.unit}<br/>
+                      <strong>File name:</strong> {selectedStock.name}_{new Date(exportYear, exportStartMonth - 1).toLocaleString('default', { month: 'long' })}_to_{new Date(exportYear, exportEndMonth - 1).toLocaleString('default', { month: 'long' })}_{exportYear}.xlsx
+                    </div>
+                  </>
+                )}
               </>
             )}
 
