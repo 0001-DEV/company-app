@@ -149,9 +149,19 @@ function Home() {
   }, [getAuthHeader]);
 
   const navItems = [
-    { id: "creds",         icon: "🔒", label: "Staff Credentials",      path: "/staff-credentials" },
+    { id: "staff",         icon: "🆔", label: "Staff IDs",              path: "/all-staff" },
+    { id: "dept",          icon: "🏢", label: "Departments",            path: "/department" },
+    { id: "mapping",       icon: "🗺️", label: "Mapping",                path: "/mapping" },
+    { id: "client-docs",   icon: "📄", label: "Client Documentation",   path: "/client-documentation" },
+    { id: "works",         icon: "📤", label: "Work Bank",              path: "/uploaded-works" },
+    { id: "stock",         icon: "📦", label: "Stock Management",       path: "/stock-management" },
     { id: "cards",         icon: "🎴", label: "Our Work",               path: "/card-samples" },
+    { id: "creds",         icon: "🔒", label: "Staff Credentials",      path: "/staff-credentials" },
+    { id: "chat",          icon: "💬", label: "Chat Box",               path: "/chat", badge: hasUnreadMessages },
+    { id: "announcements", icon: "📢", label: "Announcements",          path: "/announcements" },
     { id: "directory",     icon: "👥", label: "Employee Directory",     path: "/employee-directory" },
+    { id: "admin-weekly",  icon: "📊", label: "Weekly Reports",         path: "/admin/weekly-reports" },
+    { id: "recycle",       icon: "🗑️", label: "Recycle Bin",            path: "/recycle-bin" },
   ];
 
   const cards = [
