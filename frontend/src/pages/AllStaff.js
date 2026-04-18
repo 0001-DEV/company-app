@@ -574,12 +574,6 @@ function AllStaff() {
               >
                 📋 Departments
               </button>
-              <button 
-                onClick={() => { navigate('/home'); setMobileMenuOpen(false); }}
-                style={{ ...s.mobileSidebarBtn, background: '#3b82f6', color: 'white', marginTop: 'auto' }}
-              >
-                ← Back to Dashboard
-              </button>
             </div>
           </div>
         </>
