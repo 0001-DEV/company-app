@@ -980,25 +980,30 @@ const ChatBox = () => {
             width: 100% !important;
             border-right: none !important;
             border-bottom: 1px solid #2a3f4b !important;
-            max-height: 40vh !important;
+            max-height: auto !important;
             min-height: auto !important;
             flex-shrink: 0 !important;
+            flex: 0 0 auto !important;
           }
           .chatbox-main {
             flex: 1 !important;
-            min-height: 60vh !important;
+            min-height: auto !important;
             display: flex !important;
             flex-direction: column !important;
+            width: 100% !important;
           }
           .chatbox-sidebar-list {
-            max-height: calc(40vh - 140px) !important;
+            max-height: none !important;
             overflow-y: auto !important;
+            flex: 1 !important;
           }
           .chatbox-messages {
-            padding: 12px !important;
-            gap: 6px !important;
+            padding: 8px !important;
+            gap: 4px !important;
             flex: 1 !important;
             overflow-y: auto !important;
+            background: #2a3f4b !important;
+            background-image: none !important;
           }
           .chatbox-bubble {
             max-width: 85% !important;
@@ -1006,29 +1011,33 @@ const ChatBox = () => {
             font-size: 12px !important;
           }
           .chatbox-input-bar {
-            flex-wrap: wrap !important;
-            gap: 8px !important;
+            flex-wrap: nowrap !important;
+            gap: 6px !important;
             flex-shrink: 0 !important;
+            padding: 8px !important;
           }
           .chatbox-text-input {
-            min-height: 32px !important;
-            font-size: 12px !important;
+            min-height: 28px !important;
+            font-size: 11px !important;
             flex: 1 !important;
-            min-width: 100% !important;
+            min-width: 100px !important;
+            max-height: 60px !important;
+            padding: 6px 10px !important;
           }
           .chatbox-action-btn {
-            font-size: 16px !important;
-            padding: 8px !important;
-            min-width: 40px !important;
-            min-height: 40px !important;
+            font-size: 14px !important;
+            padding: 4px !important;
+            min-width: 32px !important;
+            min-height: 32px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            flex-shrink: 0 !important;
           }
           .chatbox-send-btn {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 14px !important;
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 12px !important;
             flex-shrink: 0 !important;
           }
           .chatbox-modal {
@@ -1052,6 +1061,7 @@ const ChatBox = () => {
           .chatbox-header {
             flex-wrap: wrap !important;
             gap: 8px !important;
+            padding: 8px !important;
           }
           .chatbox-header-info {
             flex: 1 !important;
@@ -1063,9 +1073,9 @@ const ChatBox = () => {
           }
           .chatbox-header-btn {
             font-size: 16px !important;
-            padding: 8px !important;
-            min-width: 40px !important;
-            min-height: 40px !important;
+            padding: 6px !important;
+            min-width: 32px !important;
+            min-height: 32px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -1081,22 +1091,31 @@ const ChatBox = () => {
           }
           .chatbox-header-btn {
             font-size: 14px !important;
-            padding: 6px !important;
+            padding: 4px !important;
           }
           .chatbox-action-btn {
-            font-size: 14px !important;
-            padding: 6px !important;
-            min-width: 36px !important;
-            min-height: 36px !important;
+            font-size: 12px !important;
+            padding: 4px !important;
+            min-width: 28px !important;
+            min-height: 28px !important;
           }
           .chatbox-send-btn {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 12px !important;
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 10px !important;
           }
           .chatbox-text-input {
-            font-size: 11px !important;
-            min-height: 28px !important;
+            font-size: 10px !important;
+            min-height: 24px !important;
+            padding: 4px 8px !important;
+          }
+          .chatbox-input-bar {
+            padding: 6px !important;
+            gap: 4px !important;
+          }
+          .chatbox-messages {
+            padding: 6px !important;
+            gap: 3px !important;
           }
         }
       `}</style>
@@ -1172,7 +1191,7 @@ const ChatBox = () => {
 
       {/* ── MAIN CHAT AREA ── */}
       <div style={{ ...S.main, display: isMobile && viewMode === "none" ? "none" : "flex" }} className="chatbox-main">
-        {viewMode === "none" ? (
+        {viewMode === "none" && !isMobile ? (
           <div style={{ ...S.welcome, display: "flex" }}>
             <div style={S.welcomeIcon}>💬</div>
             <div style={S.welcomeText}>Select a chat to start messaging</div>
@@ -1831,7 +1850,7 @@ const S = {
     flexDirection: "column", 
     gap: "clamp(6px, 1.5vw, 8px)", 
     backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"><defs><pattern id=\"pattern\" x=\"0\" y=\"0\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><text x=\"50\" y=\"50\" font-size=\"80\" fill=\"rgba(255,255,255,0.02)\" text-anchor=\"middle\" dominant-baseline=\"middle\">💬</text></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"%230a0e13\"/><rect width=\"100%\" height=\"100%\" fill=\"url(%23pattern)\"/></svg>')",
-    "@media (max-width: 768px)": { padding: "12px", gap: "6px" }
+    "@media (max-width: 768px)": { padding: "12px", gap: "6px", backgroundImage: "none", background: "#2a3f4b" }
   },
   msgRow: { display: "flex", marginBottom: 4, width: "100%" },
   msgRowOwn: { justifyContent: "flex-end" },
@@ -1875,7 +1894,7 @@ const S = {
     alignItems: "flex-end", 
     borderTop: `1px solid ${WA_DIVIDER}`,
     flexWrap: "wrap",
-    "@media (max-width: 768px)": { padding: "10px 12px", gap: "8px" }
+    "@media (max-width: 768px)": { padding: "8px 8px", gap: "6px", flexWrap: "nowrap" }
   },
   inputActions: { display: "flex", gap: 8 },
   actionBtn: { 
@@ -1887,7 +1906,7 @@ const S = {
     padding: "clamp(6px, 1.5vw, 8px)", 
     borderRadius: 50, 
     transition: "background 0.2s",
-    "@media (max-width: 768px)": { fontSize: "16px", padding: "6px" }
+    "@media (max-width: 768px)": { fontSize: "14px", padding: "4px", minWidth: "32px", minHeight: "32px", display: "flex", alignItems: "center", justifyContent: "center" }
   },
   textInput: { 
     flex: 1, 
@@ -1901,7 +1920,7 @@ const S = {
     fontSize: "clamp(12px, 2.5vw, 14px)", 
     maxHeight: 100,
     minHeight: "clamp(32px, 6vw, 40px)",
-    "@media (max-width: 768px)": { padding: "8px 12px", fontSize: "12px", minHeight: "32px" }
+    "@media (max-width: 768px)": { padding: "6px 10px", fontSize: "11px", minHeight: "28px", maxHeight: "60px", flex: 1, minWidth: "100px" }
   },
   sendBtn: { 
     background: WA_ACCENT, 
@@ -1916,7 +1935,8 @@ const S = {
     justifyContent: "center", 
     fontSize: "clamp(14px, 3vw, 18px)", 
     transition: "background 0.2s",
-    "@media (max-width: 768px)": { width: "36px", height: "36px", fontSize: "14px" }
+    flexShrink: 0,
+    "@media (max-width: 768px)": { width: "32px", height: "32px", fontSize: "12px", flexShrink: 0 }
   },
   
   // Jitsi - responsive
