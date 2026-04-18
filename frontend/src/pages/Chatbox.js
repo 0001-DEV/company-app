@@ -607,7 +607,7 @@ const ChatBox = () => {
   };
 
   const startCall = async (type) => {
-    if (!selectedUser && viewMode !== "department") return;
+    if (!selectedUser && viewMode !== "department" && viewMode !== "all") return;
     let roomName, receiverId, receiverName;
     if (viewMode === "private" && selectedUser) {
       const peer = staffList.find(s => s._id === selectedUser);
@@ -618,6 +618,10 @@ const ChatBox = () => {
       roomName = `xtreme-${type}-dept-${selectedDepartment._id}`;
       receiverId = selectedDepartment._id;
       receiverName = selectedDepartment.name;
+    } else if (viewMode === "all") {
+      roomName = `xtreme-${type}-team-chat`;
+      receiverId = "all";
+      receiverName = "Team Chat";
     } else return;
     try {
       const token = localStorage.getItem("token");
@@ -995,6 +999,9 @@ const ChatBox = () => {
           <>
             <div style={{ ...S.chatHeader, position: "relative" }}>
               <div style={S.chatHeaderInfo}>
+                {isMobile && (
+                  <button onClick={() => { setViewMode("none"); setSelectedUser(null); setSelectedDepartment(null); }} style={{ background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", fontSize: 20, padding: "4px 8px", marginRight: 8 }}>←</button>
+                )}
                 <div style={{ ...S.avatar, width: 40, height: 40, fontSize: 16 }}>
                   {selectedDepartment ? getInitials(selectedDepartment.name) : viewMode === "all" ? "🏢" : getInitials(staffList.find(s => s._id === selectedUser)?.name || "")}
                 </div>
