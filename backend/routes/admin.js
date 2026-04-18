@@ -181,9 +181,13 @@ router.get('/export-staff', adminAuth, async (req, res) => {
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="Staff_Directory_${date}.csv"`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.send('\uFEFF' + csvContent); // BOM for Excel UTF-8 compatibility
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Export staff error:', err);
+    res.status(500).json({ message: 'Export failed: ' + err.message });
   }
 });
 

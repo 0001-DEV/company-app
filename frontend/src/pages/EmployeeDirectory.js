@@ -48,8 +48,16 @@ export default function EmployeeDirectory() {
       const res = await fetch('/api/admin/export-staff', {
         headers: { Authorization: `Bearer ${t}` }
       });
-      if (!res.ok) { alert('Export failed. Please try again.'); return; }
+      if (!res.ok) { 
+        const errData = await res.json().catch(() => ({}));
+        alert('Export failed: ' + (errData.message || res.statusText)); 
+        return; 
+      }
       const blob = await res.blob();
+      if (blob.size === 0) {
+        alert('Export failed: Empty response from server');
+        return;
+      }
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       const date = new Date().toISOString().split('T')[0];
@@ -59,6 +67,7 @@ export default function EmployeeDirectory() {
       link.click();
       setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1000);
     } catch (err) {
+      console.error('Export error:', err);
       alert('Download error: ' + err.message);
     }
   };

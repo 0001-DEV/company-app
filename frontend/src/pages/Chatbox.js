@@ -970,11 +970,12 @@ const ChatBox = () => {
   if (error) return <div style={S.center}><div style={{ color: "#ef4444" }}>{error}</div></div>;
 
   return (
-    <div style={isMobile ? { ...S.root, flexDirection: "column" } : S.root}>
+    <div style={isMobile ? { ...S.root, flexDirection: "column", height: "100vh" } : S.root}>
       <style>{`
         @media (max-width: 768px) {
           .chatbox-root {
             flex-direction: column !important;
+            height: 100vh !important;
           }
           .chatbox-sidebar {
             width: 100% !important;
@@ -983,7 +984,9 @@ const ChatBox = () => {
             max-height: auto !important;
             min-height: auto !important;
             flex-shrink: 0 !important;
-            flex: 0 0 auto !important;
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
           }
           .chatbox-main {
             flex: 1 !important;
@@ -991,11 +994,16 @@ const ChatBox = () => {
             display: flex !important;
             flex-direction: column !important;
             width: 100% !important;
+            height: 100vh !important;
+          }
+          .chatbox-sidebar-header {
+            flex-shrink: 0 !important;
           }
           .chatbox-sidebar-list {
             max-height: none !important;
             overflow-y: auto !important;
             flex: 1 !important;
+            -webkit-overflow-scrolling: touch !important;
           }
           .chatbox-messages {
             padding: 8px !important;
@@ -1004,6 +1012,7 @@ const ChatBox = () => {
             overflow-y: auto !important;
             background: #2a3f4b !important;
             background-image: none !important;
+            -webkit-overflow-scrolling: touch !important;
           }
           .chatbox-bubble {
             max-width: 85% !important;
@@ -1062,6 +1071,7 @@ const ChatBox = () => {
             flex-wrap: wrap !important;
             gap: 8px !important;
             padding: 8px !important;
+            flex-shrink: 0 !important;
           }
           .chatbox-header-info {
             flex: 1 !important;
@@ -1120,7 +1130,7 @@ const ChatBox = () => {
         }
       `}</style>
       {/* ── SIDEBAR ── */}
-      <div style={{ ...S.sidebar, display: isMobile && viewMode !== "none" ? "none" : "flex" }} className="chatbox-sidebar chatbox-root">
+      <div style={{ ...S.sidebar, display: isMobile && viewMode !== "none" ? "none" : "flex", height: isMobile && viewMode === "none" ? "100vh" : "auto", flexDirection: "column" }} className="chatbox-sidebar chatbox-root">
         <div style={S.sidebarHeader}>
           <div style={S.sidebarTitle}>
             <span style={S.sidebarTitleText}>Chats</span>
