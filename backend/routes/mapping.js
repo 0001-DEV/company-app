@@ -539,18 +539,36 @@ router.get('/access/get', verifyUser, async (req, res) => {
 router.get('/access/check', verifyUser, async (req, res) => {
   try {
     if (req.user.role === 'admin') {
+      console.log('✅ Admin mapping access granted');
       return res.json({ hasAccess: true });
     }
     
     const access = await MappingAccess.findOne().sort({ updatedAt: -1 });
     
-    const hasAccess = access && access.staffIds && access.staffIds.some(id => 
-      id.toString() === req.user.id.toString()
-    );
+    const userId = req.user.id.toString();
+    console.log('Mapping Access Check:');
+    console.log('User ID:', userId);
+    console.log('Access record exists:', !!access);
+    
+    if (!access || !access.staffIds || access.staffIds.length === 0) {
+      console.log('❌ No access record or empty staffIds');
+      return res.json({ hasAccess: false });
+    }
+    
+    console.log('Staff IDs in access:', access.staffIds.map(id => id.toString()));
+    
+    const hasAccess = access.staffIds.some(id => {
+      const idStr = id.toString();
+      const match = idStr === userId;
+      console.log(`Comparing ${idStr} === ${userId}: ${match}`);
+      return match;
+    });
+    
+    console.log('Final result - Has access:', hasAccess);
     res.json({ hasAccess: hasAccess || false });
   } catch (err) {
     console.error('Error checking access:', err);
-    res.status(500).json({ message: 'Error checking access' });
+    res.status(500).json({ message: 'Error checking access', error: err.message });
   }
 });
 

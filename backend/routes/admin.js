@@ -1564,27 +1564,37 @@ router.get('/workbank/access/check', verifyUser, async (req, res) => {
     const WorkBankAccess = require('../models/WorkBankAccess');
     
     if (req.user.role === 'admin') {
+      console.log('✅ Admin access granted');
       return res.json({ hasAccess: true });
     }
     
     const access = await WorkBankAccess.findOne().sort({ updatedAt: -1 });
     
+    const userId = req.user.id.toString();
     console.log('Work Bank Access Check:');
-    console.log('User ID:', req.user.id);
-    console.log('Access record:', access);
-    console.log('Staff IDs in access:', access?.staffIds?.map(id => id.toString()));
+    console.log('User ID:', userId);
+    console.log('Access record exists:', !!access);
     
-    // Check if staff ID is in the access list (using string comparison for safety)
-    const hasAccess = access && access.staffIds && access.staffIds.some(id => 
-      id.toString() === req.user.id.toString()
-    );
+    if (!access || !access.staffIds || access.staffIds.length === 0) {
+      console.log('❌ No access record or empty staffIds');
+      return res.json({ hasAccess: false });
+    }
     
-    console.log('Has access:', hasAccess);
+    console.log('Staff IDs in access:', access.staffIds.map(id => id.toString()));
     
+    // Check if staff ID is in the access list
+    const hasAccess = access.staffIds.some(id => {
+      const idStr = id.toString();
+      const match = idStr === userId;
+      console.log(`Comparing ${idStr} === ${userId}: ${match}`);
+      return match;
+    });
+    
+    console.log('Final result - Has access:', hasAccess);
     res.json({ hasAccess: hasAccess || false });
   } catch (err) {
     console.error('Error checking Work Bank access:', err);
-    res.status(500).json({ message: 'Error checking Work Bank access' });
+    res.status(500).json({ message: 'Error checking Work Bank access', error: err.message });
   }
 });
 
