@@ -149,24 +149,8 @@ function Home() {
   }, [getAuthHeader]);
 
   const navItems = [
-    { id: "staff",         icon: "🆔", label: "Staff IDs",              path: "/all-staff" },
-    { id: "dept",          icon: "🏢", label: "Departments",            path: "/department" },
-    { id: "mapping",       icon: "🗺️", label: "Mapping",                path: "/mapping" },
-    { id: "client-docs",   icon: "📄", label: "Client Documentation",   path: "/client-documentation" },
-    { id: "works",         icon: "📤", label: "Work Bank",              path: "/uploaded-works" },
-    { id: "stock",         icon: "📦", label: "Stock Management",       path: "/stock-management" },
-    { id: "progress",      icon: "📊", label: "Client Progress",        path: "/client-progress" },
     { id: "cards",         icon: "🎴", label: "Our Work",               path: "/card-samples" },
-    { id: "creds",         icon: "🔒", label: "Staff Credentials",      path: "/staff-credentials" },
-    { id: "chat",          icon: "💬", label: "Chat Box",               path: "/chat", badge: hasUnreadMessages },
-    { id: "announcements", icon: "📢", label: "Announcements",          path: "/announcements" },
-    { id: "tasks",         icon: "✓", label: "Task Board",              path: "/tasks" },
     { id: "directory",     icon: "👥", label: "Employee Directory",     path: "/employee-directory" },
-    { id: "schedule",      icon: "📅", label: "Schedule Board",         path: "/schedule-board" },
-    { id: "admin-weekly",  icon: "📊", label: "Weekly Reports",         path: "/admin/weekly-reports" },
-    { id: "audit",         icon: "📋", label: "Audit Log",              path: "/audit-log" },
-    { id: "orgchart",      icon: "🏛️", label: "Org Chart",              path: "/org-chart" },
-    { id: "recycle",       icon: "🗑️", label: "Recycle Bin",            path: "/recycle-bin" },
   ];
 
   const cards = [
