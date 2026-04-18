@@ -304,6 +304,26 @@ const s = {
   topbarMeta: { fontSize: 13, color: '#6b7280', fontWeight: 500 },
   addBtn: { padding: '9px 20px', background: 'linear-gradient(135deg, #4f46e5, #6366f1)', color: 'white', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.2px', boxShadow: '0 4px 15px rgba(79,70,229,0.4)' },
 
+  /* Mobile responsive topbar */
+  '@media (max-width: 768px)': {
+    topbarInner: { 
+      padding: '0 12px', 
+      height: 'auto',
+      minHeight: 56,
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: 8,
+      paddingTop: 8,
+      paddingBottom: 8
+    },
+    topbarLeft: { width: '100%', gap: 8 },
+    backBtn: { fontSize: 12, padding: '5px 8px' },
+    topbarTitle: { fontSize: 14 },
+    topbarRight: { width: '100%', gap: 8, justifyContent: 'space-between' },
+    topbarMeta: { fontSize: 11, display: 'none' },
+    addBtn: { padding: '8px 14px', fontSize: 12 }
+  },
+
   /* Body */
   body: { maxWidth: 1200, margin: '0 auto', padding: '28px 28px 60px' },
 
@@ -320,22 +340,51 @@ const s = {
   statVal: { fontSize: 20, fontWeight: 900, color: '#f9fafb', lineHeight: 1 },
   statLbl: { fontSize: 10, color: '#6b7280', fontWeight: 600, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' },
 
+  /* Mobile responsive controls */
+  '@media (max-width: 768px)': {
+    controlRow: { 
+      flexDirection: 'column',
+      gap: 12,
+      marginBottom: 20,
+      width: '100%'
+    },
+    searchWrap: { 
+      maxWidth: '100%',
+      width: '100%'
+    },
+    searchInput: { 
+      fontSize: 13,
+      padding: '9px 12px 9px 36px'
+    },
+    statsRow: { 
+      width: '100%',
+      gap: 6,
+      justifyContent: 'space-between'
+    },
+    statChip: { 
+      flex: 1,
+      padding: '6px 8px',
+      minWidth: 'auto',
+      fontSize: 11
+    },
+    statVal: { 
+      fontSize: 16,
+      fontWeight: 800
+    },
+    statLbl: { 
+      fontSize: 9,
+      marginTop: 2
+    }
+  },
+
   /* Grid */
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 20 },
   empty: { textAlign: 'center', padding: '80px 20px' },
 
-  /* Mobile responsive */
+  /* Mobile responsive grid */
   '@media (max-width: 768px)': {
-    grid: { gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 },
-    topbarInner: { padding: '0 16px', height: 56, flexDirection: 'column', gap: 8 },
-    topbarRight: { width: '100%', justifyContent: 'space-between', gap: 8 },
-    addBtn: { padding: '8px 12px', fontSize: 12 },
-    controlRow: { flexDirection: 'column', gap: 12 },
-    searchWrap: { maxWidth: '100%' },
-    statsRow: { width: '100%', justifyContent: 'space-between', gap: 4 },
-    statChip: { padding: '6px 10px', minWidth: 'auto', fontSize: 11 },
-    statVal: { fontSize: 16 },
-    statLbl: { fontSize: 9 }
+    grid: { gridTemplateColumns: '1fr', gap: 12 },
+    empty: { padding: '40px 16px' }
   },
 
   /* Card */
