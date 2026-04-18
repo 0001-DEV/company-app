@@ -261,7 +261,7 @@ const Department = () => {
                   <div style={{ ...s.accentStrip, background: accent }} />
 
                   {/* Clickable body */}
-                  <div style={s.cardBody} onClick={() => navigate(`/department/${dept._id}`)}>
+                  <div style={s.cardBody} onClick={() => navigate(`/department-detail/${dept._id}`)}>
                     <div style={s.cardTop}>
                       <div style={{ ...s.cardInitial, background: accent + '18', color: accent }}>
                         {dept.name.charAt(0).toUpperCase()}

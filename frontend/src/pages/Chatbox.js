@@ -1090,7 +1090,7 @@ const ChatBox = () => {
                       </div>
                     )}
                     {contextMenu?.msg._id === msg._id && contextMenu?.type === "menu" && (
-                      <div style={{ position: "fixed", top: Math.max(60, contextMenu.y - 100), left: 20, background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 300, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 180 }}>
+                      <div style={{ position: "fixed", top: contextMenu.y, left: Math.min(contextMenu.x, window.innerWidth - 220), background: "#2a2a3e", border: "1px solid #35354f", borderRadius: 8, zIndex: 300, boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 180, maxWidth: 220 }}>
                         <button onClick={() => { handleStar(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>⭐ Star Message</button>
                         {viewMode === "department" && <button onClick={() => { handlePin(msg._id); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>📌 Pin Message</button>}
                         <button onClick={() => { setForwardMsg(msg); setContextMenu(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", textAlign: "left", fontSize: 13, borderBottom: "1px solid #35354f" }}>↗️ Forward</button>
@@ -1342,7 +1342,7 @@ const ChatBox = () => {
               <input type="file" multiple onChange={e => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} style={{ display: "none" }} id="fileInput" />
               <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.actionBtn }} className="chatbox-action-btn">📎</button>
               <button onClick={() => setShowVoiceModal(true)} style={{ ...S.actionBtn }} className="chatbox-action-btn">🎙️</button>
-              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn, position: "relative" }} className="chatbox-action-btn">
+              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn, position: "relative" }} className="chatbox-action-btn" title="Add emoji">
                 😊
                 {showEmojiPicker && <EmojiPicker onSelect={e => { setText(text + e); setShowEmojiPicker(false); }} onClose={() => setShowEmojiPicker(false)} />}
               </button>

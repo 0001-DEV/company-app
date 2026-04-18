@@ -155,7 +155,7 @@ function Home() {
     { id: "client-docs",   icon: "📄", label: "Client Documentation",   path: "/client-documentation" },
     { id: "works",         icon: "📤", label: "Work Bank",              path: "/uploaded-works" },
     { id: "stock",         icon: "📦", label: "Stock Management",       path: "/stock-management" },
-    { id: "cards",         icon: "🎴", label: "Our Work",               path: "/card-samples" },
+    { id: "cards",         icon: "🎴", label: "Our Portfolio",          path: "/card-samples" },
     { id: "creds",         icon: "🔒", label: "Staff Credentials",      path: "/staff-credentials" },
     { id: "chat",          icon: "💬", label: "Chat Box",               path: "/chat", badge: hasUnreadMessages },
     { id: "announcements", icon: "📢", label: "Announcements",          path: "/announcements" },
@@ -479,9 +479,9 @@ function Home() {
             )}
           </div>
 
-          {/* Our Work */}
+          {/* Our Portfolio */}
           <div style={styles.sectionHeader}>
-            <h3 style={styles.sectionTitle}>Our Work</h3>
+            <h3 style={styles.sectionTitle}>Our Portfolio</h3>
             <span style={styles.sectionLine} />
           </div>
           <div style={styles.cardGrid} className="card-grid-4">

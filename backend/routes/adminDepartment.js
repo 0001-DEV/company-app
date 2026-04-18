@@ -96,17 +96,17 @@ router.delete('/delete-department/:id', async (req, res) => {
 module.exports = router;
 
 // ADD MEMBER TO DEPARTMENT
-router.post('/:deptId/add-member', async (req, res) => {
+router.post('/department/:deptId/add-member', async (req, res) => {
   try {
-    const { memberId } = req.body;
+    const { staffId } = req.body;
     const dept = await Department.findById(req.params.deptId);
     
     if (!dept) {
       return res.status(404).json({ message: 'Department not found' });
     }
 
-    if (!dept.members.includes(memberId)) {
-      dept.members.push(memberId);
+    if (!dept.members.includes(staffId)) {
+      dept.members.push(staffId);
       await dept.save();
     }
 
@@ -118,17 +118,17 @@ router.post('/:deptId/add-member', async (req, res) => {
 });
 
 // REMOVE MEMBER FROM DEPARTMENT
-router.post('/:deptId/remove-member', async (req, res) => {
+router.post('/department/:deptId/remove-member', async (req, res) => {
   try {
-    const { memberId } = req.body;
+    const { staffId } = req.body;
     const dept = await Department.findById(req.params.deptId);
     
     if (!dept) {
       return res.status(404).json({ message: 'Department not found' });
     }
 
-    dept.members = dept.members.filter(m => m.toString() !== memberId);
-    dept.groupAdmins = dept.groupAdmins.filter(a => a.toString() !== memberId);
+    dept.members = dept.members.filter(m => m.toString() !== staffId);
+    dept.admins = dept.admins.filter(a => a.toString() !== staffId);
     await dept.save();
 
     return res.json(dept);
@@ -139,17 +139,17 @@ router.post('/:deptId/remove-member', async (req, res) => {
 });
 
 // MAKE MEMBER AN ADMIN
-router.post('/:deptId/make-admin', async (req, res) => {
+router.post('/department/:deptId/make-admin', async (req, res) => {
   try {
-    const { memberId } = req.body;
+    const { staffId } = req.body;
     const dept = await Department.findById(req.params.deptId);
     
     if (!dept) {
       return res.status(404).json({ message: 'Department not found' });
     }
 
-    if (!dept.groupAdmins.includes(memberId)) {
-      dept.groupAdmins.push(memberId);
+    if (!dept.admins.includes(staffId)) {
+      dept.admins.push(staffId);
       await dept.save();
     }
 
@@ -161,16 +161,16 @@ router.post('/:deptId/make-admin', async (req, res) => {
 });
 
 // REMOVE ADMIN ROLE
-router.post('/:deptId/remove-admin', async (req, res) => {
+router.post('/department/:deptId/remove-admin', async (req, res) => {
   try {
-    const { memberId } = req.body;
+    const { staffId } = req.body;
     const dept = await Department.findById(req.params.deptId);
     
     if (!dept) {
       return res.status(404).json({ message: 'Department not found' });
     }
 
-    dept.groupAdmins = dept.groupAdmins.filter(a => a.toString() !== memberId);
+    dept.admins = dept.admins.filter(a => a.toString() !== staffId);
     await dept.save();
 
     return res.json(dept);
@@ -181,7 +181,7 @@ router.post('/:deptId/remove-admin', async (req, res) => {
 });
 
 // UPDATE DEPARTMENT SETTINGS (who can send messages, disappear after days)
-router.put('/:deptId/settings', async (req, res) => {
+router.put('/department/:deptId/settings', async (req, res) => {
   try {
     const { onlyAdminsCanSend, disappearAfterDays } = req.body;
     const dept = await Department.findByIdAndUpdate(

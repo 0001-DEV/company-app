@@ -78,7 +78,7 @@ function App() {
             <Department />
           </ProtectedRoute>
         } />
-        <Route path="/department/:id" element={
+        <Route path="/department-detail/:deptId" element={
           <ProtectedRoute requiredRole="admin">
             <DepartmentDetail />
           </ProtectedRoute>
