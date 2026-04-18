@@ -216,6 +216,30 @@ const StockManagement = () => {
     }
   };
 
+  const handleExportSingleStock = async (stock) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/stock/${stock._id}/export`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${stock.name}-details.xlsx`;
+        a.click();
+        alert('✅ Stock exported successfully');
+      } else {
+        const error = await res.json();
+        alert('Error: ' + (error.message || 'Failed to export'));
+      }
+    } catch (err) {
+      console.error('Error exporting stock:', err);
+      alert('Error exporting stock');
+    }
+  };
+
   const handleAssignStockManager = async () => {
     if (!selectedStaffForManager) {
       alert('Please select a staff member');
@@ -445,6 +469,9 @@ const StockManagement = () => {
                 <button style={{ ...S.smallBtn, background: 'rgba(59,130,246,0.2)', color: '#3b82f6' }} onClick={() => { setSelectedStock(stock); setShowAssignMonitor(true); }}>👤 Assign</button>
                 <button style={{ ...S.smallBtn, background: 'rgba(249,115,22,0.2)', color: '#f97316' }} onClick={() => { setSelectedStock(stock); setEditStockName(stock.name); setShowEditStock(true); }}>✏️ Edit</button>
                 <button style={{ ...S.smallBtn, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} onClick={() => handleDeleteStock(stock)}>🗑️ Delete</button>
+              </div>
+              <div style={S.actions}>
+                <button style={{ ...S.smallBtn, background: 'rgba(34,197,94,0.2)', color: '#22c55e' }} onClick={() => handleExportSingleStock(stock)}>📥 Export</button>
               </div>
             </div>
           ))}

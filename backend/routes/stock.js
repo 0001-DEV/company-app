@@ -543,6 +543,59 @@ router.get('/export/year/:year', verifyUser, async (req, res) => {
   }
 });
 
+// Export single stock to Excel
+router.get('/:stockId/export', verifyUser, async (req, res) => {
+  try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
+
+    const stock = await Stock.findById(req.params.stockId);
+    if (!stock) {
+      return res.status(404).json({ message: 'Stock not found' });
+    }
+
+    const data = [{
+      'Stock Name': stock.name,
+      'Unit': stock.unit,
+      'Current Quantity': stock.currentQuantity,
+      'Monitor': stock.monitorName || 'Unassigned',
+      'Total Transactions': stock.transactions?.length || 0
+    }];
+
+    // Add transaction details
+    if (stock.transactions && stock.transactions.length > 0) {
+      data.push({});
+      data.push({ 'Stock Name': 'Transaction History' });
+      stock.transactions.forEach((t, idx) => {
+        data.push({
+          'Stock Name': `${idx + 1}. ${t.type === 'add' ? 'Added' : 'Used'}`,
+          'Unit': t.quantity,
+          'Current Quantity': t.reason || '-',
+          'Monitor': t.addedByName || 'Unknown',
+          'Total Transactions': new Date(t.date).toLocaleDateString()
+        });
+      });
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Details');
+
+    const filename = `${stock.name}-details.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error exporting stock:', err);
+    res.status(500).json({ message: 'Error exporting stock: ' + err.message });
+  }
+});
+
 // Delete stock
 router.delete('/:stockId', verifyUser, async (req, res) => {
   try {
