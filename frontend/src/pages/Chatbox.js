@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import PollWidget from "../components/PollWidget";
 
 const EMOJI_CATEGORIES = [
@@ -125,6 +125,7 @@ const AudioPlayer = ({ fileUrl }) => {
 
 const ChatBox = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
@@ -190,6 +191,7 @@ const ChatBox = () => {
   });
   const [showAutoDownloadMenu, setShowAutoDownloadMenu] = useState(false);
   const [missedCallToast, setMissedCallToast] = useState(null);
+  const [callNotification, setCallNotification] = useState(null);
   const [myStatus, setMyStatus] = useState(() => {
     try { return JSON.parse(localStorage.getItem("myStatus") || "null") || { status: "", emoji: "🟢" }; } catch { return { status: "", emoji: "🟢" }; }
   });
@@ -502,11 +504,18 @@ const ChatBox = () => {
           const { status } = await res.json();
           if (status === "accepted") {
             stopRing(); setCallStatus("accepted");
+            setCallNotification({ type: "picked", name: activeCall.receiverName, callType: activeCall.callType });
+            setTimeout(() => setCallNotification(null), 3000);
             setJitsiRoom({ roomName: activeCall.roomName, callType: activeCall.callType, displayName: currentUser?.name });
             setActiveCall(null);
           } else if (status === "ended") {
             stopRing(); setActiveCall(null); setCallStatus("ended");
-            setTimeout(() => setCallStatus(null), 2000);
+            setCallNotification({ type: "missed", name: activeCall.receiverName, callType: activeCall.callType });
+            setTimeout(() => setCallNotification(null), 4000);
+          } else if (status === "declined") {
+            stopRing(); setActiveCall(null); setCallStatus("declined");
+            setCallNotification({ type: "declined", name: activeCall.receiverName, callType: activeCall.callType });
+            setTimeout(() => setCallNotification(null), 3000);
           }
         }
       } catch (_) {}
@@ -1048,6 +1057,7 @@ const ChatBox = () => {
                 <input type="text" placeholder="Search messages..." value={msgSearchQuery} onChange={e => setMsgSearchQuery(e.target.value)} style={{ padding: "clamp(6px, 1.5vw, 10px) clamp(10px, 2vw, 12px)", background: "#35354f", border: "1px solid #35354f", borderRadius: 6, color: "#e9edef", outline: "none", flex: 1, minWidth: 150, maxWidth: 300, fontSize: "clamp(12px, 2.5vw, 14px)" }} />
               )}
               <div style={S.chatHeaderActions} className="chatbox-header-actions">
+                <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => navigate(currentUser?.role === "admin" ? "/home" : "/staff-dashboard")} title="Go to Dashboard">🏠</button>
                 <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowSearch(!showSearch)}>🔍</button>
                 <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowStarred(!showStarred)}>⭐</button>
                 {selectedDepartment && <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
@@ -1321,6 +1331,19 @@ const ChatBox = () => {
                 📞 Missed {missedCallToast.callType} call from {missedCallToast.callerName}
               </div>
             )}
+            {callNotification && (
+              <div style={{ position: "fixed", bottom: 20, right: 20, background: callNotification.type === "missed" ? "#ef4444" : callNotification.type === "declined" ? "#f59e0b" : "#10b981", color: "#fff", padding: "12px 16px", borderRadius: 8, zIndex: 200, fontSize: 13, animation: "slideIn 0.3s ease" }}>
+                <style>{`
+                  @keyframes slideIn {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                  }
+                `}</style>
+                {callNotification.type === "missed" && `📞 Missed ${callNotification.callType} call to ${callNotification.name}`}
+                {callNotification.type === "picked" && `✓ ${callNotification.name} picked up your ${callNotification.callType} call`}
+                {callNotification.type === "declined" && `✕ ${callNotification.name} declined your ${callNotification.callType} call`}
+              </div>
+            )}
             {activeCall && (
               <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", padding: "32px", borderRadius: 16, zIndex: 200, fontSize: 14, display: "flex", flexDirection: "column", gap: 20, alignItems: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", minWidth: 320 }}>
                 <style>{`
@@ -1392,13 +1415,15 @@ const ChatBox = () => {
               <input type="file" multiple onChange={e => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} style={{ display: "none" }} id="fileInput" />
               <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.actionBtn }} className="chatbox-action-btn">📎</button>
               <button onClick={() => setShowVoiceModal(true)} style={{ ...S.actionBtn }} className="chatbox-action-btn">🎙️</button>
-              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn, position: "relative" }} className="chatbox-action-btn" title="Add emoji">
-                😊
-                {showEmojiPicker && <EmojiPicker onSelect={e => { setText(text + e); setShowEmojiPicker(false); }} onClose={() => setShowEmojiPicker(false)} />}
-              </button>
+              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn }} className="chatbox-action-btn" title="Add emoji">😊</button>
               <textarea ref={inputRef} style={S.textInput} className="chatbox-text-input" value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} placeholder="Type a message..." />
               <button style={S.sendBtn} className="chatbox-send-btn" onClick={sendMessage}>➤</button>
             </div>
+            {showEmojiPicker && (
+              <div style={{ position: "absolute", bottom: 70, left: 0, right: 0, background: "#1e1e2e", borderTop: "1px solid #35354f", zIndex: 150, maxHeight: 280, overflowY: "auto", display: "flex", flexWrap: "wrap", gap: 4, padding: 8, justifyContent: "center" }}>
+                <EmojiPicker onSelect={e => { setText(text + e); setShowEmojiPicker(false); }} onClose={() => setShowEmojiPicker(false)} />
+              </div>
+            )}
           </>
         )}
       </div>
