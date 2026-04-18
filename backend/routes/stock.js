@@ -183,6 +183,8 @@ router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, 
     const endDate = new Date(yearNum, endMonthNum, 0, 23, 59, 59);
     
     const data = [];
+    let totalAdded = 0;
+    let totalDeducted = 0;
     
     for (const stock of stocks) {
       const transactions = stock.transactions.filter(t => {
@@ -195,6 +197,9 @@ router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, 
         if (t.type === 'add') added += t.quantity;
         else if (t.type === 'deduct') deducted += t.quantity;
       });
+      
+      totalAdded += added;
+      totalDeducted += deducted;
       
       data.push({
         'Stock Name': stock.name,
@@ -216,6 +221,18 @@ router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, 
         'Current Quantity': 0,
         'Monitor': '-',
         'Transactions': 0
+      });
+    } else {
+      // Add totals row
+      data.push({});
+      data.push({
+        'Stock Name': 'TOTALS',
+        'Unit': '',
+        'Added': totalAdded,
+        'Deducted': totalDeducted,
+        'Current Quantity': totalAdded - totalDeducted,
+        'Monitor': '',
+        'Transactions': ''
       });
     }
     
@@ -260,6 +277,8 @@ router.get('/export/:month/:year', verifyUser, async (req, res) => {
     const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59);
     
     const data = [];
+    let totalAdded = 0;
+    let totalDeducted = 0;
     
     for (const stock of stocks) {
       const transactions = stock.transactions.filter(t => {
@@ -274,6 +293,8 @@ router.get('/export/:month/:year', verifyUser, async (req, res) => {
       });
       
       if (transactions.length > 0) {
+        totalAdded += added;
+        totalDeducted += deducted;
         data.push({
           'Stock Name': stock.name,
           'Unit': stock.unit,
@@ -295,6 +316,18 @@ router.get('/export/:month/:year', verifyUser, async (req, res) => {
         'Current Quantity': 0,
         'Monitor': '-',
         'Transactions': 0
+      });
+    } else {
+      // Add totals row
+      data.push({});
+      data.push({
+        'Stock Name': 'TOTALS',
+        'Unit': '',
+        'Added': totalAdded,
+        'Deducted': totalDeducted,
+        'Current Quantity': totalAdded - totalDeducted,
+        'Monitor': '',
+        'Transactions': ''
       });
     }
     
@@ -336,6 +369,8 @@ router.get('/export/year/:year', verifyUser, async (req, res) => {
     const endDate = new Date(yearNum, 11, 31, 23, 59, 59);
     
     const data = [];
+    let totalAdded = 0;
+    let totalDeducted = 0;
     
     for (const stock of stocks) {
       const transactions = stock.transactions.filter(t => {
@@ -350,6 +385,8 @@ router.get('/export/year/:year', verifyUser, async (req, res) => {
       });
       
       if (transactions.length > 0) {
+        totalAdded += added;
+        totalDeducted += deducted;
         data.push({
           'Stock Name': stock.name,
           'Unit': stock.unit,
@@ -371,6 +408,18 @@ router.get('/export/year/:year', verifyUser, async (req, res) => {
         'Current Quantity': 0,
         'Monitor': '-',
         'Transactions': 0
+      });
+    } else {
+      // Add totals row
+      data.push({});
+      data.push({
+        'Stock Name': 'TOTALS',
+        'Unit': '',
+        'Added': totalAdded,
+        'Deducted': totalDeducted,
+        'Current Quantity': totalAdded - totalDeducted,
+        'Monitor': '',
+        'Transactions': ''
       });
     }
     
@@ -416,7 +465,14 @@ router.get('/export-stock/:stockId', verifyUser, async (req, res) => {
     if (stock.transactions && stock.transactions.length > 0) {
       data.push({});
       data.push({ 'Stock Name': 'Transaction History' });
+      
+      let totalAdded = 0;
+      let totalDeducted = 0;
+      
       stock.transactions.forEach((t, idx) => {
+        if (t.type === 'add') totalAdded += t.quantity;
+        else if (t.type === 'deduct') totalDeducted += t.quantity;
+        
         data.push({
           'Stock Name': `${idx + 1}. ${t.type === 'add' ? 'Added' : 'Used'}`,
           'Unit': t.quantity,
@@ -424,6 +480,16 @@ router.get('/export-stock/:stockId', verifyUser, async (req, res) => {
           'Monitor': t.addedByName || 'Unknown',
           'Total Transactions': new Date(t.date).toLocaleDateString()
         });
+      });
+      
+      // Add totals row
+      data.push({});
+      data.push({
+        'Stock Name': 'TOTALS',
+        'Unit': totalAdded + totalDeducted,
+        'Current Quantity': `Added: ${totalAdded} | Deducted: ${totalDeducted}`,
+        'Monitor': `Current: ${stock.currentQuantity}`,
+        'Total Transactions': ''
       });
     }
 

@@ -535,7 +535,9 @@ router.get('/access/check', verifyUser, async (req, res) => {
     
     const access = await MappingAccess.findOne().sort({ updatedAt: -1 });
     
-    const hasAccess = access && access.staffIds && access.staffIds.includes(req.user.id);
+    const hasAccess = access && access.staffIds && access.staffIds.some(id => 
+      id.toString() === req.user.id.toString()
+    );
     res.json({ hasAccess: hasAccess || false });
   } catch (err) {
     console.error('Error checking access:', err);

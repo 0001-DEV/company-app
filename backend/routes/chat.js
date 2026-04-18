@@ -326,18 +326,47 @@ router.post("/messages/mark-read", verifyUser, async (req, res) => {
 router.get("/unread-counts", verifyUser, async (req, res) => {
   try {
     const myId = req.user.id.toString();
-    // Count all unread private messages sent TO this user by anyone
-    const msgs = await Message.find({
+    const unreadCounts = {};
+
+    // Private messages: only count messages sent TO this user
+    const privateMessages = await Message.find({
       receiverId: myId,
       readBy: { $ne: req.user.id }
     }).select("senderId");
 
-    const unreadCounts = {};
-    for (const msg of msgs) {
+    for (const msg of privateMessages) {
       const sid = msg.senderId?.toString();
       if (!sid) continue;
       unreadCounts[sid] = (unreadCounts[sid] || 0) + 1;
     }
+
+    // Department messages: only if user is member
+    if (req.user.role === "staff") {
+      const staffUser = await User.findById(req.user.id);
+      if (staffUser?.department) {
+        const deptMessages = await Message.find({
+          receiverId: `department:${staffUser.department}`,
+          senderId: { $ne: req.user.id },
+          readBy: { $ne: req.user.id }
+        }).select("receiverId");
+        if (deptMessages.length > 0) {
+          unreadCounts[`department:${staffUser.department}`] = deptMessages.length;
+        }
+      }
+    }
+
+    // Team chat: only for admins
+    if (req.user.role === "admin") {
+      const teamMessages = await Message.find({
+        receiverId: "all",
+        senderId: { $ne: req.user.id },
+        readBy: { $ne: req.user.id }
+      }).select("receiverId");
+      if (teamMessages.length > 0) {
+        unreadCounts["all"] = teamMessages.length;
+      }
+    }
+
     res.json(unreadCounts);
   } catch (err) {
     res.status(500).json({ message: "Error fetching unread counts" });
@@ -353,10 +382,10 @@ router.get("/last-messages", verifyUser, async (req, res) => {
     // Fetch all messages involving this user, sorted newest first
     const msgs = await Message.find({
       $or: [
-        { senderId: req.user.id },
+        { senderId: req.user.id, receiverId: { $ne: "all", $not: /^department:/ } },
         { receiverId: myId },
-        { receiverId: "all" },
-        ...(req.user.role === "staff" ? [{ receiverId: /^department:/ }] : [])
+        ...(req.user.role === "admin" ? [{ receiverId: "all" }] : []),
+        ...(req.user.role === "staff" ? [{ receiverId: `department:${(await User.findById(req.user.id)).department}` }] : [])
       ]
     }).sort({ createdAt: -1 }).limit(500);
 
@@ -364,12 +393,10 @@ router.get("/last-messages", verifyUser, async (req, res) => {
       const sid = msg.senderId?.toString();
       const rid = msg.receiverId?.toString();
       
-      // Handle private messages
-      if (rid && rid !== "all" && !rid.startsWith("department:")) {
-        const otherId = sid === myId ? rid : sid;
-        if (!otherId || otherId === myId) continue;
-        if (!lastMessages[otherId]) {
-          lastMessages[otherId] = {
+      // Handle private messages - only if I'm the receiver
+      if (rid === myId) {
+        if (!lastMessages[sid]) {
+          lastMessages[sid] = {
             text: msg.text,
             createdAt: msg.createdAt,
             senderId: sid
@@ -377,7 +404,7 @@ router.get("/last-messages", verifyUser, async (req, res) => {
         }
       }
       // Handle team chat messages
-      else if (rid === "all") {
+      else if (rid === "all" && req.user.role === "admin") {
         if (!lastMessages["all"]) {
           lastMessages["all"] = {
             text: msg.text,
@@ -726,7 +753,7 @@ router.post("/call/end", verifyUser, async (req, res) => {
   if (call && call.status === "ringing" && !call.missedSaved) {
     call.missedSaved = true; // guard against double-save
     try {
-      const icon = call.callType === "video" ? "\u{1F4F9}" : "\u{1F4DE}";
+      const icon = call.callType === "video" ? "📹" : "📞";
       await Message.create({
         senderId: call.callerId,
         senderName: call.callerName,
@@ -739,6 +766,38 @@ router.post("/call/end", verifyUser, async (req, res) => {
   }
   delete activeCalls[callId];
   res.json({ ok: true });
+});
+
+// Save call notification (picked up or declined)
+router.post("/call/save-notification", verifyUser, async (req, res) => {
+  try {
+    const { receiverId, callType, status, duration } = req.body;
+    let text = "";
+    
+    if (status === "picked") {
+      const icon = callType === "video" ? "📹" : "📞";
+      text = `${icon} ${callType} call - ${duration}s`;
+    } else if (status === "declined") {
+      const icon = callType === "video" ? "📹" : "📞";
+      text = `${icon} Declined ${callType} call`;
+    }
+    
+    if (text) {
+      await Message.create({
+        senderId: req.user.id,
+        senderName: req.user.name,
+        senderRole: req.user.role,
+        receiverId: receiverId,
+        text: text,
+        isCallNotification: true,
+      });
+    }
+    
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error saving call notification:", err);
+    res.status(500).json({ message: "Error saving call notification" });
+  }
 });
 
 module.exports = router;

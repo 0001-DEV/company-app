@@ -197,6 +197,8 @@ const ChatBox = () => {
   });
   const [peerStatuses, setPeerStatuses] = useState({});
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [callStartTime, setCallStartTime] = useState(null);
+  const [onlineNotifications, setOnlineNotifications] = useState({});
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -294,7 +296,30 @@ const ChatBox = () => {
         const token = localStorage.getItem("token");
         const ids = staffList.map(s => s._id).join(",");
         const res = await fetch(`/api/chat/online-status?ids=${ids}`, { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setOnlineStatus(await res.json());
+        if (res.ok) {
+          const statuses = await res.json();
+          // Check for newly online users
+          Object.entries(statuses).forEach(([userId, status]) => {
+            if (status.online && !onlineStatus[userId]?.online) {
+              // User just came online
+              const user = staffList.find(s => s._id === userId);
+              if (user) {
+                setOnlineNotifications(prev => ({
+                  ...prev,
+                  [userId]: `${user.name} is now online`
+                }));
+                setTimeout(() => {
+                  setOnlineNotifications(prev => {
+                    const updated = { ...prev };
+                    delete updated[userId];
+                    return updated;
+                  });
+                }, 3000);
+              }
+            }
+          });
+          setOnlineStatus(statuses);
+        }
       } catch (_) {}
     };
     fetchOnline(); const iv = setInterval(fetchOnline, 15000); return () => clearInterval(iv);
@@ -506,16 +531,43 @@ const ChatBox = () => {
             stopRing(); setCallStatus("accepted");
             setCallNotification({ type: "picked", name: activeCall.receiverName, callType: activeCall.callType });
             setTimeout(() => setCallNotification(null), 3000);
+            setCallStartTime(Date.now());
             setJitsiRoom({ roomName: activeCall.roomName, callType: activeCall.callType, displayName: currentUser?.name });
             setActiveCall(null);
           } else if (status === "ended") {
             stopRing(); setActiveCall(null); setCallStatus("ended");
             setCallNotification({ type: "missed", name: activeCall.receiverName, callType: activeCall.callType });
             setTimeout(() => setCallNotification(null), 4000);
+            // Save missed call notification
+            try {
+              const token = localStorage.getItem("token");
+              await fetch("/api/chat/call/save-notification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                  receiverId: activeCall.receiverId,
+                  callType: activeCall.callType,
+                  status: "missed"
+                })
+              });
+            } catch (_) {}
           } else if (status === "declined") {
             stopRing(); setActiveCall(null); setCallStatus("declined");
             setCallNotification({ type: "declined", name: activeCall.receiverName, callType: activeCall.callType });
             setTimeout(() => setCallNotification(null), 3000);
+            // Save declined call notification
+            try {
+              const token = localStorage.getItem("token");
+              await fetch("/api/chat/call/save-notification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                  receiverId: activeCall.receiverId,
+                  callType: activeCall.callType,
+                  status: "declined"
+                })
+              });
+            } catch (_) {}
           }
         }
       } catch (_) {}
@@ -694,6 +746,27 @@ const ChatBox = () => {
         jitsiApiRef.current.dispose();
         jitsiApiRef.current = null;
       } catch (_) {}
+    }
+    // Save call duration if call was picked up
+    if (callStartTime && jitsiRoom) {
+      const duration = Math.floor((Date.now() - callStartTime) / 1000);
+      try {
+        const token = localStorage.getItem("token");
+        let receiverId = "all";
+        if (viewMode === "private" && selectedUser) receiverId = selectedUser;
+        else if (viewMode === "department" && selectedDepartment) receiverId = `department:${selectedDepartment._id}`;
+        await fetch("/api/chat/call/save-notification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            receiverId: receiverId,
+            callType: jitsiRoom.callType,
+            status: "picked",
+            duration: duration
+          })
+        });
+      } catch (_) {}
+      setCallStartTime(null);
     }
     setJitsiRoom(null);
   };
@@ -884,82 +957,138 @@ const ChatBox = () => {
   if (error) return <div style={S.center}><div style={{ color: "#ef4444" }}>{error}</div></div>;
 
   return (
-    <div style={S.root}>
+    <div style={isMobile ? { ...S.root, flexDirection: "column" } : S.root}>
       <style>{`
         @media (max-width: 768px) {
           .chatbox-root {
-            flex-direction: column;
+            flex-direction: column !important;
           }
           .chatbox-sidebar {
-            width: 100%;
-            border-right: none;
-            border-bottom: 1px solid #2a3f4b;
-            max-height: 40vh;
-            min-height: auto;
+            width: 100% !important;
+            border-right: none !important;
+            border-bottom: 1px solid #2a3f4b !important;
+            max-height: 40vh !important;
+            min-height: auto !important;
+            flex-shrink: 0 !important;
           }
           .chatbox-main {
-            flex: 1;
-            min-height: 60vh;
+            flex: 1 !important;
+            min-height: 60vh !important;
+            display: flex !important;
+            flex-direction: column !important;
           }
           .chatbox-sidebar-list {
-            max-height: calc(40vh - 120px);
+            max-height: calc(40vh - 140px) !important;
+            overflow-y: auto !important;
           }
           .chatbox-messages {
-            padding: 12px;
-            gap: 6px;
+            padding: 12px !important;
+            gap: 6px !important;
+            flex: 1 !important;
+            overflow-y: auto !important;
           }
           .chatbox-bubble {
-            max-width: 85%;
-            padding: 6px 10px;
+            max-width: 85% !important;
+            padding: 6px 10px !important;
+            font-size: 12px !important;
           }
           .chatbox-input-bar {
-            flex-wrap: wrap;
-            gap: 8px;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            flex-shrink: 0 !important;
           }
           .chatbox-text-input {
-            min-height: 32px;
-            font-size: 12px;
+            min-height: 32px !important;
+            font-size: 12px !important;
+            flex: 1 !important;
+            min-width: 100% !important;
+          }
+          .chatbox-action-btn {
+            font-size: 16px !important;
+            padding: 8px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+          .chatbox-send-btn {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 14px !important;
+            flex-shrink: 0 !important;
           }
           .chatbox-modal {
             width: 90% !important;
             max-width: 90vw !important;
           }
           .chatbox-sidebar-panel {
+            position: fixed !important;
             width: 100% !important;
             max-width: 100vw !important;
             height: 50vh !important;
             right: 0 !important;
             bottom: 0 !important;
             top: auto !important;
+            left: 0 !important;
             border-left: none !important;
             border-top: 1px solid #35354f !important;
+            border-radius: 16px 16px 0 0 !important;
+            z-index: 250 !important;
+          }
+          .chatbox-header {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+          .chatbox-header-info {
+            flex: 1 !important;
+            min-width: 0 !important;
+          }
+          .chatbox-header-actions {
+            gap: 4px !important;
+            flex-wrap: wrap !important;
+          }
+          .chatbox-header-btn {
+            font-size: 16px !important;
+            padding: 8px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
           }
         }
         
         @media (max-width: 480px) {
           .chatbox-bubble {
-            max-width: 90%;
+            max-width: 90% !important;
           }
           .chatbox-header-actions {
-            gap: 4px;
+            gap: 4px !important;
           }
           .chatbox-header-btn {
-            font-size: 14px;
-            padding: 4px;
+            font-size: 14px !important;
+            padding: 6px !important;
           }
           .chatbox-action-btn {
-            font-size: 14px;
-            padding: 4px;
+            font-size: 14px !important;
+            padding: 6px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
           }
           .chatbox-send-btn {
-            width: 32px;
-            height: 32px;
-            font-size: 12px;
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 12px !important;
+          }
+          .chatbox-text-input {
+            font-size: 11px !important;
+            min-height: 28px !important;
           }
         }
       `}</style>
       {/* ── SIDEBAR ── */}
-      <div style={{ ...S.sidebar, display: isMobile && viewMode !== "none" ? "none" : "flex" }} className="chatbox-sidebar">
+      <div style={{ ...S.sidebar, display: isMobile && viewMode !== "none" ? "none" : "flex" }} className="chatbox-sidebar chatbox-root">
         <div style={S.sidebarHeader}>
           <div style={S.sidebarTitle}>
             <span style={S.sidebarTitleText}>Chats</span>
@@ -1038,7 +1167,7 @@ const ChatBox = () => {
           </div>
         ) : (
           <>
-            <div style={{ ...S.chatHeader, position: "relative" }}>
+            <div style={{ ...S.chatHeader, position: "relative" }} className="chatbox-header">
               <div style={S.chatHeaderInfo}>
                 {isMobile && (
                   <button onClick={() => { setViewMode("none"); setSelectedUser(null); setSelectedDepartment(null); }} style={{ background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", fontSize: 20, padding: "4px 8px", marginRight: 8 }}>←</button>
@@ -1080,7 +1209,7 @@ const ChatBox = () => {
                 const isOwn = msg.senderId?.toString() === currentUser?.id?.toString();
                 return (
                   <div key={msg._id || idx} style={{ ...S.msgRow, justifyContent: isOwn ? "flex-end" : "flex-start", position: "relative", alignItems: "flex-end", gap: 8 }}>
-                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative", cursor: "pointer" }} onClick={e => { e.stopPropagation(); setContextMenu({ msg, type: "emoji", x: e.clientX, y: e.clientY }); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}>
+                    <div style={{ ...S.bubble, ...(isOwn ? S.bubbleOwn : S.bubbleOther), position: "relative", cursor: "pointer" }} onClick={e => { e.stopPropagation(); setContextMenu({ msg, type: "emoji", x: e.clientX, y: e.clientY }); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }} className="chatbox-bubble">
                       {!isOwn && <div style={S.msgSenderName}>{msg.senderName}</div>}
                       <div style={S.msgText}>{renderMentions(msg.text, currentUser?.name, staffList)}</div>
                       {msg.files && msg.files.length > 0 && (
@@ -1344,6 +1473,17 @@ const ChatBox = () => {
                 {callNotification.type === "declined" && `✕ ${callNotification.name} declined your ${callNotification.callType} call`}
               </div>
             )}
+            {Object.entries(onlineNotifications).map(([userId, message]) => (
+              <div key={userId} style={{ position: "fixed", bottom: 20, left: 20, background: "#10b981", color: "#fff", padding: "12px 16px", borderRadius: 8, zIndex: 200, fontSize: 13, animation: "slideIn 0.3s ease" }}>
+                <style>{`
+                  @keyframes slideIn {
+                    from { transform: translateX(-400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                  }
+                `}</style>
+                🟢 {message}
+              </div>
+            ))}
             {activeCall && (
               <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", padding: "32px", borderRadius: 16, zIndex: 200, fontSize: 14, display: "flex", flexDirection: "column", gap: 20, alignItems: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", minWidth: 320 }}>
                 <style>{`
@@ -1415,7 +1555,6 @@ const ChatBox = () => {
               <input type="file" multiple onChange={e => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} style={{ display: "none" }} id="fileInput" />
               <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.actionBtn }} className="chatbox-action-btn">📎</button>
               <button onClick={() => setShowVoiceModal(true)} style={{ ...S.actionBtn }} className="chatbox-action-btn">🎙️</button>
-              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn }} className="chatbox-action-btn" title="Add emoji">😊</button>
               <textarea ref={inputRef} style={S.textInput} className="chatbox-text-input" value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} placeholder="Type a message..." />
               <button style={S.sendBtn} className="chatbox-send-btn" onClick={sendMessage}>➤</button>
             </div>

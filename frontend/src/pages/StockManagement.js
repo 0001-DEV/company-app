@@ -36,6 +36,7 @@ const StockManagement = () => {
   const [showStockManagerModal, setShowStockManagerModal] = useState(false);
   const [stockManagers, setStockManagers] = useState([]);
   const [selectedStaffForManager, setSelectedStaffForManager] = useState('');
+  const [accessDenied, setAccessDenied] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -51,7 +52,12 @@ const StockManagement = () => {
       const res = await fetch('/api/stock/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) setStocks(await res.json());
+      if (res.status === 403) {
+        setAccessDenied(true);
+        setTimeout(() => navigate('/staff-dashboard'), 2000);
+      } else if (res.ok) {
+        setStocks(await res.json());
+      }
     } catch (err) {
       console.error('Error fetching stocks:', err);
     } finally {
@@ -441,6 +447,13 @@ const StockManagement = () => {
           background: #334155;
         }
       `}</style>
+      
+      {accessDenied && (
+        <div style={{ background: '#ef4444', color: '#fff', padding: '16px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center' }}>
+          ❌ Access Denied: You don't have permission to access Stock Management. Redirecting...
+        </div>
+      )}
+      
       <div style={S.header}>
         <div>
           <div style={S.title}>📦 Stock Management</div>
