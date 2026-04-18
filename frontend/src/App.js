@@ -36,7 +36,7 @@ import DarkModeToggle from './components/DarkModeToggle';
 const Footer = () => (
   <footer style={{ background: '#0f172a', color: '#94a3b8', padding: '20px 0', textAlign: 'center', fontSize: '13px', borderTop: '1px solid #1e293b' }}>
     <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <span>© 2026 Xtremecr8ivity</span>
+      <span>© 2026 Xtreme Cr8tivity</span>
     </div>
   </footer>
 );

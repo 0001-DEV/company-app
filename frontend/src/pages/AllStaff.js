@@ -244,8 +244,48 @@ function AllStaff() {
   const [bulkUploading, setBulkUploading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
   const perPage = 10;
   const navigate = useNavigate();
+
+  // Add mobile styles to document
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media (max-width: 768px) {
+        .allstaff-mobile-header {
+          display: flex !important;
+        }
+        .allstaff-mobile-overlay {
+          display: block !important;
+        }
+        .allstaff-mobile-sidebar {
+          display: flex !important;
+        }
+        .allstaff-toolbar {
+          padding: 12px 16px;
+        }
+        .allstaff-stats-bar {
+          display: none !important;
+        }
+        .allstaff-grid {
+          padding: 12px 16px;
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchStaff = async () => {
     const token = localStorage.getItem('token');
@@ -462,10 +502,10 @@ function AllStaff() {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Mobile Sidebar */}
-      {typeof window !== 'undefined' && window.innerWidth <= 768 && (
+      {isMobile && (
         <>
           {/* Mobile Header with Menu Button */}
-          <div style={s.mobileHeader}>
+          <div style={s.mobileHeader} className="allstaff-mobile-header">
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={s.mobileMenuBtn}
@@ -480,12 +520,13 @@ function AllStaff() {
           {mobileMenuOpen && (
             <div 
               style={s.mobileOverlay}
+              className="allstaff-mobile-overlay"
               onClick={() => setMobileMenuOpen(false)}
             />
           )}
 
           {/* Mobile Sidebar */}
-          <div style={{ ...s.mobileSidebar, transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)' }}>
+          <div style={{ ...s.mobileSidebar, transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)' }} className="allstaff-mobile-sidebar">
             <div style={s.mobileSidebarHeader}>
               <h2 style={s.mobileSidebarTitle}>Menu</h2>
               <button 
@@ -569,7 +610,7 @@ function AllStaff() {
       />
 
       {/* Toolbar */}
-      <div style={s.toolbar} className="toolbar-wrap">
+      <div style={s.toolbar} className="allstaff-toolbar">
         <div style={s.searchWrap}>
           <span style={s.searchIcon}>🔍</span>
           <input
@@ -583,7 +624,7 @@ function AllStaff() {
       </div>
 
       {/* Stats bar - hidden on mobile */}
-      <div style={{ ...s.statsBar, display: window.innerWidth > 768 ? 'flex' : 'none' }}>
+      <div style={{ ...s.statsBar, display: window.innerWidth > 768 ? 'flex' : 'none' }} className="allstaff-stats-bar">
         <div style={s.statChip}>👥 Total: <b>{staff.length}</b></div>
         <div style={s.statChip}>🔍 Showing: <b>{filteredStaff.length}</b></div>
         <div style={s.statChip}>📄 Page: <b>{currentPage}/{totalPages || 1}</b></div>
@@ -595,7 +636,7 @@ function AllStaff() {
       {!loading && (
         <>
           {/* Cards Grid */}
-          <div style={s.grid} className="info-grid-3">
+          <div style={s.grid} className="allstaff-grid info-grid-3">
             {paginatedStaff.map((member, i) => {
               const color = avatarColors[i % avatarColors.length];
               const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -713,8 +754,7 @@ const s = {
     zIndex: 200, 
     alignItems: 'center', 
     justifyContent: 'space-between', 
-    padding: '0 12px',
-    '@media (max-width: 768px)': { display: 'flex' }
+    padding: '0 12px'
   },
   mobileMenuBtn: { 
     background: 'none', 
@@ -739,8 +779,7 @@ const s = {
     inset: 0, 
     background: 'rgba(0,0,0,0.5)', 
     zIndex: 150, 
-    display: 'none',
-    '@media (max-width: 768px)': { display: 'block' }
+    display: 'none'
   },
   mobileSidebar: { 
     position: 'fixed', 
@@ -751,11 +790,10 @@ const s = {
     background: 'linear-gradient(135deg, #0f172a 0%, #1e40af 100%)', 
     color: 'white', 
     zIndex: 160, 
-    display: 'flex', 
+    display: 'none', 
     flexDirection: 'column',
     transition: 'transform 0.3s ease',
-    boxShadow: '4px 0 12px rgba(0,0,0,0.3)',
-    '@media (max-width: 768px)': { display: 'flex' }
+    boxShadow: '4px 0 12px rgba(0,0,0,0.3)'
   },
   mobileSidebarHeader: { 
     padding: '16px', 
