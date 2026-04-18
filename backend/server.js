@@ -109,8 +109,8 @@ setInterval(async () => {
   } catch (_) {}
 }, 30000);
 
-// ── Birthday Email Dispatcher (Runs at 12:00 AM every day) ──
-// Sends birthday email exactly at midnight for staff with birthdays that day
+// ── Birthday Email Dispatcher (Runs at 12:01 AM every day) ──
+// Sends birthday email exactly once per day at 12:01 AM
 // Uses database to track sent emails to prevent duplicates on server restart
 
 // Function to check and send birthday emails
@@ -214,21 +214,21 @@ const checkAndSendBirthdayEmails = async () => {
   }
 };
 
-// Schedule birthday email check to run at 12:00 AM every day
+// Schedule birthday email check to run at 12:01 AM every day
 const scheduleBirthdayEmails = () => {
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0); // Set to 12:00 AM
+  tomorrow.setHours(0, 1, 0, 0); // Set to 12:01 AM (1 minute after midnight)
   
   const timeUntilMidnight = tomorrow.getTime() - now.getTime();
   
   console.log(`⏰ Birthday email scheduler initialized. Next check at ${tomorrow.toLocaleString()}`);
   
-  // First check at midnight
+  // First check at 12:01 AM
   setTimeout(() => {
     checkAndSendBirthdayEmails();
-    // Then check every 24 hours
+    // Then check every 24 hours at 12:01 AM
     setInterval(checkAndSendBirthdayEmails, 24 * 60 * 60 * 1000);
   }, timeUntilMidnight);
 };
