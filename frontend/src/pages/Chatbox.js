@@ -618,6 +618,10 @@ const ChatBox = () => {
 
   const sendMessage = async () => {
     if (!text.trim() && selectedFiles.length === 0) return;
+    if (viewMode === "none") {
+      console.warn("Cannot send message: no chat selected");
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       let receiverId = "all";
@@ -631,8 +635,17 @@ const ChatBox = () => {
       const res = await fetch("/api/chat/message", {
         method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData,
       });
-      if (res.ok) { setText(""); setSelectedFiles([]); setReplyingTo(null); reloadMessages(); }
-    } catch (_) {}
+      if (res.ok) { 
+        setText(""); 
+        setSelectedFiles([]); 
+        setReplyingTo(null); 
+        setTimeout(() => reloadMessages(), 100);
+      } else {
+        console.error("Failed to send message:", res.status);
+      }
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   };
 
   const notifyTyping = async (isTyping) => {
@@ -1160,7 +1173,7 @@ const ChatBox = () => {
       {/* ── MAIN CHAT AREA ── */}
       <div style={{ ...S.main, display: isMobile && viewMode === "none" ? "none" : "flex" }} className="chatbox-main">
         {viewMode === "none" ? (
-          <div style={S.welcome}>
+          <div style={{ ...S.welcome, display: "flex" }}>
             <div style={S.welcomeIcon}>💬</div>
             <div style={S.welcomeText}>Select a chat to start messaging</div>
             <div style={S.welcomeSub}>Choose a contact or group from the list</div>
@@ -1617,8 +1630,9 @@ const S = {
       width: "100%",
       borderRight: "none",
       borderBottom: `1px solid ${WA_DIVIDER}`,
-      maxHeight: "40vh",
-      minHeight: "auto"
+      maxHeight: "100%",
+      minHeight: "auto",
+      flex: 1
     }
   },
   sidebarHeader: { 
@@ -1655,7 +1669,7 @@ const S = {
     flex: 1, 
     overflowY: "auto", 
     overflowX: "hidden",
-    "@media (max-width: 768px)": { maxHeight: "calc(40vh - 120px)" }
+    "@media (max-width: 768px)": { flex: 1, maxHeight: "none" }
   },
   sidebarItem: { 
     display: "flex", 
@@ -1734,9 +1748,9 @@ const S = {
     background: WA_CHAT_BG, 
     display: "flex",
     minWidth: 0,
-    "@media (max-width: 768px)": { flex: 1, minHeight: "60vh" }
+    "@media (max-width: 768px)": { flex: 1, minHeight: "auto", width: "100%" }
   },
-  welcome: { flex: 1, alignItems: "center", justifyContent: "center", display: "flex", flexDirection: "column" },
+  welcome: { flex: 1, alignItems: "center", justifyContent: "center", display: "flex", flexDirection: "column", width: "100%", minHeight: "auto" },
   welcomeIcon: { 
     fontSize: "clamp(60px, 15vw, 100px)", 
     marginBottom: "clamp(12px, 3vw, 20px)", 
