@@ -128,7 +128,7 @@ router.post('/department/:deptId/remove-member', async (req, res) => {
     }
 
     dept.members = dept.members.filter(m => m.toString() !== staffId);
-    dept.admins = dept.admins.filter(a => a.toString() !== staffId);
+    dept.groupAdmins = dept.groupAdmins.filter(a => a.toString() !== staffId);
     await dept.save();
 
     return res.json(dept);
@@ -148,8 +148,8 @@ router.post('/department/:deptId/make-admin', async (req, res) => {
       return res.status(404).json({ message: 'Department not found' });
     }
 
-    if (!dept.admins.includes(staffId)) {
-      dept.admins.push(staffId);
+    if (!dept.groupAdmins.includes(staffId)) {
+      dept.groupAdmins.push(staffId);
       await dept.save();
     }
 
@@ -170,7 +170,7 @@ router.post('/department/:deptId/remove-admin', async (req, res) => {
       return res.status(404).json({ message: 'Department not found' });
     }
 
-    dept.admins = dept.admins.filter(a => a.toString() !== staffId);
+    dept.groupAdmins = dept.groupAdmins.filter(a => a.toString() !== staffId);
     await dept.save();
 
     return res.json(dept);
