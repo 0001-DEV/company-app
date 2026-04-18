@@ -93,7 +93,29 @@ router.delete('/delete-department/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+// GET DEPARTMENT MEMBERS
+// -----------------------------
+router.get('/department-members/:deptId', async (req, res) => {
+  try {
+    const dept = await Department.findById(req.params.deptId)
+      .populate('members', 'name email')
+      .populate('groupAdmins', 'name email');
+
+    if (!dept) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+
+    return res.json({
+      members: dept.members || [],
+      groupAdmins: dept.groupAdmins || [],
+      onlyAdminsCanSend: dept.onlyAdminsCanSend || false,
+      disappearAfterDays: dept.disappearAfterDays || 0
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // ADD MEMBER TO DEPARTMENT
 router.post('/department/:deptId/add-member', async (req, res) => {
@@ -200,3 +222,5 @@ router.put('/department/:deptId/settings', async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
+module.exports = router;

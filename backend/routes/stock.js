@@ -229,6 +229,109 @@ router.post('/upload-excel', verifyUser, upload.single('file'), async (req, res)
   }
 });
 
+// Export stocks for month range to Excel (MUST be before /export/:month/:year)
+router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, res) => {
+  try {
+    console.log('🔍 Range export endpoint hit');
+    console.log('User role:', req.user?.role);
+    console.log('Params:', req.params);
+    
+    if (req.user.role !== 'admin') {
+      console.log('❌ User is not admin');
+      return res.status(403).json({ message: 'Admin only' });
+    }
+    
+    const { startMonth, endMonth, year } = req.params;
+    const startMonthNum = parseInt(startMonth);
+    const endMonthNum = parseInt(endMonth);
+    const yearNum = parseInt(year);
+    
+    if (isNaN(startMonthNum) || isNaN(endMonthNum) || isNaN(yearNum)) {
+      console.log('❌ Invalid params:', { startMonth, endMonth, year });
+      return res.status(400).json({ message: 'Invalid month or year' });
+    }
+
+    if (startMonthNum < 1 || startMonthNum > 12 || endMonthNum < 1 || endMonthNum > 12) {
+      return res.status(400).json({ message: 'Month must be between 1 and 12' });
+    }
+
+    if (startMonthNum > endMonthNum) {
+      return res.status(400).json({ message: 'Start month cannot be after end month' });
+    }
+    
+    console.log('✅ Fetching stocks for range:', startMonthNum, 'to', endMonthNum, 'in', yearNum);
+    const stocks = await Stock.find();
+    console.log('✅ Found', stocks.length, 'stocks');
+    
+    const startDate = new Date(yearNum, startMonthNum - 1, 1);
+    const endDate = new Date(yearNum, endMonthNum, 0, 23, 59, 59);
+    
+    const data = [];
+    
+    for (const stock of stocks) {
+      const transactions = stock.transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate >= startDate && tDate <= endDate;
+      });
+      
+      let added = 0, deducted = 0;
+      transactions.forEach(t => {
+        if (t.type === 'add') added += t.quantity;
+        else if (t.type === 'deduct') deducted += t.quantity;
+      });
+      
+      // Include ALL stocks in the export, showing transactions for this period
+      data.push({
+        'Stock Name': stock.name,
+        'Unit': stock.unit,
+        'Added': added,
+        'Deducted': deducted,
+        'Current Quantity': stock.currentQuantity,
+        'Monitor': stock.monitorName || 'Unassigned',
+        'Transactions': transactions.length
+      });
+    }
+    
+    if (data.length === 0) {
+      data.push({
+        'Stock Name': 'No stocks found',
+        'Unit': '-',
+        'Added': 0,
+        'Deducted': 0,
+        'Current Quantity': 0,
+        'Monitor': '-',
+        'Transactions': 0
+      });
+    }
+    
+    console.log('✅ Creating Excel file with', data.length, 'rows');
+    
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
+    
+    const startMonthName = new Date(yearNum, startMonthNum - 1).toLocaleString('default', { month: 'long' });
+    const endMonthName = new Date(yearNum, endMonthNum - 1).toLocaleString('default', { month: 'long' });
+    const filename = `stock-report-${startMonthName}-to-${endMonthName}-${yearNum}.xlsx`;
+    console.log('✅ Filename:', filename);
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    console.log('✅ Headers set');
+    
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    console.log('✅ Buffer created, size:', buffer.length, 'bytes');
+    
+    console.log('✅ Sending buffer...');
+    res.send(buffer);
+  } catch (err) {
+    console.error('❌ Error exporting range stocks:', err.message);
+    console.error('Stack:', err.stack);
+    res.status(500).json({ message: 'Error exporting stocks: ' + err.message });
+  }
+});
+
 // Export stocks to Excel
 router.get('/export/:month/:year', verifyUser, async (req, res) => {
   try {

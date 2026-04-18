@@ -25,6 +25,14 @@ const StockManagement = () => {
   const [historyStock, setHistoryStock] = useState(null);
   const [showEditStock, setShowEditStock] = useState(false);
   const [editStockName, setEditStockName] = useState('');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportType, setExportType] = useState('single');
+  const [exportMonth, setExportMonth] = useState(new Date().getMonth() + 1);
+  const [exportYear, setExportYear] = useState(new Date().getFullYear());
+  const [exportStartMonth, setExportStartMonth] = useState(1);
+  const [exportEndMonth, setExportEndMonth] = useState(6);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(7);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -171,6 +179,27 @@ const StockManagement = () => {
     }
   };
 
+  const handleDeleteStock = async (stock) => {
+    if (!window.confirm(`Are you sure you want to delete "${stock.name}"? This action cannot be undone.`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/stock/${stock._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchStocks();
+        alert('✅ Stock deleted successfully');
+      } else {
+        const error = await res.json();
+        alert('Error: ' + (error.message || 'Failed to delete'));
+      }
+    } catch (err) {
+      console.error('Error deleting stock:', err);
+      alert('Error deleting stock');
+    }
+  };
+
   const handleUploadExcel = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -221,21 +250,26 @@ const StockManagement = () => {
     a.click();
   };
 
-  const handleExportExcel = async (exportType = 'month') => {
+  const handleExportExcel = async (type = 'single') => {
     try {
       const token = localStorage.getItem('token');
       let endpoint;
       let filename;
       
-      if (exportType === 'year') {
-        endpoint = `/api/stock/export/year/${selectedYear}`;
-        filename = `stock-report-${selectedYear}.xlsx`;
+      if (type === 'range') {
+        // Export range of months
+        endpoint = `/api/stock/export-range/${exportStartMonth}/${exportEndMonth}/${exportYear}`;
+        const startMonthName = new Date(exportYear, exportStartMonth - 1).toLocaleString('default', { month: 'long' });
+        const endMonthName = new Date(exportYear, exportEndMonth - 1).toLocaleString('default', { month: 'long' });
+        filename = `Stock_${startMonthName}_to_${endMonthName}_${exportYear}.xlsx`;
       } else {
-        endpoint = `/api/stock/export/${selectedMonth}/${selectedYear}`;
-        filename = `stock-report-${selectedMonth}-${selectedYear}.xlsx`;
+        // Export single month
+        endpoint = `/api/stock/export/${exportMonth}/${exportYear}`;
+        const monthName = new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' });
+        filename = `Stock_${monthName}_${exportYear}.xlsx`;
       }
       
-      console.log('Exporting:', exportType, 'endpoint:', endpoint);
+      console.log('Exporting:', type, 'endpoint:', endpoint);
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -248,6 +282,7 @@ const StockManagement = () => {
         a.download = filename;
         a.click();
         alert('Report exported successfully');
+        setShowExportModal(false);
       } else {
         const text = await res.text();
         console.error('Export error response:', text);
@@ -265,6 +300,12 @@ const StockManagement = () => {
   };
 
   const filteredStocks = stocks.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredStocks.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStocks = filteredStocks.slice(startIndex, endIndex);
 
   const S = {
     root: { display: 'flex', flexDirection: 'column', gap: 20, padding: '24px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', minHeight: '100vh', color: '#e9edef' },
@@ -310,21 +351,7 @@ const StockManagement = () => {
           <button style={S.btn} onClick={() => fileInputRef.current?.click()}>📥 Import Excel</button>
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} style={{ display: 'none' }} />
           <button style={S.btn} onClick={handleDownloadTemplate}>📋 Template</button>
-          <button style={S.btn} onClick={() => setShowAssignMonitor(true)}>👤 Assign Monitor</button>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <select value={selectedMonth} onChange={e => setSelectedMonth(parseInt(e.target.value))} style={{ ...S.select, marginBottom: 0, width: 100 }}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
-                <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'short' })}</option>
-              ))}
-            </select>
-            <select value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value))} style={{ ...S.select, marginBottom: 0, width: 100 }}>
-              {[2024, 2025, 2026].map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <button style={S.btn} onClick={() => handleExportExcel('month')}>📊 Month</button>
-            <button style={S.btn} onClick={() => handleExportExcel('year')}>📊 Year</button>
-          </div>
+          <button style={S.btn} onClick={() => { setExportType('single'); setExportMonth(new Date().getMonth() + 1); setExportYear(new Date().getFullYear()); setShowExportModal(true); }}>📊 Export</button>
           <button style={{ ...S.btn, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} onClick={() => navigate('/home')}>← Back</button>
         </div>
       </div>
@@ -334,8 +361,9 @@ const StockManagement = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Loading...</div>
       ) : (
-        <div style={S.grid}>
-          {filteredStocks.map(stock => (
+        <>
+          <div style={S.grid}>
+            {paginatedStocks.map(stock => (
             <div key={stock._id} style={S.card} onMouseEnter={e => Object.assign(e.currentTarget.style, S.cardHover)} onMouseLeave={e => Object.assign(e.currentTarget.style, { background: S.card.background, borderColor: S.card.borderColor })}>
               <div style={S.stockName}>{stock.name}</div>
               <div style={S.quantity}>{stock.currentQuantity} {stock.unit}</div>
@@ -352,10 +380,54 @@ const StockManagement = () => {
               <div style={S.actions}>
                 <button style={{ ...S.smallBtn, background: 'rgba(59,130,246,0.2)', color: '#3b82f6' }} onClick={() => { setSelectedStock(stock); setShowAssignMonitor(true); }}>👤 Assign</button>
                 <button style={{ ...S.smallBtn, background: 'rgba(249,115,22,0.2)', color: '#f97316' }} onClick={() => { setSelectedStock(stock); setEditStockName(stock.name); setShowEditStock(true); }}>✏️ Edit</button>
+                <button style={{ ...S.smallBtn, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} onClick={() => handleDeleteStock(stock)}>🗑️ Delete</button>
               </div>
             </div>
           ))}
-        </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
+              <button 
+                style={{ ...S.btn, opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }} 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                ← Previous
+              </button>
+              
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    style={{
+                      ...S.btn,
+                      background: currentPage === page ? '#6366f1' : 'rgba(99,102,241,0.2)',
+                      color: currentPage === page ? '#fff' : '#6366f1',
+                      padding: '8px 12px',
+                      minWidth: '36px'
+                    }}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                style={{ ...S.btn, opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }} 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next →
+              </button>
+
+              <div style={{ fontSize: 13, color: '#94a3b8', marginLeft: 16 }}>
+                Page {currentPage} of {totalPages} ({filteredStocks.length} total)
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {showAddStock && (
@@ -457,6 +529,92 @@ const StockManagement = () => {
             <div style={{ display: 'flex', gap: 12 }}>
               <button style={{ ...S.btn, flex: 1 }} onClick={() => setShowEditStock(false)}>Cancel</button>
               <button style={{ ...S.btn, ...S.btnPrimary, flex: 1 }} onClick={handleEditStock}>Update</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showExportModal && (
+        <div style={S.modal} onClick={() => setShowExportModal(false)}>
+          <div style={S.modalContent} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>📊 Export Stock Report</div>
+            
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Export Type</label>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#cbd5e1' }}>
+                  <input type="radio" name="exportType" value="single" checked={exportType === 'single'} onChange={e => setExportType(e.target.value)} />
+                  Single Month
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#cbd5e1' }}>
+                  <input type="radio" name="exportType" value="range" checked={exportType === 'range'} onChange={e => setExportType(e.target.value)} />
+                  Month Range
+                </label>
+              </div>
+            </div>
+
+            {exportType === 'single' ? (
+              <>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Month</label>
+                  <select value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))} style={S.select}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                      <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Year</label>
+                  <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))} style={S.select}>
+                    {[2024, 2025, 2026].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
+                  <strong>File name:</strong> Stock_{new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' })}_{exportYear}.xlsx
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>From Month</label>
+                  <select value={exportStartMonth} onChange={e => setExportStartMonth(parseInt(e.target.value))} style={S.select}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                      <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>To Month</label>
+                  <select value={exportEndMonth} onChange={e => setExportEndMonth(parseInt(e.target.value))} style={S.select}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                      <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Year</label>
+                  <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))} style={S.select}>
+                    {[2024, 2025, 2026].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
+                  <strong>File name:</strong> Stock_{new Date(exportYear, exportStartMonth - 1).toLocaleString('default', { month: 'long' })}_to_{new Date(exportYear, exportEndMonth - 1).toLocaleString('default', { month: 'long' })}_{exportYear}.xlsx
+                </div>
+              </>
+            )}
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button style={{ ...S.btn, flex: 1 }} onClick={() => setShowExportModal(false)}>Cancel</button>
+              <button style={{ ...S.btn, ...S.btnPrimary, flex: 1 }} onClick={() => handleExportExcel(exportType)}>Export</button>
             </div>
           </div>
         </div>
