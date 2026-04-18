@@ -79,6 +79,373 @@ router.post('/create', verifyUser, async (req, res) => {
   }
 });
 
+// Upload stocks from Excel
+router.post('/upload-excel', verifyUser, upload.single('file'), async (req, res) => {
+  try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
+    console.log('📤 Upload Excel endpoint hit');
+    
+    if (!req.file) {
+      console.log('❌ No file uploaded');
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    
+    console.log('✅ File received:', req.file.filename);
+    
+    const workbook = XLSX.readFile(req.file.path);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(worksheet);
+    
+    console.log('✅ Excel data parsed, rows:', data.length);
+    
+    const createdStocks = [];
+    for (const row of data) {
+      const name = row.name || row.Name || row.NAME || row['Stock Name'] || row['Item Name'];
+      const quantity = row.quantity || row.Quantity || row.QTY || row.Qty || row.Amount;
+      const unit = row.unit || row.Unit || row.UNIT || 'pcs';
+      
+      if (!name || quantity === undefined) {
+        continue;
+      }
+      
+      const stockName = String(name).trim();
+      const qtyNum = parseInt(quantity);
+      
+      let stock = await Stock.findOne({ name: { $regex: new RegExp('^' + stockName + '$', 'i') } });
+      if (!stock) {
+        stock = await Stock.create({
+          name: stockName,
+          currentQuantity: qtyNum,
+          unit: unit,
+          transactions: [{
+            type: 'add',
+            quantity: qtyNum,
+            reason: 'Imported from Excel',
+            addedBy: req.user.id,
+            addedByName: req.user.name
+          }]
+        });
+      } else {
+        stock.currentQuantity += qtyNum;
+        stock.transactions.push({
+          type: 'add',
+          quantity: qtyNum,
+          reason: 'Imported from Excel',
+          addedBy: req.user.id,
+          addedByName: req.user.name
+        });
+        await stock.save();
+      }
+      createdStocks.push(stock);
+    }
+    
+    res.json({ message: 'Stocks imported successfully', count: createdStocks.length });
+  } catch (err) {
+    console.error('❌ Error uploading stocks:', err.message);
+    res.status(500).json({ message: 'Error uploading stocks: ' + err.message });
+  }
+});
+
+// ===== SPECIFIC EXPORT ROUTES (MUST BE BEFORE GENERIC /:stockId ROUTES) =====
+
+// Export stocks for month range to Excel
+router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, res) => {
+  try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
+    console.log('🔍 Range export endpoint hit');
+    
+    const { startMonth, endMonth, year } = req.params;
+    const startMonthNum = parseInt(startMonth);
+    const endMonthNum = parseInt(endMonth);
+    const yearNum = parseInt(year);
+    
+    if (isNaN(startMonthNum) || isNaN(endMonthNum) || isNaN(yearNum)) {
+      return res.status(400).json({ message: 'Invalid month or year' });
+    }
+
+    if (startMonthNum < 1 || startMonthNum > 12 || endMonthNum < 1 || endMonthNum > 12) {
+      return res.status(400).json({ message: 'Month must be between 1 and 12' });
+    }
+
+    if (startMonthNum > endMonthNum) {
+      return res.status(400).json({ message: 'Start month cannot be after end month' });
+    }
+    
+    const stocks = await Stock.find();
+    
+    const startDate = new Date(yearNum, startMonthNum - 1, 1);
+    const endDate = new Date(yearNum, endMonthNum, 0, 23, 59, 59);
+    
+    const data = [];
+    
+    for (const stock of stocks) {
+      const transactions = stock.transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate >= startDate && tDate <= endDate;
+      });
+      
+      let added = 0, deducted = 0;
+      transactions.forEach(t => {
+        if (t.type === 'add') added += t.quantity;
+        else if (t.type === 'deduct') deducted += t.quantity;
+      });
+      
+      data.push({
+        'Stock Name': stock.name,
+        'Unit': stock.unit,
+        'Added': added,
+        'Deducted': deducted,
+        'Current Quantity': stock.currentQuantity,
+        'Monitor': stock.monitorName || 'Unassigned',
+        'Transactions': transactions.length
+      });
+    }
+    
+    if (data.length === 0) {
+      data.push({
+        'Stock Name': 'No stocks found',
+        'Unit': '-',
+        'Added': 0,
+        'Deducted': 0,
+        'Current Quantity': 0,
+        'Monitor': '-',
+        'Transactions': 0
+      });
+    }
+    
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
+    
+    const startMonthName = new Date(yearNum, startMonthNum - 1).toLocaleString('default', { month: 'long' });
+    const endMonthName = new Date(yearNum, endMonthNum - 1).toLocaleString('default', { month: 'long' });
+    const filename = `stock-report-${startMonthName}-to-${endMonthName}-${yearNum}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    res.send(buffer);
+  } catch (err) {
+    console.error('❌ Error exporting range stocks:', err.message);
+    res.status(500).json({ message: 'Error exporting stocks: ' + err.message });
+  }
+});
+
+// Export stocks to Excel (single month)
+router.get('/export/:month/:year', verifyUser, async (req, res) => {
+  try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
+    
+    const { month, year } = req.params;
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    
+    if (isNaN(monthNum) || isNaN(yearNum)) {
+      return res.status(400).json({ message: 'Invalid month or year' });
+    }
+    
+    const stocks = await Stock.find();
+    
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59);
+    
+    const data = [];
+    
+    for (const stock of stocks) {
+      const transactions = stock.transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate >= startDate && tDate <= endDate;
+      });
+      
+      let added = 0, deducted = 0;
+      transactions.forEach(t => {
+        if (t.type === 'add') added += t.quantity;
+        else if (t.type === 'deduct') deducted += t.quantity;
+      });
+      
+      if (transactions.length > 0) {
+        data.push({
+          'Stock Name': stock.name,
+          'Unit': stock.unit,
+          'Added': added,
+          'Deducted': deducted,
+          'Current Quantity': stock.currentQuantity,
+          'Monitor': stock.monitorName || 'Unassigned',
+          'Transactions': transactions.length
+        });
+      }
+    }
+    
+    if (data.length === 0) {
+      data.push({
+        'Stock Name': 'No transactions found for this period',
+        'Unit': '-',
+        'Added': 0,
+        'Deducted': 0,
+        'Current Quantity': 0,
+        'Monitor': '-',
+        'Transactions': 0
+      });
+    }
+    
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
+    
+    const filename = `stock-report-${monthNum}-${yearNum}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    res.send(buffer);
+  } catch (err) {
+    console.error('❌ Error exporting stocks:', err.message);
+    res.status(500).json({ message: 'Error exporting stocks: ' + err.message });
+  }
+});
+
+// Export stocks for entire year to Excel
+router.get('/export/year/:year', verifyUser, async (req, res) => {
+  try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
+    
+    const { year } = req.params;
+    const yearNum = parseInt(year);
+    
+    if (isNaN(yearNum)) {
+      return res.status(400).json({ message: 'Invalid year' });
+    }
+    
+    const stocks = await Stock.find();
+    
+    const startDate = new Date(yearNum, 0, 1);
+    const endDate = new Date(yearNum, 11, 31, 23, 59, 59);
+    
+    const data = [];
+    
+    for (const stock of stocks) {
+      const transactions = stock.transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate >= startDate && tDate <= endDate;
+      });
+      
+      let added = 0, deducted = 0;
+      transactions.forEach(t => {
+        if (t.type === 'add') added += t.quantity;
+        else if (t.type === 'deduct') deducted += t.quantity;
+      });
+      
+      if (transactions.length > 0) {
+        data.push({
+          'Stock Name': stock.name,
+          'Unit': stock.unit,
+          'Added': added,
+          'Deducted': deducted,
+          'Current Quantity': stock.currentQuantity,
+          'Monitor': stock.monitorName || 'Unassigned',
+          'Transactions': transactions.length
+        });
+      }
+    }
+    
+    if (data.length === 0) {
+      data.push({
+        'Stock Name': 'No transactions found for this year',
+        'Unit': '-',
+        'Added': 0,
+        'Deducted': 0,
+        'Current Quantity': 0,
+        'Monitor': '-',
+        'Transactions': 0
+      });
+    }
+    
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
+    
+    const filename = `stock-report-${yearNum}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    res.send(buffer);
+  } catch (err) {
+    console.error('❌ Error exporting year stocks:', err.message);
+    res.status(500).json({ message: 'Error exporting stocks: ' + err.message });
+  }
+});
+
+// Export single stock to Excel
+router.get('/export-stock/:stockId', verifyUser, async (req, res) => {
+  try {
+    const isAllowed = await isAdminOrStockManager(req.user.id);
+    if (!isAllowed) {
+      return res.status(403).json({ message: 'Admin or Stock Manager only' });
+    }
+
+    const stock = await Stock.findById(req.params.stockId);
+    if (!stock) {
+      return res.status(404).json({ message: 'Stock not found' });
+    }
+
+    const data = [{
+      'Stock Name': stock.name,
+      'Unit': stock.unit,
+      'Current Quantity': stock.currentQuantity,
+      'Monitor': stock.monitorName || 'Unassigned',
+      'Total Transactions': stock.transactions?.length || 0
+    }];
+
+    // Add transaction details
+    if (stock.transactions && stock.transactions.length > 0) {
+      data.push({});
+      data.push({ 'Stock Name': 'Transaction History' });
+      stock.transactions.forEach((t, idx) => {
+        data.push({
+          'Stock Name': `${idx + 1}. ${t.type === 'add' ? 'Added' : 'Used'}`,
+          'Unit': t.quantity,
+          'Current Quantity': t.reason || '-',
+          'Monitor': t.addedByName || 'Unknown',
+          'Total Transactions': new Date(t.date).toLocaleDateString()
+        });
+      });
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Details');
+
+    const filename = `${stock.name}-details.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error exporting stock:', err);
+    res.status(500).json({ message: 'Error exporting stock: ' + err.message });
+  }
+});
+
+// ===== GENERIC /:stockId ROUTES (MUST BE AFTER SPECIFIC ROUTES) =====
+
 // Add stock
 router.post('/:stockId/add', verifyUser, async (req, res) => {
   try {
@@ -185,414 +552,6 @@ router.put('/:stockId/update-name', verifyUser, async (req, res) => {
   } catch (err) {
     console.error('Error updating stock name:', err);
     res.status(500).json({ message: 'Error updating stock name' });
-  }
-});
-
-// Upload stocks from Excel
-router.post('/upload-excel', verifyUser, upload.single('file'), async (req, res) => {
-  try {
-    const isAllowed = await isAdminOrStockManager(req.user.id);
-    if (!isAllowed) {
-      return res.status(403).json({ message: 'Admin or Stock Manager only' });
-    }
-    console.log('📤 Upload Excel endpoint hit');
-    
-    if (!req.file) {
-      console.log('❌ No file uploaded');
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-    
-    console.log('✅ File received:', req.file.filename);
-    
-    const workbook = XLSX.readFile(req.file.path);
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(worksheet);
-    
-    console.log('✅ Excel data parsed, rows:', data.length);
-    
-    const createdStocks = [];
-    for (const row of data) {
-      const name = row.name || row.Name || row.NAME || row['Stock Name'] || row['Item Name'];
-      const quantity = row.quantity || row.Quantity || row.QTY || row.Qty || row.Amount;
-      const unit = row.unit || row.Unit || row.UNIT || 'pcs';
-      
-      if (!name || quantity === undefined) {
-        continue;
-      }
-      
-      const stockName = String(name).trim();
-      const qtyNum = parseInt(quantity);
-      
-      let stock = await Stock.findOne({ name: { $regex: new RegExp('^' + stockName + '$', 'i') } });
-      if (!stock) {
-        stock = await Stock.create({
-          name: stockName,
-          currentQuantity: qtyNum,
-          unit: unit,
-          transactions: [{
-            type: 'add',
-            quantity: qtyNum,
-            reason: 'Imported from Excel',
-            addedBy: req.user.id,
-            addedByName: req.user.name
-          }]
-        });
-      } else {
-        stock.currentQuantity += qtyNum;
-        stock.transactions.push({
-          type: 'add',
-          quantity: qtyNum,
-          reason: 'Imported from Excel',
-          addedBy: req.user.id,
-          addedByName: req.user.name
-        });
-        await stock.save();
-      }
-      createdStocks.push(stock);
-    }
-    
-    res.json({ message: 'Stocks imported successfully', count: createdStocks.length });
-  } catch (err) {
-    console.error('❌ Error uploading stocks:', err.message);
-    res.status(500).json({ message: 'Error uploading stocks: ' + err.message });
-  }
-});
-
-// Export stocks for month range to Excel (MUST be before /export/:month/:year)
-router.get('/export-range/:startMonth/:endMonth/:year', verifyUser, async (req, res) => {
-  try {
-    const isAllowed = await isAdminOrStockManager(req.user.id);
-    if (!isAllowed) {
-      return res.status(403).json({ message: 'Admin or Stock Manager only' });
-    }
-    console.log('🔍 Range export endpoint hit');
-    console.log('User role:', req.user?.role);
-    console.log('Params:', req.params);
-    
-    const { startMonth, endMonth, year } = req.params;
-    const startMonthNum = parseInt(startMonth);
-    const endMonthNum = parseInt(endMonth);
-    const yearNum = parseInt(year);
-    
-    if (isNaN(startMonthNum) || isNaN(endMonthNum) || isNaN(yearNum)) {
-      console.log('❌ Invalid params:', { startMonth, endMonth, year });
-      return res.status(400).json({ message: 'Invalid month or year' });
-    }
-
-    if (startMonthNum < 1 || startMonthNum > 12 || endMonthNum < 1 || endMonthNum > 12) {
-      return res.status(400).json({ message: 'Month must be between 1 and 12' });
-    }
-
-    if (startMonthNum > endMonthNum) {
-      return res.status(400).json({ message: 'Start month cannot be after end month' });
-    }
-    
-    console.log('✅ Fetching stocks for range:', startMonthNum, 'to', endMonthNum, 'in', yearNum);
-    const stocks = await Stock.find();
-    console.log('✅ Found', stocks.length, 'stocks');
-    
-    const startDate = new Date(yearNum, startMonthNum - 1, 1);
-    const endDate = new Date(yearNum, endMonthNum, 0, 23, 59, 59);
-    
-    const data = [];
-    
-    for (const stock of stocks) {
-      const transactions = stock.transactions.filter(t => {
-        const tDate = new Date(t.date);
-        return tDate >= startDate && tDate <= endDate;
-      });
-      
-      let added = 0, deducted = 0;
-      transactions.forEach(t => {
-        if (t.type === 'add') added += t.quantity;
-        else if (t.type === 'deduct') deducted += t.quantity;
-      });
-      
-      // Include ALL stocks in the export, showing transactions for this period
-      data.push({
-        'Stock Name': stock.name,
-        'Unit': stock.unit,
-        'Added': added,
-        'Deducted': deducted,
-        'Current Quantity': stock.currentQuantity,
-        'Monitor': stock.monitorName || 'Unassigned',
-        'Transactions': transactions.length
-      });
-    }
-    
-    if (data.length === 0) {
-      data.push({
-        'Stock Name': 'No stocks found',
-        'Unit': '-',
-        'Added': 0,
-        'Deducted': 0,
-        'Current Quantity': 0,
-        'Monitor': '-',
-        'Transactions': 0
-      });
-    }
-    
-    console.log('✅ Creating Excel file with', data.length, 'rows');
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
-    
-    const startMonthName = new Date(yearNum, startMonthNum - 1).toLocaleString('default', { month: 'long' });
-    const endMonthName = new Date(yearNum, endMonthNum - 1).toLocaleString('default', { month: 'long' });
-    const filename = `stock-report-${startMonthName}-to-${endMonthName}-${yearNum}.xlsx`;
-    console.log('✅ Filename:', filename);
-    
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    
-    console.log('✅ Headers set');
-    
-    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-    console.log('✅ Buffer created, size:', buffer.length, 'bytes');
-    
-    console.log('✅ Sending buffer...');
-    res.send(buffer);
-  } catch (err) {
-    console.error('❌ Error exporting range stocks:', err.message);
-    console.error('Stack:', err.stack);
-    res.status(500).json({ message: 'Error exporting stocks: ' + err.message });
-  }
-});
-
-// Export stocks to Excel
-router.get('/export/:month/:year', verifyUser, async (req, res) => {
-  try {
-    const isAllowed = await isAdminOrStockManager(req.user.id);
-    if (!isAllowed) {
-      return res.status(403).json({ message: 'Admin or Stock Manager only' });
-    }
-    console.log('🔍 Export endpoint hit');
-    console.log('User role:', req.user?.role);
-    console.log('Params:', req.params);
-    
-    const { month, year } = req.params;
-    const monthNum = parseInt(month);
-    const yearNum = parseInt(year);
-    
-    if (isNaN(monthNum) || isNaN(yearNum)) {
-      console.log('❌ Invalid month/year:', { month, year });
-      return res.status(400).json({ message: 'Invalid month or year' });
-    }
-    
-    console.log('✅ Fetching stocks...');
-    const stocks = await Stock.find();
-    console.log('✅ Found', stocks.length, 'stocks');
-    
-    const startDate = new Date(yearNum, monthNum - 1, 1);
-    const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59);
-    
-    const data = [];
-    
-    for (const stock of stocks) {
-      const transactions = stock.transactions.filter(t => {
-        const tDate = new Date(t.date);
-        return tDate >= startDate && tDate <= endDate;
-      });
-      
-      let added = 0, deducted = 0;
-      transactions.forEach(t => {
-        if (t.type === 'add') added += t.quantity;
-        else if (t.type === 'deduct') deducted += t.quantity;
-      });
-      
-      if (transactions.length > 0) {
-        data.push({
-          'Stock Name': stock.name,
-          'Unit': stock.unit,
-          'Added': added,
-          'Deducted': deducted,
-          'Current Quantity': stock.currentQuantity,
-          'Monitor': stock.monitorName || 'Unassigned',
-          'Transactions': transactions.length
-        });
-      }
-    }
-    
-    if (data.length === 0) {
-      data.push({
-        'Stock Name': 'No transactions found for this period',
-        'Unit': '-',
-        'Added': 0,
-        'Deducted': 0,
-        'Current Quantity': 0,
-        'Monitor': '-',
-        'Transactions': 0
-      });
-    }
-    
-    console.log('✅ Creating Excel file with', data.length, 'rows');
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
-    
-    const filename = `stock-report-${monthNum}-${yearNum}.xlsx`;
-    console.log('✅ Filename:', filename);
-    
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    
-    console.log('✅ Headers set');
-    
-    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-    console.log('✅ Buffer created, size:', buffer.length, 'bytes');
-    
-    console.log('✅ Sending buffer...');
-    res.send(buffer);
-  } catch (err) {
-    console.error('❌ Error exporting stocks:', err.message);
-    console.error('Stack:', err.stack);
-    res.status(500).json({ message: 'Error exporting stocks: ' + err.message });
-  }
-});
-
-// Export stocks for entire year to Excel
-router.get('/export/year/:year', verifyUser, async (req, res) => {
-  try {
-    const isAllowed = await isAdminOrStockManager(req.user.id);
-    if (!isAllowed) {
-      return res.status(403).json({ message: 'Admin or Stock Manager only' });
-    }
-    console.log('🔍 Year export endpoint hit');
-    console.log('User role:', req.user?.role);
-    console.log('Params:', req.params);
-    
-    const { year } = req.params;
-    const yearNum = parseInt(year);
-    
-    if (isNaN(yearNum)) {
-      console.log('❌ Invalid year:', { year });
-      return res.status(400).json({ message: 'Invalid year' });
-    }
-    
-    console.log('✅ Fetching stocks for year:', yearNum);
-    const stocks = await Stock.find();
-    console.log('✅ Found', stocks.length, 'stocks');
-    
-    const startDate = new Date(yearNum, 0, 1);
-    const endDate = new Date(yearNum, 11, 31, 23, 59, 59);
-    
-    const data = [];
-    
-    for (const stock of stocks) {
-      const transactions = stock.transactions.filter(t => {
-        const tDate = new Date(t.date);
-        return tDate >= startDate && tDate <= endDate;
-      });
-      
-      let added = 0, deducted = 0;
-      transactions.forEach(t => {
-        if (t.type === 'add') added += t.quantity;
-        else if (t.type === 'deduct') deducted += t.quantity;
-      });
-      
-      if (transactions.length > 0) {
-        data.push({
-          'Stock Name': stock.name,
-          'Unit': stock.unit,
-          'Added': added,
-          'Deducted': deducted,
-          'Current Quantity': stock.currentQuantity,
-          'Monitor': stock.monitorName || 'Unassigned',
-          'Transactions': transactions.length
-        });
-      }
-    }
-    
-    if (data.length === 0) {
-      data.push({
-        'Stock Name': 'No transactions found for this year',
-        'Unit': '-',
-        'Added': 0,
-        'Deducted': 0,
-        'Current Quantity': 0,
-        'Monitor': '-',
-        'Transactions': 0
-      });
-    }
-    
-    console.log('✅ Creating Excel file with', data.length, 'rows');
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
-    
-    const filename = `stock-report-${yearNum}.xlsx`;
-    console.log('✅ Filename:', filename);
-    
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    
-    console.log('✅ Headers set');
-    
-    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-    console.log('✅ Buffer created, size:', buffer.length, 'bytes');
-    
-    console.log('✅ Sending buffer...');
-    res.send(buffer);
-  } catch (err) {
-    console.error('❌ Error exporting year stocks:', err.message);
-    console.error('Stack:', err.stack);
-    res.status(500).json({ message: 'Error exporting stocks: ' + err.message });
-  }
-});
-
-// Export single stock to Excel
-router.get('/:stockId/export', verifyUser, async (req, res) => {
-  try {
-    const isAllowed = await isAdminOrStockManager(req.user.id);
-    if (!isAllowed) {
-      return res.status(403).json({ message: 'Admin or Stock Manager only' });
-    }
-
-    const stock = await Stock.findById(req.params.stockId);
-    if (!stock) {
-      return res.status(404).json({ message: 'Stock not found' });
-    }
-
-    const data = [{
-      'Stock Name': stock.name,
-      'Unit': stock.unit,
-      'Current Quantity': stock.currentQuantity,
-      'Monitor': stock.monitorName || 'Unassigned',
-      'Total Transactions': stock.transactions?.length || 0
-    }];
-
-    // Add transaction details
-    if (stock.transactions && stock.transactions.length > 0) {
-      data.push({});
-      data.push({ 'Stock Name': 'Transaction History' });
-      stock.transactions.forEach((t, idx) => {
-        data.push({
-          'Stock Name': `${idx + 1}. ${t.type === 'add' ? 'Added' : 'Used'}`,
-          'Unit': t.quantity,
-          'Current Quantity': t.reason || '-',
-          'Monitor': t.addedByName || 'Unknown',
-          'Total Transactions': new Date(t.date).toLocaleDateString()
-        });
-      });
-    }
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Details');
-
-    const filename = `${stock.name}-details.xlsx`;
-
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-    res.send(buffer);
-  } catch (err) {
-    console.error('Error exporting stock:', err);
-    res.status(500).json({ message: 'Error exporting stock: ' + err.message });
   }
 });
 

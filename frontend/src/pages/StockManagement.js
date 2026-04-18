@@ -219,7 +219,7 @@ const StockManagement = () => {
   const handleExportSingleStock = async (stock) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/stock/${stock._id}/export`, {
+      const res = await fetch(`/api/stock/export-stock/${stock._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -229,14 +229,20 @@ const StockManagement = () => {
         a.href = url;
         a.download = `${stock.name}-details.xlsx`;
         a.click();
+        window.URL.revokeObjectURL(url);
         alert('✅ Stock exported successfully');
       } else {
-        const error = await res.json();
-        alert('Error: ' + (error.message || 'Failed to export'));
+        const text = await res.text();
+        try {
+          const error = JSON.parse(text);
+          alert('Error: ' + (error.message || 'Failed to export'));
+        } catch (e) {
+          alert('Error: ' + text);
+        }
       }
     } catch (err) {
       console.error('Error exporting stock:', err);
-      alert('Error exporting stock');
+      alert('Error exporting stock: ' + err.message);
     }
   };
 
@@ -252,17 +258,17 @@ const StockManagement = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ staffId: selectedStaffForManager })
       });
+      const data = await res.json();
       if (res.ok) {
         fetchStockManagers();
         setSelectedStaffForManager('');
         alert('✅ Staff member assigned as stock manager');
       } else {
-        const error = await res.json();
-        alert('Error: ' + (error.message || 'Failed to assign'));
+        alert('Error: ' + (data.message || 'Failed to assign'));
       }
     } catch (err) {
       console.error('Error assigning stock manager:', err);
-      alert('Error assigning stock manager');
+      alert('Error assigning stock manager: ' + err.message);
     }
   };
 
