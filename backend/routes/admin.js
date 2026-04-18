@@ -1480,6 +1480,9 @@ router.post('/workbank/access/update', adminAuth, async (req, res) => {
     const mongoose = require('mongoose');
     const { staffIds } = req.body;
     
+    console.log('Work Bank Access Update:');
+    console.log('Received staffIds:', staffIds);
+    
     // Convert staffIds to ObjectIds
     const objectIds = (staffIds || []).map(id => {
       if (typeof id === 'string') {
@@ -1487,6 +1490,8 @@ router.post('/workbank/access/update', adminAuth, async (req, res) => {
       }
       return id;
     });
+    
+    console.log('Converted ObjectIds:', objectIds.map(id => id.toString()));
     
     // Delete existing access and create new one
     await WorkBankAccess.deleteMany({});
@@ -1496,6 +1501,8 @@ router.post('/workbank/access/update', adminAuth, async (req, res) => {
       updatedBy: req.user.id
     });
     await access.save();
+    
+    console.log('Saved access:', access);
     
     res.json({ message: 'Work Bank access updated', access });
   } catch (err) {
@@ -1562,10 +1569,18 @@ router.get('/workbank/access/check', verifyUser, async (req, res) => {
     
     const access = await WorkBankAccess.findOne().sort({ updatedAt: -1 });
     
+    console.log('Work Bank Access Check:');
+    console.log('User ID:', req.user.id);
+    console.log('Access record:', access);
+    console.log('Staff IDs in access:', access?.staffIds?.map(id => id.toString()));
+    
     // Check if staff ID is in the access list (using string comparison for safety)
     const hasAccess = access && access.staffIds && access.staffIds.some(id => 
       id.toString() === req.user.id.toString()
     );
+    
+    console.log('Has access:', hasAccess);
+    
     res.json({ hasAccess: hasAccess || false });
   } catch (err) {
     console.error('Error checking Work Bank access:', err);
