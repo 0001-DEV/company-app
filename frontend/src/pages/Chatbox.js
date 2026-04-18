@@ -835,8 +835,81 @@ const ChatBox = () => {
 
   return (
     <div style={S.root}>
+      <style>{`
+        @media (max-width: 768px) {
+          .chatbox-root {
+            flex-direction: column;
+          }
+          .chatbox-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid #2a3f4b;
+            max-height: 40vh;
+            min-height: auto;
+          }
+          .chatbox-main {
+            flex: 1;
+            min-height: 60vh;
+          }
+          .chatbox-sidebar-list {
+            max-height: calc(40vh - 120px);
+          }
+          .chatbox-messages {
+            padding: 12px;
+            gap: 6px;
+          }
+          .chatbox-bubble {
+            max-width: 85%;
+            padding: 6px 10px;
+          }
+          .chatbox-input-bar {
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          .chatbox-text-input {
+            min-height: 32px;
+            font-size: 12px;
+          }
+          .chatbox-modal {
+            width: 90% !important;
+            max-width: 90vw !important;
+          }
+          .chatbox-sidebar-panel {
+            width: 100% !important;
+            max-width: 100vw !important;
+            height: 50vh !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            top: auto !important;
+            border-left: none !important;
+            border-top: 1px solid #35354f !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .chatbox-bubble {
+            max-width: 90%;
+          }
+          .chatbox-header-actions {
+            gap: 4px;
+          }
+          .chatbox-header-btn {
+            font-size: 14px;
+            padding: 4px;
+          }
+          .chatbox-action-btn {
+            font-size: 14px;
+            padding: 4px;
+          }
+          .chatbox-send-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 12px;
+          }
+        }
+      `}</style>
       {/* ── SIDEBAR ── */}
-      <div style={{ ...S.sidebar, display: isMobile && viewMode !== "none" ? "none" : "flex" }}>
+      <div style={{ ...S.sidebar, display: isMobile && viewMode !== "none" ? "none" : "flex" }} className="chatbox-sidebar">
         <div style={S.sidebarHeader}>
           <div style={S.sidebarTitle}>
             <span style={S.sidebarTitleText}>Chats</span>
@@ -849,7 +922,7 @@ const ChatBox = () => {
             <input placeholder="Search chats..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={S.searchInput} />
           </div>
         </div>
-        <div style={S.sidebarList}>
+        <div style={S.sidebarList} className="chatbox-sidebar-list">
           {currentUser?.role === "admin" && (
             <div style={{ ...S.sidebarItem, ...(viewMode === "all" ? S.sidebarItemActive : {}) }}
               onClick={() => { setViewMode("all"); setSelectedUser(null); setSelectedDepartment(null); markAsRead(null, { teamChat: true }); }}>
@@ -905,7 +978,7 @@ const ChatBox = () => {
       </div>
 
       {/* ── MAIN CHAT AREA ── */}
-      <div style={{ ...S.main, display: isMobile && viewMode === "none" ? "none" : "flex" }}>
+      <div style={{ ...S.main, display: isMobile && viewMode === "none" ? "none" : "flex" }} className="chatbox-main">
         {viewMode === "none" ? (
           <div style={S.welcome}>
             <div style={S.welcomeIcon}>💬</div>
@@ -930,13 +1003,13 @@ const ChatBox = () => {
               {showSearch && (
                 <input type="text" placeholder="Search messages..." value={msgSearchQuery} onChange={e => setMsgSearchQuery(e.target.value)} style={{ padding: "6px 12px", background: "#35354f", border: "1px solid #35354f", borderRadius: 6, color: "#e9edef", outline: "none", width: 200 }} />
               )}
-              <div style={S.chatHeaderActions}>
-                <button style={S.headerBtn} onClick={() => setShowSearch(!showSearch)}>🔍</button>
-                <button style={S.headerBtn} onClick={() => setShowStarred(!showStarred)}>⭐</button>
-                {selectedDepartment && <button style={S.headerBtn} onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
-                <button style={S.headerBtn} onClick={() => setShowScheduleModal(!showScheduleModal)}>⏰</button>
-                <button style={S.headerBtn} onClick={() => startCall("voice")}>📞</button>
-                <button style={S.headerBtn} onClick={() => startCall("video")}>📹</button>
+              <div style={S.chatHeaderActions} className="chatbox-header-actions">
+                <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowSearch(!showSearch)}>🔍</button>
+                <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowStarred(!showStarred)}>⭐</button>
+                {selectedDepartment && <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => { setShowGroupInfo(!showGroupInfo); if (!showGroupInfo) loadGroupInfo(selectedDepartment); }}>ℹ️</button>}
+                <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => setShowScheduleModal(!showScheduleModal)}>⏰</button>
+                <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => startCall("voice")}>📞</button>
+                <button style={S.headerBtn} className="chatbox-header-btn" onClick={() => startCall("video")}>📹</button>
               </div>
             </div>
             {pinnedMessages.length > 0 && viewMode === "department" && (
@@ -948,7 +1021,7 @@ const ChatBox = () => {
                 <button onClick={() => setPinnedMessages([])} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>✕</button>
               </div>
             )}
-            <div style={S.messagesList} ref={messagesContainerRef}>
+            <div style={S.messagesList} ref={messagesContainerRef} className="chatbox-messages">
               {messages.filter(msg => !msgSearchQuery || msg.text.toLowerCase().includes(msgSearchQuery.toLowerCase())).map((msg, idx) => {
                 const isOwn = msg.senderId?.toString() === currentUser?.id?.toString();
                 return (
@@ -1044,7 +1117,7 @@ const ChatBox = () => {
               </div>
             )}
             {showStarred && (
-              <div style={{ position: "fixed", top: 0, right: 0, width: 360, height: "100vh", background: "#1e1e2e", borderLeft: "1px solid #35354f", zIndex: 250, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+              <div style={{ position: "fixed", top: 0, right: 0, width: 360, height: "100vh", background: "#1e1e2e", borderLeft: "1px solid #35354f", zIndex: 250, overflowY: "auto", display: "flex", flexDirection: "column" }} className="chatbox-sidebar-panel">
                 <div style={{ padding: "16px", borderBottom: "1px solid #35354f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ fontWeight: 600, color: "#e9edef" }}>⭐ Starred Messages</div>
                   <button onClick={() => setShowStarred(false)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
@@ -1065,7 +1138,7 @@ const ChatBox = () => {
               </div>
             )}
             {showGroupInfo && selectedDepartment && (
-              <div style={{ position: "fixed", top: 0, right: 0, width: 360, height: "100vh", background: "#1e1e2e", borderLeft: "1px solid #35354f", zIndex: 250, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+              <div style={{ position: "fixed", top: 0, right: 0, width: 360, height: "100vh", background: "#1e1e2e", borderLeft: "1px solid #35354f", zIndex: 250, overflowY: "auto", display: "flex", flexDirection: "column" }} className="chatbox-sidebar-panel">
                 <div style={{ padding: "16px", borderBottom: "1px solid #35354f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ fontWeight: 600, color: "#e9edef" }}>ℹ️ Group Info</div>
                   <button onClick={() => setShowGroupInfo(false)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
@@ -1124,7 +1197,7 @@ const ChatBox = () => {
               </div>
             )}
             {showScheduleModal && (
-              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 400 }}>
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 400 }} className="chatbox-modal">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div style={{ fontWeight: 600, color: "#e9edef", fontSize: 16 }}>⏰ Schedule Message</div>
                   <button onClick={() => setShowScheduleModal(false)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
@@ -1148,7 +1221,7 @@ const ChatBox = () => {
               </div>
             )}
             {forwardMsg && (
-              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 400 }}>
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 400 }} className="chatbox-modal">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div style={{ fontWeight: 600, color: "#e9edef", fontSize: 16 }}>↗️ Forward Message</div>
                   <button onClick={() => setForwardMsg(null)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
@@ -1171,7 +1244,7 @@ const ChatBox = () => {
               </div>
             )}
             {readByPopup && (
-              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 300 }}>
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "24px", zIndex: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", width: "90%", maxWidth: 300 }} className="chatbox-modal">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div style={{ fontWeight: 600, color: "#e9edef", fontSize: 16 }}>👁️ Read by</div>
                   <button onClick={() => setReadByPopup(null)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18 }}>✕</button>
@@ -1237,7 +1310,7 @@ const ChatBox = () => {
             )}
             {showVoiceModal && (
               <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 400 }}>
-                <div style={{ background: "#1e1e2e", borderRadius: 16, padding: "32px", width: "90%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", gap: 24 }}>
+                <div style={{ background: "#1e1e2e", borderRadius: 16, padding: "32px", width: "90%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", gap: 24 }} className="chatbox-modal">
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 48, marginBottom: 12 }}>🎙️</div>
                   </div>
@@ -1259,16 +1332,16 @@ const ChatBox = () => {
                 </div>
               </div>
             )}
-            <div style={S.inputBar}>
+            <div style={S.inputBar} className="chatbox-input-bar">
               <input type="file" multiple onChange={e => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} style={{ display: "none" }} id="fileInput" />
-              <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.actionBtn }}>📎</button>
-              <button onClick={() => setShowVoiceModal(true)} style={{ ...S.actionBtn }}>🎙️</button>
-              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn, position: "relative" }}>
+              <button onClick={() => document.getElementById("fileInput").click()} style={{ ...S.actionBtn }} className="chatbox-action-btn">📎</button>
+              <button onClick={() => setShowVoiceModal(true)} style={{ ...S.actionBtn }} className="chatbox-action-btn">🎙️</button>
+              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ ...S.actionBtn, position: "relative" }} className="chatbox-action-btn">
                 😊
                 {showEmojiPicker && <EmojiPicker onSelect={e => { setText(text + e); setShowEmojiPicker(false); }} onClose={() => setShowEmojiPicker(false)} />}
               </button>
-              <textarea ref={inputRef} style={S.textInput} value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} placeholder="Type a message..." />
-              <button style={S.sendBtn} onClick={sendMessage}>➤</button>
+              <textarea ref={inputRef} style={S.textInput} className="chatbox-text-input" value={text} onChange={handleTextChange} onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())} placeholder="Type a message..." />
+              <button style={S.sendBtn} className="chatbox-send-btn" onClick={sendMessage}>➤</button>
             </div>
           </>
         )}
@@ -1300,72 +1373,341 @@ const WA_DIVIDER      = "#2a3f4b";
 const WA_ACCENT       = "#00a884";
 
 const S = {
-  root: { display: "flex", height: "100vh", background: WA_CHAT_BG, fontFamily: "'Segoe UI', Helvetica, Arial, sans-serif", overflow: "hidden" },
+  root: { 
+    display: "flex", 
+    height: "100vh", 
+    background: WA_CHAT_BG, 
+    fontFamily: "'Segoe UI', Helvetica, Arial, sans-serif", 
+    overflow: "hidden",
+    flexDirection: "row",
+    "@media (max-width: 768px)": { flexDirection: "column" }
+  },
   center: { display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: WA_CHAT_BG },
   spinner: { width: 40, height: 40, border: "4px solid #2a3f4b", borderTop: "4px solid #00a884", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
   
-  // Sidebar styles
-  sidebar: { width: 360, background: WA_SIDEBAR_BG, borderRight: `1px solid ${WA_DIVIDER}`, flexDirection: "column", display: "flex" },
-  sidebarHeader: { background: WA_SIDEBAR_HDR, padding: "16px", display: "flex", flexDirection: "column", gap: 12, borderBottom: `1px solid ${WA_DIVIDER}` },
+  // Sidebar styles - responsive
+  sidebar: { 
+    width: "clamp(280px, 25vw, 360px)",
+    background: WA_SIDEBAR_BG, 
+    borderRight: `1px solid ${WA_DIVIDER}`, 
+    flexDirection: "column", 
+    display: "flex",
+    minWidth: 0,
+    "@media (max-width: 768px)": {
+      width: "100%",
+      borderRight: "none",
+      borderBottom: `1px solid ${WA_DIVIDER}`,
+      maxHeight: "40vh",
+      minHeight: "auto"
+    }
+  },
+  sidebarHeader: { 
+    background: WA_SIDEBAR_HDR, 
+    padding: "clamp(12px, 3vw, 16px)", 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: 12, 
+    borderBottom: `1px solid ${WA_DIVIDER}`,
+    "@media (max-width: 768px)": { padding: "12px" }
+  },
   sidebarTitle: { display: "flex", alignItems: "center", justifyContent: "space-between" },
-  sidebarTitleText: { fontWeight: 700, fontSize: 20, color: WA_TEXT },
-  searchInput: { width: "100%", padding: "10px 16px", borderRadius: 24, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none", fontSize: 14 },
+  sidebarTitleText: { 
+    fontWeight: 700, 
+    fontSize: "clamp(16px, 4vw, 20px)", 
+    color: WA_TEXT,
+    "@media (max-width: 768px)": { fontSize: "18px" }
+  },
+  searchInput: { 
+    width: "100%", 
+    padding: "clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px)", 
+    borderRadius: 24, 
+    border: "none", 
+    background: WA_INPUT_BG, 
+    color: WA_TEXT, 
+    outline: "none", 
+    fontSize: "clamp(12px, 2.5vw, 14px)",
+    "@media (max-width: 768px)": { padding: "8px 12px", fontSize: "13px" }
+  },
   searchWrap: { position: "relative" },
-  searchIcon: { position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: WA_TEXT_SUB, fontSize: 16 },
-  sidebarList: { flex: 1, overflowY: "auto", overflowX: "hidden" },
-  sidebarItem: { display: "flex", alignItems: "center", gap: 12, padding: "8px 8px", margin: "0 8px", cursor: "pointer", borderRadius: 8, transition: "background 0.2s" },
+  searchIcon: { position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: WA_TEXT_SUB, fontSize: "clamp(14px, 3vw, 16px)" },
+  sidebarList: { 
+    flex: 1, 
+    overflowY: "auto", 
+    overflowX: "hidden",
+    "@media (max-width: 768px)": { maxHeight: "calc(40vh - 120px)" }
+  },
+  sidebarItem: { 
+    display: "flex", 
+    alignItems: "center", 
+    gap: "clamp(8px, 2vw, 12px)", 
+    padding: "clamp(6px, 1.5vw, 8px)", 
+    margin: "0 clamp(4px, 1vw, 8px)", 
+    cursor: "pointer", 
+    borderRadius: 8, 
+    transition: "background 0.2s",
+    "@media (max-width: 768px)": { gap: "8px", padding: "6px", margin: "0 4px" }
+  },
   sidebarItemActive: { background: WA_SIDEBAR_ACT },
   sidebarItemHover: { background: "rgba(255,255,255,0.05)" },
-  sectionHeader: { padding: "12px 16px", cursor: "pointer", background: "transparent", fontSize: 13, fontWeight: 700, color: WA_TEXT_SUB, textTransform: "uppercase", letterSpacing: "0.5px" },
+  sectionHeader: { 
+    padding: "clamp(10px, 2vw, 12px) clamp(12px, 3vw, 16px)", 
+    cursor: "pointer", 
+    background: "transparent", 
+    fontSize: "clamp(11px, 2vw, 13px)", 
+    fontWeight: 700, 
+    color: WA_TEXT_SUB, 
+    textTransform: "uppercase", 
+    letterSpacing: "0.5px",
+    "@media (max-width: 768px)": { padding: "10px 12px", fontSize: "11px" }
+  },
   sidebarItemInfo: { flex: 1, minWidth: 0 },
-  sidebarItemName: { fontSize: 15, color: WA_TEXT, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  sidebarItemPreview: { fontSize: 13, color: WA_TEXT_SUB, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 },
-  badge: { background: WA_ACCENT, color: "#fff", borderRadius: 12, padding: "4px 8px", fontSize: 12, fontWeight: 600, minWidth: 20, textAlign: "center" },
+  sidebarItemName: { 
+    fontSize: "clamp(13px, 2.5vw, 15px)", 
+    color: WA_TEXT, 
+    fontWeight: 500, 
+    whiteSpace: "nowrap", 
+    overflow: "hidden", 
+    textOverflow: "ellipsis",
+    "@media (max-width: 768px)": { fontSize: "13px" }
+  },
+  sidebarItemPreview: { 
+    fontSize: "clamp(11px, 2vw, 13px)", 
+    color: WA_TEXT_SUB, 
+    whiteSpace: "nowrap", 
+    overflow: "hidden", 
+    textOverflow: "ellipsis", 
+    marginTop: 2,
+    "@media (max-width: 768px)": { fontSize: "11px" }
+  },
+  badge: { 
+    background: WA_ACCENT, 
+    color: "#fff", 
+    borderRadius: 12, 
+    padding: "4px 8px", 
+    fontSize: "clamp(10px, 2vw, 12px)", 
+    fontWeight: 600, 
+    minWidth: 20, 
+    textAlign: "center",
+    "@media (max-width: 768px)": { fontSize: "10px" }
+  },
   avatarWrap: { position: "relative", flexShrink: 0 },
   onlineDot: { position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "#31a24c", border: `3px solid ${WA_SIDEBAR_BG}` },
-  avatar: { width: 50, height: 50, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 18, background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+  avatar: { 
+    width: "clamp(40px, 8vw, 50px)", 
+    height: "clamp(40px, 8vw, 50px)", 
+    borderRadius: "50%", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    color: "#fff", 
+    fontWeight: 600, 
+    fontSize: "clamp(14px, 3vw, 18px)", 
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "@media (max-width: 768px)": { width: "40px", height: "40px", fontSize: "14px" }
+  },
   
-  // Main chat area
-  main: { flex: 1, flexDirection: "column", background: WA_CHAT_BG, display: "flex" },
+  // Main chat area - responsive
+  main: { 
+    flex: 1, 
+    flexDirection: "column", 
+    background: WA_CHAT_BG, 
+    display: "flex",
+    minWidth: 0,
+    "@media (max-width: 768px)": { flex: 1, minHeight: "60vh" }
+  },
   welcome: { flex: 1, alignItems: "center", justifyContent: "center", display: "flex", flexDirection: "column" },
-  welcomeIcon: { fontSize: 100, marginBottom: 20, opacity: 0.3 },
-  welcomeText: { fontSize: 20, color: WA_TEXT, fontWeight: 500, marginBottom: 8 },
-  welcomeSub: { fontSize: 14, color: WA_TEXT_SUB },
+  welcomeIcon: { 
+    fontSize: "clamp(60px, 15vw, 100px)", 
+    marginBottom: "clamp(12px, 3vw, 20px)", 
+    opacity: 0.3,
+    "@media (max-width: 768px)": { fontSize: "60px", marginBottom: "12px" }
+  },
+  welcomeText: { 
+    fontSize: "clamp(16px, 4vw, 20px)", 
+    color: WA_TEXT, 
+    fontWeight: 500, 
+    marginBottom: 8,
+    "@media (max-width: 768px)": { fontSize: "16px" }
+  },
+  welcomeSub: { 
+    fontSize: "clamp(12px, 3vw, 14px)", 
+    color: WA_TEXT_SUB,
+    "@media (max-width: 768px)": { fontSize: "12px" }
+  },
   
-  // Chat header
-  chatHeader: { display: "flex", alignItems: "center", padding: "12px 16px", background: WA_HEADER_BG, borderBottom: `1px solid ${WA_DIVIDER}`, justifyContent: "space-between" },
-  chatHeaderInfo: { display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 },
-  chatHeaderName: { fontWeight: 600, color: WA_TEXT, fontSize: 15 },
-  chatHeaderStatus: { fontSize: 12, color: WA_TEXT_SUB, marginTop: 2 },
-  chatHeaderActions: { display: "flex", gap: 8, alignItems: "center" },
-  headerBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: WA_TEXT_SUB, padding: "8px", borderRadius: 50, transition: "background 0.2s" },
+  // Chat header - responsive
+  chatHeader: { 
+    display: "flex", 
+    alignItems: "center", 
+    padding: "clamp(10px, 2vw, 12px) clamp(12px, 3vw, 16px)", 
+    background: WA_HEADER_BG, 
+    borderBottom: `1px solid ${WA_DIVIDER}`, 
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
+    "@media (max-width: 768px)": { padding: "10px 12px" }
+  },
+  chatHeaderInfo: { 
+    display: "flex", 
+    alignItems: "center", 
+    gap: "clamp(8px, 2vw, 12px)", 
+    flex: 1, 
+    minWidth: 0,
+    "@media (max-width: 768px)": { gap: "8px" }
+  },
+  chatHeaderName: { 
+    fontWeight: 600, 
+    color: WA_TEXT, 
+    fontSize: "clamp(13px, 3vw, 15px)",
+    "@media (max-width: 768px)": { fontSize: "13px" }
+  },
+  chatHeaderStatus: { 
+    fontSize: "clamp(10px, 2vw, 12px)", 
+    color: WA_TEXT_SUB, 
+    marginTop: 2,
+    "@media (max-width: 768px)": { fontSize: "10px" }
+  },
+  chatHeaderActions: { 
+    display: "flex", 
+    gap: "clamp(4px, 1vw, 8px)", 
+    alignItems: "center",
+    flexWrap: "wrap",
+    "@media (max-width: 768px)": { gap: "4px" }
+  },
+  headerBtn: { 
+    background: "none", 
+    border: "none", 
+    fontSize: "clamp(16px, 4vw, 20px)", 
+    cursor: "pointer", 
+    color: WA_TEXT_SUB, 
+    padding: "clamp(6px, 1.5vw, 8px)", 
+    borderRadius: 50, 
+    transition: "background 0.2s",
+    "@media (max-width: 768px)": { fontSize: "16px", padding: "6px" }
+  },
   headerBtnHover: { background: "rgba(255,255,255,0.1)" },
   
-  // Messages
-  messagesList: { flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8, backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"><defs><pattern id=\"pattern\" x=\"0\" y=\"0\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><text x=\"50\" y=\"50\" font-size=\"80\" fill=\"rgba(255,255,255,0.02)\" text-anchor=\"middle\" dominant-baseline=\"middle\">💬</text></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"%230a0e13\"/><rect width=\"100%\" height=\"100%\" fill=\"url(%23pattern)\"/></svg>')" },
+  // Messages - responsive
+  messagesList: { 
+    flex: 1, 
+    overflowY: "auto", 
+    padding: "clamp(12px, 3vw, 16px) clamp(12px, 3vw, 20px)", 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "clamp(6px, 1.5vw, 8px)", 
+    backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"><defs><pattern id=\"pattern\" x=\"0\" y=\"0\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><text x=\"50\" y=\"50\" font-size=\"80\" fill=\"rgba(255,255,255,0.02)\" text-anchor=\"middle\" dominant-baseline=\"middle\">💬</text></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"%230a0e13\"/><rect width=\"100%\" height=\"100%\" fill=\"url(%23pattern)\"/></svg>')",
+    "@media (max-width: 768px)": { padding: "12px", gap: "6px" }
+  },
   msgRow: { display: "flex", marginBottom: 4, width: "100%" },
   msgRowOwn: { justifyContent: "flex-end" },
   msgRowOther: { justifyContent: "flex-start" },
-  msgSenderName: { fontSize: 12, fontWeight: 700, color: WA_ACCENT, marginBottom: 4 },
-  bubble: { padding: "8px 12px", borderRadius: 8, maxWidth: "75%", wordWrap: "break-word", boxShadow: "0 1px 0.5px rgba(0,0,0,0.13)" },
+  msgSenderName: { 
+    fontSize: "clamp(10px, 2vw, 12px)", 
+    fontWeight: 700, 
+    color: WA_ACCENT, 
+    marginBottom: 4,
+    "@media (max-width: 768px)": { fontSize: "10px" }
+  },
+  bubble: { 
+    padding: "clamp(6px, 1.5vw, 8px) clamp(10px, 2vw, 12px)", 
+    borderRadius: 8, 
+    maxWidth: "clamp(70%, 85vw, 75%)", 
+    wordWrap: "break-word", 
+    boxShadow: "0 1px 0.5px rgba(0,0,0,0.13)",
+    "@media (max-width: 768px)": { maxWidth: "85%", padding: "6px 10px" }
+  },
   bubbleOwn: { background: WA_BUBBLE_OUT, color: WA_TEXT, borderBottomRightRadius: 4, marginLeft: "auto" },
   bubbleOther: { background: WA_BUBBLE_IN, color: WA_TEXT, borderBottomLeftRadius: 4, marginRight: "auto" },
-  msgText: { fontSize: 14, lineHeight: 1.4 },
+  msgText: { 
+    fontSize: "clamp(12px, 2.5vw, 14px)", 
+    lineHeight: 1.4,
+    "@media (max-width: 768px)": { fontSize: "12px" }
+  },
   msgMeta: { display: "flex", alignItems: "center", gap: 4, marginTop: 4, justifyContent: "flex-end" },
-  msgTime: { fontSize: 12, color: "rgba(255,255,255,0.6)" },
+  msgTime: { 
+    fontSize: "clamp(10px, 2vw, 12px)", 
+    color: "rgba(255,255,255,0.6)",
+    "@media (max-width: 768px)": { fontSize: "10px" }
+  },
   msgStatus: { fontSize: 12 },
   
-  // Input area
-  inputBar: { display: "flex", padding: "12px 16px", background: WA_HEADER_BG, gap: 12, alignItems: "flex-end", borderTop: `1px solid ${WA_DIVIDER}` },
+  // Input area - responsive
+  inputBar: { 
+    display: "flex", 
+    padding: "clamp(10px, 2vw, 12px) clamp(12px, 3vw, 16px)", 
+    background: WA_HEADER_BG, 
+    gap: "clamp(8px, 2vw, 12px)", 
+    alignItems: "flex-end", 
+    borderTop: `1px solid ${WA_DIVIDER}`,
+    flexWrap: "wrap",
+    "@media (max-width: 768px)": { padding: "10px 12px", gap: "8px" }
+  },
   inputActions: { display: "flex", gap: 8 },
-  actionBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: WA_ACCENT, padding: "8px", borderRadius: 50, transition: "background 0.2s" },
-  textInput: { flex: 1, padding: "10px 16px", borderRadius: 20, border: "none", background: WA_INPUT_BG, color: WA_TEXT, outline: "none", resize: "none", fontSize: 14, maxHeight: 100 },
-  sendBtn: { background: WA_ACCENT, color: "#fff", border: "none", borderRadius: "50%", width: 40, height: 40, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, transition: "background 0.2s" },
+  actionBtn: { 
+    background: "none", 
+    border: "none", 
+    fontSize: "clamp(16px, 4vw, 20px)", 
+    cursor: "pointer", 
+    color: WA_ACCENT, 
+    padding: "clamp(6px, 1.5vw, 8px)", 
+    borderRadius: 50, 
+    transition: "background 0.2s",
+    "@media (max-width: 768px)": { fontSize: "16px", padding: "6px" }
+  },
+  textInput: { 
+    flex: 1, 
+    padding: "clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px)", 
+    borderRadius: 20, 
+    border: "none", 
+    background: WA_INPUT_BG, 
+    color: WA_TEXT, 
+    outline: "none", 
+    resize: "none", 
+    fontSize: "clamp(12px, 2.5vw, 14px)", 
+    maxHeight: 100,
+    minHeight: "clamp(32px, 6vw, 40px)",
+    "@media (max-width: 768px)": { padding: "8px 12px", fontSize: "12px", minHeight: "32px" }
+  },
+  sendBtn: { 
+    background: WA_ACCENT, 
+    color: "#fff", 
+    border: "none", 
+    borderRadius: "50%", 
+    width: "clamp(36px, 8vw, 40px)", 
+    height: "clamp(36px, 8vw, 40px)", 
+    cursor: "pointer", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    fontSize: "clamp(14px, 3vw, 18px)", 
+    transition: "background 0.2s",
+    "@media (max-width: 768px)": { width: "36px", height: "36px", fontSize: "14px" }
+  },
   
-  // Jitsi
+  // Jitsi - responsive
   jitsiOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.95)", zIndex: 1000 },
-  jitsiContainer: { position: "relative", width: "90%", height: "90%", margin: "2% auto" },
-  jitsiEndBtn: { position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", padding: "12px 24px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }
+  jitsiContainer: { 
+    position: "relative", 
+    width: "clamp(90%, 95vw, 95%)", 
+    height: "clamp(85vh, 90vh, 95%)", 
+    margin: "auto",
+    "@media (max-width: 768px)": { width: "100%", height: "100%", margin: 0 }
+  },
+  jitsiEndBtn: { 
+    position: "absolute", 
+    bottom: "clamp(12px, 3vw, 20px)", 
+    left: "50%", 
+    transform: "translateX(-50%)", 
+    padding: "clamp(10px, 2vw, 12px) clamp(20px, 4vw, 24px)", 
+    background: "#ef4444", 
+    color: "#fff", 
+    border: "none", 
+    borderRadius: 8, 
+    cursor: "pointer", 
+    fontWeight: 600,
+    fontSize: "clamp(12px, 2.5vw, 14px)",
+    "@media (max-width: 768px)": { padding: "10px 20px", fontSize: "12px", bottom: "12px" }
+  }
 };
 
 export default ChatBox;
