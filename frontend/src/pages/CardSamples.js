@@ -42,12 +42,12 @@ import activities1 from '../assets/cards/STAFF ACTIVITIES.1.jpeg';
 import activitiesMain from '../assets/cards/STAFF ACTIVITIES.jpeg';
 
 // Video Assets - Import from assets
-import videoHowToUse from '../assets/videos/HOW TO USE OUR SMART CARDS.mp4';
-import videoQRCode from '../assets/videos/Qrcode card.mp4';
-import videoClassicLustre from '../assets/videos/classic-lustre.mp4';
-import videoEggShell from '../assets/videos/Egg-Shell.mp4';
-import videoTranslux from '../assets/videos/translux.mp4';
-import videoNubix from '../assets/videos/nubis.mp4';
+import videoHowToUse from '../assets/Videos/HOW TO USE OUR SMART CARDS.mp4';
+import videoQRCode from '../assets/Videos/Qrcode card.mp4';
+import videoClassicLustre from '../assets/Videos/classic-lustre.mp4';
+import videoEggShell from '../assets/Videos/Egg-Shell.mp4';
+import videoTranslux from '../assets/Videos/translux.mp4';
+import videoNubix from '../assets/Videos/nubis.mp4';
 
 const materials = [
   { id:'eggshell',      group:'plastic', name:'Eggshell',       tagline:'Subtle texture, premium feel',      photo:matEggshell,    accent:'#c8a97e', badge:'Eggshell',       badgeBg:'#fdf6ee', badgeColor:'#92400e', description:'A lightly textured plastic finish that mimics the natural feel of an eggshell surface. Soft to the touch, it gives cards a refined, understated luxury that stands out without being loud.', specs:['Textured PVC surface','Matte-like tactile feel','Full-color print support','Durable & water-resistant','Standard CR80 card size'], bestFor:['Executive business cards','Premium ID cards','Corporate branding'] },
