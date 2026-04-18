@@ -149,6 +149,7 @@ function Home() {
   }, [getAuthHeader]);
 
   const navItems = [
+    { id: "creds",         icon: "🔒", label: "Staff Credentials",      path: "/staff-credentials" },
     { id: "cards",         icon: "🎴", label: "Our Work",               path: "/card-samples" },
     { id: "directory",     icon: "👥", label: "Employee Directory",     path: "/employee-directory" },
   ];
