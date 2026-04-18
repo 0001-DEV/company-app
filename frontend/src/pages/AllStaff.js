@@ -243,6 +243,7 @@ function AllStaff() {
   const [toast, setToast] = useState(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const perPage = 10;
   const navigate = useNavigate();
 
@@ -460,22 +461,101 @@ function AllStaff() {
     <div style={s.page}>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <TopBar
-        title="🆔 Staff Directory"
-        subtitle={`${staff.length} total staff members`}
-        backPath="/home"
-        actions={[
-          { label: '➕ Add Staff', onClick: () => { refreshDepartments(); setEditingData(null); setShowStaffModal(true); setViewOnly(false); } },
-          { label: '🏢 Add Department', onClick: () => { setEditingDept(null); setShowDeptModal(true); }, style: { background: 'linear-gradient(135deg,#10b981,#059669)' } },
-          {
-            label: bulkUploading ? '⏳ Importing...' : '📥 Bulk Upload (CSV/Excel)',
-            onClick: () => document.getElementById('bulk-upload-excel-input')?.click(),
-            style: { background: 'linear-gradient(135deg,#f59e0b,#f97316)' },
-          },
-          { label: '📋 Download Template', onClick: downloadExcelTemplate, style: { background: 'linear-gradient(135deg,#06b6d4,#0891b2)' } },
-          { label: '📋 Departments', onClick: () => navigate('/department'), style: { background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' } }
-        ]}
-      />
+      {/* Mobile Sidebar */}
+      {typeof window !== 'undefined' && window.innerWidth <= 768 && (
+        <>
+          {/* Mobile Header with Menu Button */}
+          <div style={s.mobileHeader}>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={s.mobileMenuBtn}
+            >
+              ☰
+            </button>
+            <h1 style={s.mobileTitle}>🆔 Staff</h1>
+            <div style={{ width: 32 }} />
+          </div>
+
+          {/* Mobile Sidebar Overlay */}
+          {mobileMenuOpen && (
+            <div 
+              style={s.mobileOverlay}
+              onClick={() => setMobileMenuOpen(false)}
+            />
+          )}
+
+          {/* Mobile Sidebar */}
+          <div style={{ ...s.mobileSidebar, transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)' }}>
+            <div style={s.mobileSidebarHeader}>
+              <h2 style={s.mobileSidebarTitle}>Menu</h2>
+              <button 
+                onClick={() => setMobileMenuOpen(false)}
+                style={s.mobileSidebarClose}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={s.mobileSidebarContent}>
+              <button 
+                onClick={() => { refreshDepartments(); setEditingData(null); setShowStaffModal(true); setViewOnly(false); setMobileMenuOpen(false); }}
+                style={s.mobileSidebarBtn}
+              >
+                ➕ Add Staff
+              </button>
+              <button 
+                onClick={() => { setEditingDept(null); setShowDeptModal(true); setMobileMenuOpen(false); }}
+                style={s.mobileSidebarBtn}
+              >
+                🏢 Add Department
+              </button>
+              <button 
+                onClick={() => { document.getElementById('bulk-upload-excel-input')?.click(); setMobileMenuOpen(false); }}
+                style={s.mobileSidebarBtn}
+              >
+                {bulkUploading ? '⏳ Importing...' : '📥 Bulk Upload'}
+              </button>
+              <button 
+                onClick={() => { downloadExcelTemplate(); setMobileMenuOpen(false); }}
+                style={s.mobileSidebarBtn}
+              >
+                📋 Download Template
+              </button>
+              <button 
+                onClick={() => { navigate('/department'); setMobileMenuOpen(false); }}
+                style={s.mobileSidebarBtn}
+              >
+                📋 Departments
+              </button>
+              <button 
+                onClick={() => { navigate('/home'); setMobileMenuOpen(false); }}
+                style={{ ...s.mobileSidebarBtn, background: '#3b82f6', color: 'white', marginTop: 'auto' }}
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Desktop TopBar */}
+      {typeof window === 'undefined' || window.innerWidth > 768 ? (
+        <TopBar
+          title="🆔 Staff Directory"
+          subtitle={`${staff.length} total staff members`}
+          backPath="/home"
+          actions={[
+            { label: '➕ Add Staff', onClick: () => { refreshDepartments(); setEditingData(null); setShowStaffModal(true); setViewOnly(false); } },
+            { label: '🏢 Add Department', onClick: () => { setEditingDept(null); setShowDeptModal(true); }, style: { background: 'linear-gradient(135deg,#10b981,#059669)' } },
+            {
+              label: bulkUploading ? '⏳ Importing...' : '📥 Bulk Upload (CSV/Excel)',
+              onClick: () => document.getElementById('bulk-upload-excel-input')?.click(),
+              style: { background: 'linear-gradient(135deg,#f59e0b,#f97316)' },
+            },
+            { label: '📋 Download Template', onClick: downloadExcelTemplate, style: { background: 'linear-gradient(135deg,#06b6d4,#0891b2)' } },
+            { label: '📋 Departments', onClick: () => navigate('/department'), style: { background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' } }
+          ]}
+        />
+      ) : null}
       <input
         id="bulk-upload-excel-input"
         type="file"
@@ -619,6 +699,108 @@ const s = {
   pageBtn: { padding: '9px 16px', background: 'var(--bg-card, white)', color: 'var(--text-muted, #475569)', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' },
   pageBtnActive: { background: '#3b82f6', color: 'white', border: '1px solid #3b82f6' },
   pageBtnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
+
+  /* Mobile Sidebar Styles */
+  mobileHeader: { 
+    display: 'none', 
+    position: 'fixed', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    height: 56, 
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e40af 100%)', 
+    color: 'white', 
+    zIndex: 200, 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    padding: '0 12px',
+    '@media (max-width: 768px)': { display: 'flex' }
+  },
+  mobileMenuBtn: { 
+    background: 'none', 
+    border: 'none', 
+    color: 'white', 
+    fontSize: 24, 
+    cursor: 'pointer', 
+    padding: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  mobileTitle: { 
+    margin: 0, 
+    fontSize: 16, 
+    fontWeight: 700, 
+    flex: 1, 
+    textAlign: 'center'
+  },
+  mobileOverlay: { 
+    position: 'fixed', 
+    inset: 0, 
+    background: 'rgba(0,0,0,0.5)', 
+    zIndex: 150, 
+    display: 'none',
+    '@media (max-width: 768px)': { display: 'block' }
+  },
+  mobileSidebar: { 
+    position: 'fixed', 
+    left: 0, 
+    top: 56, 
+    bottom: 0, 
+    width: 280, 
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e40af 100%)', 
+    color: 'white', 
+    zIndex: 160, 
+    display: 'flex', 
+    flexDirection: 'column',
+    transition: 'transform 0.3s ease',
+    boxShadow: '4px 0 12px rgba(0,0,0,0.3)',
+    '@media (max-width: 768px)': { display: 'flex' }
+  },
+  mobileSidebarHeader: { 
+    padding: '16px', 
+    borderBottom: '1px solid rgba(255,255,255,0.1)', 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center'
+  },
+  mobileSidebarTitle: { 
+    margin: 0, 
+    fontSize: 16, 
+    fontWeight: 700, 
+    color: 'white'
+  },
+  mobileSidebarClose: { 
+    background: 'rgba(255,255,255,0.2)', 
+    border: 'none', 
+    color: 'white', 
+    borderRadius: '50%', 
+    width: 28, 
+    height: 28, 
+    cursor: 'pointer', 
+    fontSize: 16, 
+    fontWeight: 'bold'
+  },
+  mobileSidebarContent: { 
+    flex: 1, 
+    display: 'flex', 
+    flexDirection: 'column', 
+    padding: '12px', 
+    gap: 8, 
+    overflowY: 'auto'
+  },
+  mobileSidebarBtn: { 
+    padding: '12px 16px', 
+    background: 'rgba(255,255,255,0.1)', 
+    color: 'white', 
+    border: '1px solid rgba(255,255,255,0.2)', 
+    borderRadius: 8, 
+    cursor: 'pointer', 
+    fontWeight: 600, 
+    fontSize: 13, 
+    transition: 'all 0.2s',
+    textAlign: 'left'
+  },
 };
 
 const mStyles = {
