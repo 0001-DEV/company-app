@@ -180,8 +180,8 @@ export default function CardSamples() {
 
             <div style={{ ...S.sectionLabel, marginTop: 48 }}>A Glimpse of Our Work</div>
             <div style={S.previewStrip}>
-              {samples.filter(s => s.tag === 'Business' || s.tag === 'NFC').slice(0, 2).map((s, idx) => (
-                <div key={s.id} style={S.previewThumb} onClick={() => { s.tag === 'Business' ? setActiveTab('Materials') : setActiveTab('Our Work'); }}>
+              {samples.filter(s => s.tag === 'NFC').slice(0, 1).map((s, idx) => (
+                <div key={s.id} style={S.previewThumb} onClick={() => { setActiveTab('Our Work'); }}>
                   <img src={s.image} alt={s.title} style={S.previewImg} />
                   <div style={S.previewOverlay}><span style={{ ...S.tagChip, background: TAG_COLORS[s.tag] || '#6366f1' }}>{s.tag}</span></div>
                 </div>
