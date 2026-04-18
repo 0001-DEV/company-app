@@ -41,13 +41,13 @@ import activities0 from '../assets/cards/STAFF ACTIVITIES.0.jpeg';
 import activities1 from '../assets/cards/STAFF ACTIVITIES.1.jpeg';
 import activitiesMain from '../assets/cards/STAFF ACTIVITIES.jpeg';
 
-// Video Assets - Using placeholder since videos are not available
-const videoHowToUse = null;
-const videoQRCode = null;
-const videoClassicLustre = null;
-const videoEggShell = null;
-const videoTranslux = null;
-const videoNubix = null;
+// Video Assets - Import from assets
+import videoHowToUse from '../assets/videos/HOW TO USE OUR SMART CARDS.mp4';
+import videoQRCode from '../assets/videos/Qrcode card.mp4';
+import videoClassicLustre from '../assets/videos/classic-lustre.mp4';
+import videoEggShell from '../assets/videos/Egg-Shell.mp4';
+import videoTranslux from '../assets/videos/translux.mp4';
+import videoNubix from '../assets/videos/nubis.mp4';
 
 const materials = [
   { id:'eggshell',      group:'plastic', name:'Eggshell',       tagline:'Subtle texture, premium feel',      photo:matEggshell,    accent:'#c8a97e', badge:'Eggshell',       badgeBg:'#fdf6ee', badgeColor:'#92400e', description:'A lightly textured plastic finish that mimics the natural feel of an eggshell surface. Soft to the touch, it gives cards a refined, understated luxury that stands out without being loud.', specs:['Textured PVC surface','Matte-like tactile feel','Full-color print support','Durable & water-resistant','Standard CR80 card size'], bestFor:['Executive business cards','Premium ID cards','Corporate branding'] },
@@ -180,8 +180,8 @@ export default function CardSamples() {
 
             <div style={{ ...S.sectionLabel, marginTop: 48 }}>A Glimpse of Our Work</div>
             <div style={S.previewStrip}>
-              {samples.slice(0, 5).map(s => (
-                <div key={s.id} style={S.previewThumb} onClick={() => { setActiveTab('Our Work'); }}>
+              {samples.slice(1, 5).map((s, idx) => (
+                <div key={s.id} style={S.previewThumb} onClick={() => { idx === 0 ? setActiveTab('Materials') : setActiveTab('Our Work'); }}>
                   <img src={s.image} alt={s.title} style={S.previewImg} />
                   <div style={S.previewOverlay}><span style={{ ...S.tagChip, background: TAG_COLORS[s.tag] || '#6366f1' }}>{s.tag}</span></div>
                 </div>
@@ -256,12 +256,11 @@ export default function CardSamples() {
                     { name: 'Egg Shell', video: videoEggShell, desc: 'Subtle textured premium feel' },
                     { name: 'Translux', video: videoTranslux, desc: 'Transparent see-through elegance' },
                     { name: 'Nubix', video: videoNubix, desc: 'Velvety soft-touch luxury' },
-                  ].map(v => (
-                    <div key={v.name} style={{ ...S.sampleCard, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', borderRadius: 20, overflow: 'hidden' }}>
+                  ].map((v, idx) => (
+                    <div key={`duplex-${idx}`} style={{ ...S.sampleCard, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', borderRadius: 20, overflow: 'hidden' }}>
                       <div style={{ height: 200, background: '#000', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {v.video ? (
+                        {v.video && (
                           <video 
-                            key={v.video}
                             autoPlay 
                             muted 
                             loop 
@@ -271,7 +270,8 @@ export default function CardSamples() {
                             <source src={v.video} type="video/mp4" />
                             Your browser does not support the video tag.
                           </video>
-                        ) : (
+                        )}
+                        {!v.video && (
                           <div style={{ textAlign: 'center', color: '#9ca3af' }}>
                             <div style={{ fontSize: 32, marginBottom: 8 }}>🎬</div>
                             <div style={{ fontSize: 12, fontWeight: 600 }}>Video Coming Soon</div>
@@ -387,7 +387,7 @@ export default function CardSamples() {
                       <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>A quick guide to sharing via tap</div>
                     </div>
                     <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {videoHowToUse ? (
+                      {videoHowToUse && (
                         <video 
                           autoPlay
                           muted
@@ -398,7 +398,8 @@ export default function CardSamples() {
                           <source src={videoHowToUse} type="video/mp4" />
                           Your browser does not support the video tag.
                         </video>
-                      ) : (
+                      )}
+                      {!videoHowToUse && (
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6b7280', background: 'rgba(0,0,0,0.5)' }}>
                           <div style={{ fontSize: 40, marginBottom: 12 }}>🎬</div>
                           <div style={{ fontSize: 14, fontWeight: 600 }}>NFC Tutorial Video</div>
@@ -415,7 +416,7 @@ export default function CardSamples() {
                       <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Sharing via camera scan</div>
                     </div>
                     <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {videoQRCode ? (
+                      {videoQRCode && (
                         <video 
                           autoPlay
                           muted
@@ -426,7 +427,8 @@ export default function CardSamples() {
                           <source src={videoQRCode} type="video/mp4" />
                           Your browser does not support the video tag.
                         </video>
-                      ) : (
+                      )}
+                      {!videoQRCode && (
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6b7280', background: 'rgba(0,0,0,0.5)' }}>
                           <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
                           <div style={{ fontSize: 14, fontWeight: 600 }}>QR Code Tutorial Video</div>

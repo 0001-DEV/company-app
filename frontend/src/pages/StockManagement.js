@@ -221,11 +221,22 @@ const StockManagement = () => {
     a.click();
   };
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = async (exportType = 'month') => {
     try {
       const token = localStorage.getItem('token');
-      console.log('Exporting for month:', selectedMonth, 'year:', selectedYear);
-      const res = await fetch(`/api/stock/export/${selectedMonth}/${selectedYear}`, {
+      let endpoint;
+      let filename;
+      
+      if (exportType === 'year') {
+        endpoint = `/api/stock/export/year/${selectedYear}`;
+        filename = `stock-report-${selectedYear}.xlsx`;
+      } else {
+        endpoint = `/api/stock/export/${selectedMonth}/${selectedYear}`;
+        filename = `stock-report-${selectedMonth}-${selectedYear}.xlsx`;
+      }
+      
+      console.log('Exporting:', exportType, 'endpoint:', endpoint);
+      const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('Response status:', res.status);
@@ -234,7 +245,7 @@ const StockManagement = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `stock-report-${selectedMonth}-${selectedYear}.xlsx`;
+        a.download = filename;
         a.click();
         alert('Report exported successfully');
       } else {
@@ -258,22 +269,22 @@ const StockManagement = () => {
   const S = {
     root: { display: 'flex', flexDirection: 'column', gap: 20, padding: '24px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', minHeight: '100vh', color: '#e9edef' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' },
-    title: { fontSize: 28, fontWeight: 700, color: '#f1f5f9' },
+    title: { fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 700, color: '#f1f5f9' },
     btnGroup: { display: 'flex', gap: 12, flexWrap: 'wrap' },
     btn: { padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.2s', background: 'rgba(99,102,241,0.2)', color: '#6366f1', backdropFilter: 'blur(10px)', border: '1px solid rgba(99,102,241,0.3)' },
     btnPrimary: { background: '#6366f1', color: '#fff', border: 'none' },
     searchBox: { padding: '10px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#e9edef', outline: 'none', width: '100%', maxWidth: 300 },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 20 },
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(280px, 100%, 380px), 1fr))', gap: 20 },
     card: { background: 'rgba(30,41,59,0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 12, padding: 20, transition: 'all 0.3s', display: 'flex', flexDirection: 'column', gap: 16 },
     cardHover: { background: 'rgba(30,41,59,0.95)', borderColor: 'rgba(99,102,241,0.5)', boxShadow: '0 8px 32px rgba(99,102,241,0.1)' },
     stockName: { fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 0 },
-    stockInfo: { display: 'flex', justifyContent: 'space-between', marginBottom: 0, fontSize: 13 },
+    stockInfo: { display: 'flex', justifyContent: 'space-between', marginBottom: 0, fontSize: 13, flexWrap: 'wrap', gap: 8 },
     quantity: { fontSize: 24, fontWeight: 700, color: '#6366f1', marginBottom: 0 },
     monitor: { fontSize: 12, color: '#94a3b8', marginBottom: 0 },
     actions: { display: 'flex', gap: 10, flexWrap: 'wrap' },
-    smallBtn: { flex: 1, minWidth: '90px', padding: '10px 12px', fontSize: 12, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(99,102,241,0.2)', color: '#6366f1', transition: 'all 0.2s' },
-    modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
-    modalContent: { background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 16, padding: 32, maxWidth: 500, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' },
+    smallBtn: { flex: 1, minWidth: '80px', padding: '10px 12px', fontSize: 12, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(99,102,241,0.2)', color: '#6366f1', transition: 'all 0.2s' },
+    modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
+    modalContent: { background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 16, padding: 32, maxWidth: 500, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' },
     input: { width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#e9edef', marginBottom: 12, outline: 'none', fontSize: 13, boxSizing: 'border-box' },
     select: { width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#e9edef', marginBottom: 12, outline: 'none', fontSize: 13, boxSizing: 'border-box', colorScheme: 'dark' }
   };
@@ -300,7 +311,7 @@ const StockManagement = () => {
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} style={{ display: 'none' }} />
           <button style={S.btn} onClick={handleDownloadTemplate}>📋 Template</button>
           <button style={S.btn} onClick={() => setShowAssignMonitor(true)}>👤 Assign Monitor</button>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <select value={selectedMonth} onChange={e => setSelectedMonth(parseInt(e.target.value))} style={{ ...S.select, marginBottom: 0, width: 100 }}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
                 <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'short' })}</option>
@@ -311,7 +322,8 @@ const StockManagement = () => {
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
-            <button style={S.btn} onClick={handleExportExcel}>📊 Export</button>
+            <button style={S.btn} onClick={() => handleExportExcel('month')}>📊 Month</button>
+            <button style={S.btn} onClick={() => handleExportExcel('year')}>📊 Year</button>
           </div>
           <button style={{ ...S.btn, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} onClick={() => navigate('/home')}>← Back</button>
         </div>
