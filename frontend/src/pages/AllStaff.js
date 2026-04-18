@@ -508,13 +508,19 @@ function AllStaff() {
           {/* Mobile Header with Menu Button */}
           <div style={s.mobileHeader} className="allstaff-mobile-header">
             <button 
+              onClick={() => navigate('/home')}
+              style={s.mobileBackBtn}
+              title="Back to Dashboard"
+            >
+              ←
+            </button>
+            <h1 style={s.mobileTitle}>🆔 Staff</h1>
+            <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={s.mobileMenuBtn}
             >
               ☰
             </button>
-            <h1 style={s.mobileTitle}>🆔 Staff</h1>
-            <div style={{ width: 32 }} />
           </div>
 
           {/* Mobile Sidebar Overlay */}
@@ -767,6 +773,19 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  mobileBackBtn: { 
+    background: 'rgba(255,255,255,0.2)', 
+    border: 'none', 
+    color: 'white', 
+    fontSize: 20, 
+    cursor: 'pointer', 
+    padding: '8px 12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '6px',
+    fontWeight: 'bold'
   },
   mobileTitle: { 
     margin: 0, 
