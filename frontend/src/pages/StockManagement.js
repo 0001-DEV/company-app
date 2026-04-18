@@ -352,7 +352,8 @@ const StockManagement = () => {
       // If a single stock is selected, export just that stock
       if (selectedStock) {
         endpoint = `/api/stock/export-stock/${selectedStock._id}`;
-        filename = `${selectedStock.name}-details.xlsx`;
+        const monthName = new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' });
+        filename = `${selectedStock.name}_${monthName}_${exportYear}.xlsx`;
       } else if (type === 'range') {
         // Export range of months
         endpoint = `/api/stock/export-range/${exportStartMonth}/${exportEndMonth}/${exportYear}`;
@@ -450,7 +451,7 @@ const StockManagement = () => {
           <button style={S.btn} onClick={() => fileInputRef.current?.click()}>📥 Import Excel</button>
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} style={{ display: 'none' }} />
           <button style={S.btn} onClick={handleDownloadTemplate}>📋 Template</button>
-          <button style={S.btn} onClick={() => setShowStockManagerModal(true)}>👥 Manage Managers</button>
+          <button style={S.btn} onClick={() => setShowStockManagerModal(true)}>👥 Assign Manager</button>
           <button style={S.btn} onClick={() => { setExportType('single'); setExportMonth(new Date().getMonth() + 1); setExportYear(new Date().getFullYear()); setShowExportModal(true); }}>📊 Export</button>
           <button style={{ ...S.btn, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} onClick={() => navigate('/home')}>← Back</button>
         </div>
@@ -640,7 +641,7 @@ const StockManagement = () => {
       {showExportModal && (
         <div style={S.modal} onClick={() => setShowExportModal(false)}>
           <div style={S.modalContent} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>📊 Export {selectedStock ? `"${selectedStock.name}"` : 'Stock Report'}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>📊 Export {selectedStock ? `"${selectedStock.name}" - ${new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' })} ${exportYear}` : 'Stock Report'}</div>
             
             {!selectedStock ? (
               <>
@@ -718,12 +719,32 @@ const StockManagement = () => {
             )}
               </>
             ) : (
-              <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
-                <strong>Stock:</strong> {selectedStock.name}<br/>
-                <strong>Current Quantity:</strong> {selectedStock.currentQuantity} {selectedStock.unit}<br/>
-                <strong>Transactions:</strong> {selectedStock.transactions?.length || 0}<br/>
-                <strong>File name:</strong> {selectedStock.name}-details.xlsx
-              </div>
+              <>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Month</label>
+                  <select value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))} style={S.select}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                      <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Select Year</label>
+                  <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))} style={S.select}>
+                    {[2024, 2025, 2026].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
+                  <strong>Stock:</strong> {selectedStock.name}<br/>
+                  <strong>Current Quantity:</strong> {selectedStock.currentQuantity} {selectedStock.unit}<br/>
+                  <strong>Transactions:</strong> {selectedStock.transactions?.length || 0}<br/>
+                  <strong>File name:</strong> {selectedStock.name}_{new Date(exportYear, exportMonth - 1).toLocaleString('default', { month: 'long' })}_{exportYear}.xlsx
+                </div>
+              </>
             )}
 
             <div style={{ display: 'flex', gap: 12 }}>
@@ -737,7 +758,7 @@ const StockManagement = () => {
       {showStockManagerModal && (
         <div style={S.modal} onClick={() => setShowStockManagerModal(false)}>
           <div style={S.modalContent} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>👥 Manage Stock Managers</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>👥 Assign Manager</div>
             
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Assign New Manager</label>
