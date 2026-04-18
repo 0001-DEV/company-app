@@ -349,7 +349,11 @@ const StockManagement = () => {
       let endpoint;
       let filename;
       
-      if (type === 'range') {
+      // If a single stock is selected, export just that stock
+      if (selectedStock) {
+        endpoint = `/api/stock/export-stock/${selectedStock._id}`;
+        filename = `${selectedStock.name}-details.xlsx`;
+      } else if (type === 'range') {
         // Export range of months
         endpoint = `/api/stock/export-range/${exportStartMonth}/${exportEndMonth}/${exportYear}`;
         const startMonthName = new Date(exportYear, exportStartMonth - 1).toLocaleString('default', { month: 'long' });
@@ -374,8 +378,10 @@ const StockManagement = () => {
         a.href = url;
         a.download = filename;
         a.click();
-        alert('Report exported successfully');
+        window.URL.revokeObjectURL(url);
+        alert('✅ Report exported successfully');
         setShowExportModal(false);
+        setSelectedStock(null);
       } else {
         const text = await res.text();
         console.error('Export error response:', text);
@@ -477,7 +483,7 @@ const StockManagement = () => {
                 <button style={{ ...S.smallBtn, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} onClick={() => handleDeleteStock(stock)}>🗑️ Delete</button>
               </div>
               <div style={S.actions}>
-                <button style={{ ...S.smallBtn, background: 'rgba(34,197,94,0.2)', color: '#22c55e' }} onClick={() => handleExportSingleStock(stock)}>📥 Export</button>
+                <button style={{ ...S.smallBtn, background: 'rgba(34,197,94,0.2)', color: '#22c55e' }} onClick={() => { setSelectedStock(stock); setExportType('single'); setExportMonth(new Date().getMonth() + 1); setExportYear(new Date().getFullYear()); setShowExportModal(true); }}>📥 Export</button>
               </div>
             </div>
           ))}
@@ -634,8 +640,10 @@ const StockManagement = () => {
       {showExportModal && (
         <div style={S.modal} onClick={() => setShowExportModal(false)}>
           <div style={S.modalContent} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>📊 Export Stock Report</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>📊 Export {selectedStock ? `"${selectedStock.name}"` : 'Stock Report'}</div>
             
+            {!selectedStock ? (
+              <>
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#cbd5e1' }}>Export Type</label>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -708,9 +716,18 @@ const StockManagement = () => {
                 </div>
               </>
             )}
+              </>
+            ) : (
+              <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#cbd5e1' }}>
+                <strong>Stock:</strong> {selectedStock.name}<br/>
+                <strong>Current Quantity:</strong> {selectedStock.currentQuantity} {selectedStock.unit}<br/>
+                <strong>Transactions:</strong> {selectedStock.transactions?.length || 0}<br/>
+                <strong>File name:</strong> {selectedStock.name}-details.xlsx
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: 12 }}>
-              <button style={{ ...S.btn, flex: 1 }} onClick={() => setShowExportModal(false)}>Cancel</button>
+              <button style={{ ...S.btn, flex: 1 }} onClick={() => { setShowExportModal(false); setSelectedStock(null); }}>Cancel</button>
               <button style={{ ...S.btn, ...S.btnPrimary, flex: 1 }} onClick={() => handleExportExcel(exportType)}>Export</button>
             </div>
           </div>
