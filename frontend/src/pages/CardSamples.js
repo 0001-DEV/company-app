@@ -283,7 +283,7 @@ export default function CardSamples() {
                         </div>
                       </div>
                       <div style={{ padding: 20 }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: '#f9fafb', marginBottom: 4 }}>Duplex: {v.name} Edition</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#f9fafb', marginBottom: 4 }}>Business Card: {v.name} Edition</div>
                         <div style={{ fontSize: 13, color: '#6b7280' }}>{v.desc}</div>
                       </div>
                     </div>
