@@ -242,7 +242,7 @@ export default function CardSamples() {
               <div style={{ marginBottom: 60 }}>
                 <div style={{ fontSize: 28, fontWeight: 800, color: '#f9fafb', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{ width: 4, height: 28, background: '#6366f1', borderRadius: 2 }} />
-                  Premium Duplex Showcase
+                  Premium Business Card Showcase
                 </div>
                 <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.6, marginBottom: 24, maxWidth: 800 }}>
                   A <strong>Duplex Card</strong> is the perfect combination of both an <strong>ID card</strong> and a <strong>Business card</strong>. 
