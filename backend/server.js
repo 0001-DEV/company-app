@@ -48,6 +48,12 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.url}`);
+  next();
+});
+
 // Serve uploaded files statically
 app.use('/uploads', express.static(uploadsDir));
 
@@ -330,6 +336,9 @@ app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT
 // Global Error Handler - Ensure JSON response instead of HTML
 app.use((err, req, res, next) => {
   console.error('🔥 Global Error:', err);
+  console.error('🔥 Error Stack:', err.stack);
+  console.error('🔥 Request URL:', req.url);
+  console.error('🔥 Request Method:', req.method);
   res.status(err.status || 500).json({
     message: err.message || 'An unexpected error occurred',
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
