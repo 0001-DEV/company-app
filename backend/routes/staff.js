@@ -16,6 +16,10 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
     const staff = await User.findOne({ email });
 
     if (!staff) {
@@ -42,7 +46,8 @@ router.post("/login", async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error('Staff login error:', err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
