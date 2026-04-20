@@ -127,6 +127,12 @@ function AdminLogin() {
           >
             ← Back to Login Selection
           </button>
+          <button 
+            style={styles.forgotLink}
+            onClick={() => navigate("/forgot-password")}
+          >
+            Forgot Password?
+          </button>
         </div>
 
         {/* Indicators */}
@@ -277,6 +283,17 @@ const styles = {
     fontWeight: "600",
     textDecoration: "none",
     transition: "all 0.3s"
+  },
+  forgotLink: {
+    background: "none",
+    border: "none",
+    color: "#6366f1",
+    fontSize: "14px",
+    cursor: "pointer",
+    fontWeight: "600",
+    textDecoration: "underline",
+    transition: "all 0.3s",
+    marginTop: "8px"
   },
   eyeBtn: {
     position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',

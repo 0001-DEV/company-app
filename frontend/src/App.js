@@ -7,6 +7,8 @@ import AdminLogin from './pages/AdminLogin';
 import AllStaff from './pages/AllStaff';
 import LoginSelector from "./pages/LoginSelector";
 import StaffLogin from './pages/StaffLogin';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import StaffDetails from './pages/admin/StaffDetails';
 import Department from './pages/Department';
 import DepartmentDetail from './pages/DepartmentDetail';
@@ -50,6 +52,8 @@ function App() {
         <Route path="/" element={<LoginSelector />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/staff-login" element={<StaffLogin />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/card-usage-report/:encodedId" element={<CardUsageReportPublic />} />
         
         {/* Admin-only routes */}

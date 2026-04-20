@@ -74,6 +74,9 @@ app.use('/api/company-staff', companyStaffRoutes);
 const configRoutes = require('./routes/config');
 app.use('/api/config', configRoutes);
 
+const passwordResetRoutes = require('./routes/passwordReset');
+app.use('/api/password-reset', passwordResetRoutes);
+
 // ── Test MongoDB Connection ──
 app.get('/api/test', async (req, res) => {
   try {
