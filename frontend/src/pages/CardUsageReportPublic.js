@@ -16,9 +16,16 @@ const CardUsageReportPublic = () => {
         
         // Determine backend URL based on current host
         const currentHost = window.location.hostname;
-        const backendUrl = currentHost === 'localhost' || currentHost === '127.0.0.1' 
-          ? '' 
-          : `http://${currentHost}:5000`;
+        const currentPort = window.location.port;
+        let backendUrl = '';
+        
+        if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+          // Local development - use port 5000
+          backendUrl = `http://${currentHost}:5000`;
+        } else {
+          // Production - use same host with port 5000
+          backendUrl = `http://${currentHost}:5000`;
+        }
         
         // Fetch the report data from public endpoint (no auth required)
         const res = await fetch(`${backendUrl}/api/client-documents/public/card-usage-report/${companyId}`);
@@ -26,7 +33,8 @@ const CardUsageReportPublic = () => {
           const data = await res.json();
           setReportData(data);
         } else {
-          setError('Report not found or access denied');
+          const errorText = await res.text();
+          setError(`Report not found or access denied (${res.status}): ${errorText}`);
         }
       } catch (err) {
         console.error('Error fetching report:', err);
