@@ -46,6 +46,9 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+
+// Allow public endpoints without CORS restrictions
+app.use('/api/client-documents/public', cors());
 app.use(express.json());
 
 // Request logging middleware
