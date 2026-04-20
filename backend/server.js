@@ -246,56 +246,16 @@ app.get('/api/staff/test', (req, res) => {
   res.json({ message: 'Staff routes are working!' });
 });
 
-// 🟢 MOCK LOGIN FOR LOCAL TESTING (bypasses MongoDB)
-app.post('/api/admin/login', (req, res) => {
-  const { email, password } = req.body;
-  
-  // Mock credentials for testing
-  if (email === 'admin@xtremecr8ivity.com' && password === 'password123') {
-    const token = 'mock-token-' + Date.now();
-    return res.json({
-      message: 'Admin login successful',
-      token,
-      admin: { 
-        id: 'mock-admin-1', 
-        name: 'Admin User', 
-        email: 'admin@xtremecr8ivity.com', 
-        role: 'admin', 
-        profilePicture: '' 
-      }
-    });
-  }
-  
-  res.status(404).json({ message: 'Admin not found' });
-});
-
-app.post('/api/staff/login', (req, res) => {
-  const { email, password } = req.body;
-  
-  // Mock credentials for testing
-  const staffUsers = [
-    { email: 'loveolaoye@gmail.com', password: 'LOVEOLAOYE', name: 'Love Olaoye' },
-    { email: 'love@xtremecr8ivity.com', password: 'love', name: 'Love Staff' }
-  ];
-  
-  const user = staffUsers.find(u => u.email === email && u.password === password);
-  
-  if (user) {
-    const token = 'mock-token-' + Date.now();
-    return res.json({
-      message: 'Staff login successful',
-      token,
-      staff: { 
-        id: 'mock-staff-1', 
-        name: user.name, 
-        email: user.email, 
-        role: 'staff', 
-        profilePicture: '' 
-      }
-    });
-  }
-  
-  res.status(404).json({ message: 'Staff not found' });
+// Global Error Handler - Ensure JSON response instead of HTML
+app.use((err, req, res, next) => {
+  console.error('🔥 Global Error:', err);
+  console.error('🔥 Error Stack:', err.stack);
+  console.error('🔥 Request URL:', req.url);
+  console.error('🔥 Request Method:', req.method);
+  res.status(err.status || 500).json({
+    message: err.message || 'An unexpected error occurred',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 // Database connection
@@ -312,15 +272,3 @@ mongoose.connect(mongoUri)
   .catch(err => console.log('❌ MongoDB connection error:', err));
 
 app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));
-
-// Global Error Handler - Ensure JSON response instead of HTML
-app.use((err, req, res, next) => {
-  console.error('🔥 Global Error:', err);
-  console.error('🔥 Error Stack:', err.stack);
-  console.error('🔥 Request URL:', req.url);
-  console.error('🔥 Request Method:', req.method);
-  res.status(err.status || 500).json({
-    message: err.message || 'An unexpected error occurred',
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
-});

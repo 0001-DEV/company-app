@@ -4,7 +4,7 @@ const jobSchema = new mongoose.Schema({
   title: { type: String, required: true },
   company: { type: String, required: true },
   description: String,
-department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
+  department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
 
 
   assignedStaff: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

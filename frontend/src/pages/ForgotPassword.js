@@ -23,7 +23,17 @@ const ForgotPassword = () => {
         body: JSON.stringify({ email })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data;
+      
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Invalid JSON response:', text);
+        setError('Server error: Invalid response. Make sure backend is running.');
+        setLoading(false);
+        return;
+      }
 
       if (res.ok) {
         setMessage(data.message);
@@ -33,6 +43,7 @@ const ForgotPassword = () => {
         setError(data.message || 'Failed to send reset email');
       }
     } catch (err) {
+      console.error('Error:', err);
       setError('Error: ' + err.message);
     } finally {
       setLoading(false);
