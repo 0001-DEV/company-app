@@ -45,10 +45,12 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
 };
-app.use(cors(corsOptions));
 
-// Allow public endpoints without CORS restrictions
+// Allow public endpoints without CORS restrictions FIRST
 app.use('/api/client-documents/public', cors());
+
+// Then apply restricted CORS to everything else
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Request logging middleware
