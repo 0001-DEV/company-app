@@ -12,6 +12,22 @@ const ResetPassword = () => {
   const [success, setSuccess] = useState('');
   const [tokenValid, setTokenValid] = useState(null);
 
+  // Get backend URL from environment or use current origin
+  const getBackendUrl = () => {
+    if (process.env.REACT_APP_BACKEND_URL) {
+      return process.env.REACT_APP_BACKEND_URL;
+    }
+    // In production (Vercel), use the same domain
+    // In development, use localhost:5000
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+    // For production, construct backend URL from current origin
+    return window.location.origin.replace(/:\d+$/, ':5000');
+  };
+
+  const backendUrl = getBackendUrl();
+
   useEffect(() => {
     // Verify token on component mount
     verifyToken();
@@ -19,7 +35,7 @@ const ResetPassword = () => {
 
   const verifyToken = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/password-reset/verify/${token}`);
+      const response = await fetch(`${backendUrl}/api/password-reset/verify/${token}`);
       if (response.ok) {
         setTokenValid(true);
       } else {
@@ -28,7 +44,7 @@ const ResetPassword = () => {
       }
     } catch (err) {
       setTokenValid(false);
-      setError('Failed to verify reset link. Make sure backend is running on port 5000.');
+      setError('Failed to verify reset link. Make sure backend is running.');
     }
   };
 
@@ -55,7 +71,7 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/password-reset/reset/${token}`, {
+      const response = await fetch(`${backendUrl}/api/password-reset/reset/${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +87,7 @@ const ResetPassword = () => {
       if (response.ok) {
         setSuccess('Password reset successful! Redirecting to login...');
         setTimeout(() => {
-          navigate('/login');
+          navigate('/');
         }, 2000);
       } else {
         setError(data.message || 'Failed to reset password');
@@ -100,7 +116,7 @@ const ResetPassword = () => {
         <div className="reset-password-card">
           <h1>Reset Password</h1>
           <div className="error-message">{error}</div>
-          <button onClick={() => navigate('/login')} className="back-button">
+          <button onClick={() => navigate('/')} className="back-button">
             Back to Login
           </button>
         </div>
@@ -152,7 +168,7 @@ const ResetPassword = () => {
         <div className="form-footer">
           <p>
             Remember your password?{' '}
-            <button onClick={() => navigate('/login')} className="link-button">
+            <button onClick={() => navigate('/')} className="link-button">
               Back to Login
             </button>
           </p>
