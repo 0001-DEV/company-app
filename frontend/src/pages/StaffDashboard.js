@@ -169,7 +169,6 @@ const StaffDashboard = () => {
     { id: 'clientDocs', icon: '📄', label: 'Client Documentation' },
     ...(clientProjects.length > 0 ? [{ id: 'clientProjects', icon: '📊', label: 'Monitor Client', action: () => navigate('/client-documentation') }] : []),
     { id: 'portfolio', icon: '🎨', label: 'Our Portfolio', action: () => navigate('/card-samples') },
-    { id: 'chat', icon: '💬', label: 'Chat', action: () => navigate('/chat'), badge: hasUnread },
     { id: 'announcements', icon: '📢', label: 'Announcements', action: () => navigate('/announcements'), badge: hasNewAnnouncement },
     { id: 'weekly', icon: '📊', label: 'Weekly Report', action: () => navigate('/weekly-reports') },
     ...(hasMappingAccess ? [{ id: 'mapping', icon: '🗺️', label: 'Mapping', action: () => navigate('/mapping') }] : []),
