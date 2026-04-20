@@ -2,14 +2,32 @@ const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 
 /**
- * Sends an email notification to multiple recipients
- * @param {Array} emails - List of recipient emails
- * @param {String} subject - Email subject
- * @param {String} text - Email body
+ * Sends an email notification
+ * @param {Object|Array} emailsOrOptions - Either an array of emails or a mailOptions object
+ * @param {String} subject - Email subject (optional if first param is object)
+ * @param {String} text - Email body (optional if first param is object)
  */
-const sendEmail = async (emails, subject, text) => {
+const sendEmail = async (emailsOrOptions, subject, text) => {
   try {
-    console.log('📧 Attempting to send emails to:', emails.length, 'recipients');
+    // Handle both old format (emails array, subject, text) and new format (mailOptions object)
+    let mailOptions;
+    
+    if (typeof emailsOrOptions === 'object' && !Array.isArray(emailsOrOptions)) {
+      // New format: mailOptions object passed directly
+      mailOptions = emailsOrOptions;
+      console.log('📧 Attempting to send email to:', mailOptions.to);
+    } else {
+      // Old format: emails array, subject, text
+      const emails = emailsOrOptions;
+      console.log('📧 Attempting to send emails to:', emails.length, 'recipients');
+      mailOptions = {
+        from: `"Xtreme Cr8ivity" <${process.env.EMAIL_USER}>`,
+        to: Array.isArray(emails) ? emails.join(',') : emails,
+        subject: subject,
+        text: text,
+      };
+    }
+    
     console.log('📧 Email credentials check - USER:', process.env.EMAIL_USER ? '✅ set' : '❌ not set');
     console.log('📧 Email credentials check - PASS:', process.env.EMAIL_PASS ? '✅ set' : '❌ not set');
     console.log('📧 Email HOST:', process.env.EMAIL_HOST || 'smtp.gmail.com');
@@ -30,17 +48,10 @@ const sendEmail = async (emails, subject, text) => {
       },
     });
 
-    const mailOptions = {
-      from: `"Xtreme Cr8ivity" <${process.env.EMAIL_USER}>`,
-      to: emails.join(','),
-      subject: subject,
-      text: text,
-    };
-
     console.log('📤 Sending email via:', process.env.EMAIL_HOST || 'smtp.gmail.com');
-    console.log('📤 Recipients:', emails.join(', '));
+    console.log('📤 Recipients:', mailOptions.to);
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Emails sent successfully. Message ID:', info.messageId);
+    console.log('✅ Email sent successfully. Message ID:', info.messageId);
     return true;
   } catch (error) {
     console.error('❌ Error sending email:', error.message);
