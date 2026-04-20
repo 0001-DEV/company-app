@@ -42,7 +42,7 @@ router.post('/request', async (req, res) => {
       expiresAt: expiresAt
     });
 
-    // Send reset email
+    // Send reset email in background (non-blocking)
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
     
     const mailOptions = {
@@ -78,13 +78,10 @@ router.post('/request', async (req, res) => {
       `
     };
 
-    try {
-      await sendEmail(mailOptions);
-      console.log(`✅ Password reset email sent to ${email}`);
-    } catch (mailErr) {
-      console.error(`❌ Failed to send reset email to ${email}:`, mailErr.message);
-      return res.status(500).json({ message: 'Failed to send reset email' });
-    }
+    // Send email in background without blocking response
+    sendEmail(mailOptions)
+      .then(() => console.log(`✅ Password reset email sent to ${email}`))
+      .catch(err => console.error(`❌ Failed to send reset email to ${email}:`, err.message));
 
     res.json({ message: 'If email exists, reset link will be sent' });
   } catch (err) {
