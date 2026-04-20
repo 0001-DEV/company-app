@@ -13,6 +13,7 @@ const CardUsageReportPublic = () => {
         setLoading(true);
         // Decode the company ID
         const companyId = atob(encodedId);
+        console.log('Fetching report for company:', companyId);
         
         // Determine backend URL based on current host
         const currentHost = window.location.hostname;
@@ -27,18 +28,31 @@ const CardUsageReportPublic = () => {
           backendUrl = `http://${currentHost}:5000`;
         }
         
+        console.log('Backend URL:', backendUrl);
+        console.log('Full URL:', `${backendUrl}/api/client-documents/public/card-usage-report/${companyId}`);
+        
         // Fetch the report data from public endpoint (no auth required)
-        const res = await fetch(`${backendUrl}/api/client-documents/public/card-usage-report/${companyId}`);
+        const res = await fetch(`${backendUrl}/api/client-documents/public/card-usage-report/${companyId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Response status:', res.status);
+        
         if (res.ok) {
           const data = await res.json();
+          console.log('Report data received:', data);
           setReportData(data);
         } else {
           const errorText = await res.text();
+          console.error('Error response:', errorText);
           setError(`Report not found or access denied (${res.status}): ${errorText}`);
         }
       } catch (err) {
         console.error('Error fetching report:', err);
-        setError('Error loading report: ' + err.message);
+        setError('Error loading report: ' + err.message + '. Make sure the backend server is running on port 5000.');
       } finally {
         setLoading(false);
       }
