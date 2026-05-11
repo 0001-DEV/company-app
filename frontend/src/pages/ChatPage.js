@@ -132,15 +132,8 @@ const ChatPage = () => {
     fetchPinned();
   }, [selectedConversation, chatMode]);
 
-  // Auto-scroll to bottom only when new messages arrive
-  useEffect(() => {
-    if (messages.length > 0) {
-      // Small delay to ensure DOM is updated
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [messages.length]);
+  // Don't auto-scroll - let user scroll manually
+  // This prevents the page from jumping when opening a chat
 
   // Handle typing indicator
   const notifyTyping = async (isTyping) => {
