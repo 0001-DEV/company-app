@@ -215,13 +215,14 @@
 .chat-header-info h3 {
   margin: 0;
   font-size: 16px;
-  color: var(--text-main, #0f172a);
+  color: #000000;
+  font-weight: 600;
 }
 
 .chat-header-subtitle {
   margin: 2px 0 0 0;
   font-size: 12px;
-  color: var(--text-lighter, #94a3b8);
+  color: #000000;
 }
 
 .chat-header-actions {
@@ -521,13 +522,17 @@
   background: #f1f5f9;
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
-  color: var(--text-main, #0f172a);
+  color: #000000;
   font-size: 14px;
   font-family: inherit;
   resize: none;
   outline: none;
   box-sizing: border-box;
   max-height: 100px;
+}
+
+.chat-input::placeholder {
+  color: #999999;
 }
 
 .chat-input:focus {
