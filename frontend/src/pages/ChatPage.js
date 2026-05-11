@@ -720,7 +720,13 @@ const ChatPage = () => {
 
   const sendVoiceMessage = async (audioBlob) => {
     try {
-      const headers = getAuthHeader();
+      // Don't use getAuthHeader() - we need to exclude Content-Type for FormData
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`
+        // Don't set Content-Type - browser will set it with boundary
+      };
+      
       const formData = new FormData();
       formData.append('files', audioBlob, 'voice-message.webm');
       
@@ -741,9 +747,14 @@ const ChatPage = () => {
       
       if (res.ok) {
         await loadMessages();
+      } else {
+        const error = await res.json();
+        console.error('Voice upload error:', error);
+        alert('Error sending voice message: ' + error.message);
       }
     } catch (err) {
       console.error('Error sending voice message:', err);
+      alert('Error sending voice message: ' + err.message);
     }
   };
 
@@ -758,7 +769,13 @@ const ChatPage = () => {
     
     try {
       setLoading(true);
-      const headers = getAuthHeader();
+      // Don't use getAuthHeader() directly - we need to exclude Content-Type for FormData
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`
+        // Don't set Content-Type - browser will set it with boundary for multipart/form-data
+      };
+      
       const formData = new FormData();
       
       let receiverId = '';
@@ -793,9 +810,14 @@ const ChatPage = () => {
         setReplyingTo(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         await loadMessages();
+      } else {
+        const error = await res.json();
+        console.error('Upload error:', error);
+        alert('Error uploading file: ' + error.message);
       }
     } catch (err) {
       console.error('Error sending files:', err);
+      alert('Error uploading file: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -1155,21 +1177,30 @@ const ChatPage = () => {
                         {/* File attachments */}
                         {msg.files && msg.files.length > 0 && (
                           <div className="chat-message-files">
-                            {msg.files.map((file, idx) => (
-                              <div key={idx} className="chat-file-attachment">
-                                {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                  <img src={`/${file.path}`} alt={file.originalName} className="chat-file-image" />
-                                ) : file.path.match(/\.(mp4|webm)$/i) ? (
-                                  <video src={`/${file.path}`} controls className="chat-file-video" />
-                                ) : file.path.match(/\.(mp3|webm|ogg|wav)$/i) ? (
-                                  <audio src={`/${file.path}`} controls className="chat-file-audio" />
-                                ) : (
-                                  <a href={`/${file.path}`} download className="chat-file-link">
-                                    📎 {file.originalName}
-                                  </a>
-                                )}
-                              </div>
-                            ))}
+                            {msg.files.map((file, idx) => {
+                              const canDownload = user.role === 'admin' || 
+                                (chatMode === 'department' && selectedConversation.groupAdmins?.includes(user.id));
+                              
+                              return (
+                                <div key={idx} className="chat-file-attachment">
+                                  {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                    <img src={`/${file.path}`} alt={file.originalName} className="chat-file-image" />
+                                  ) : file.path.match(/\.(mp4|webm)$/i) ? (
+                                    <video src={`/${file.path}`} controls className="chat-file-video" />
+                                  ) : file.path.match(/\.(mp3|webm|ogg|wav)$/i) ? (
+                                    <audio src={`/${file.path}`} controls className="chat-file-audio" />
+                                  ) : canDownload ? (
+                                    <a href={`/${file.path}`} download className="chat-file-link">
+                                      📎 {file.originalName}
+                                    </a>
+                                  ) : (
+                                    <div className="chat-file-link chat-file-locked" title="Only admins can download files">
+                                      🔒 {file.originalName}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                         
