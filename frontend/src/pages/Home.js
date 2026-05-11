@@ -157,6 +157,7 @@ function Home() {
     { id: "stock",         icon: "📦", label: "Stock Management",       path: "/stock-management" },
     { id: "cards",         icon: "🎴", label: "Our Portfolio",          path: "/card-samples" },
     { id: "creds",         icon: "🔒", label: "Staff Credentials",      path: "/staff-credentials" },
+    { id: "chat",          icon: "💬", label: "Chat",                   path: "/chat", badge: hasUnreadMessages },
     { id: "announcements", icon: "📢", label: "Announcements",          path: "/announcements" },
     { id: "directory",     icon: "👥", label: "Employee Directory",     path: "/employee-directory" },
     { id: "admin-weekly",  icon: "📊", label: "Weekly Reports",         path: "/admin/weekly-reports" },
