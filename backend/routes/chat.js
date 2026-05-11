@@ -817,6 +817,9 @@ router.post('/typing', verifyUser, async (req, res) => {
     }
 
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     
     if (isTyping) {
       // Create or update typing indicator
@@ -829,7 +832,7 @@ router.post('/typing', verifyUser, async (req, res) => {
           isTyping: true,
           createdAt: new Date()
         },
-        { upsert: true }
+        { upsert: true, new: true }
       );
     } else {
       // Remove typing indicator
