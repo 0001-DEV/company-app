@@ -20,6 +20,8 @@ const upload = multer({ storage: storage });
 
 // Message model
 const Message = require("../models/Message");
+const TypingIndicator = require("../models/TypingIndicator");
+const PinnedMessage = require("../models/PinnedMessage");
 
 // Get current user info
 router.get("/me", verifyUser, async (req, res) => {
@@ -802,3 +804,203 @@ router.post("/call/save-notification", verifyUser, async (req, res) => {
 });
 
 module.exports = router;
+
+
+// ── TYPING INDICATORS ──
+// Notify when user is typing
+router.post('/typing', verifyUser, async (req, res) => {
+  try {
+    const { conversationId, isTyping } = req.body;
+    
+    if (!conversationId) {
+      return res.status(400).json({ message: 'conversationId is required' });
+    }
+
+    const user = await User.findById(req.user.id);
+    
+    if (isTyping) {
+      // Create or update typing indicator
+      await TypingIndicator.findOneAndUpdate(
+        { userId: req.user.id, conversationId },
+        { 
+          userId: req.user.id,
+          userName: user.name,
+          conversationId,
+          isTyping: true,
+          createdAt: new Date()
+        },
+        { upsert: true }
+      );
+    } else {
+      // Remove typing indicator
+      await TypingIndicator.deleteOne({ userId: req.user.id, conversationId });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Typing indicator error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get typing indicators for a conversation
+router.get('/typing/:conversationId', verifyUser, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    
+    const typingUsers = await TypingIndicator.find({ conversationId });
+    res.json(typingUsers);
+  } catch (err) {
+    console.error('Get typing error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── PINNED MESSAGES ──
+// Pin a message
+router.post('/pin/:messageId', verifyUser, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { conversationId, reason } = req.body;
+
+    if (!conversationId) {
+      return res.status(400).json({ message: 'conversationId is required' });
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    // Create pinned message record
+    const pinnedMessage = await PinnedMessage.create({
+      messageId,
+      conversationId,
+      pinnedBy: req.user.id,
+      pinnedByName: user.name,
+      reason: reason || ''
+    });
+
+    // Update message to mark as pinned
+    message.isPinned = true;
+    message.pinnedBy = req.user.id;
+    message.pinnedAt = new Date();
+    await message.save();
+
+    res.json({ success: true, pinnedMessage });
+  } catch (err) {
+    console.error('Pin message error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Unpin a message
+router.post('/unpin/:messageId', verifyUser, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { conversationId } = req.body;
+
+    if (!conversationId) {
+      return res.status(400).json({ message: 'conversationId is required' });
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // Remove pinned message record
+    await PinnedMessage.deleteOne({ messageId, conversationId });
+
+    // Update message to unpin
+    message.isPinned = false;
+    message.pinnedBy = null;
+    message.pinnedAt = null;
+    await message.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Unpin message error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get pinned messages for a conversation
+router.get('/pinned/:conversationId', verifyUser, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const pinnedMessages = await PinnedMessage.find({ conversationId })
+      .populate('messageId')
+      .populate('pinnedBy', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json(pinnedMessages);
+  } catch (err) {
+    console.error('Get pinned messages error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── MESSAGE THREADS ──
+// Get thread replies for a message
+router.get('/thread/:messageId', verifyUser, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+
+    const replies = await Message.find({ 'replyTo.messageId': mongoose.Types.ObjectId(messageId) })
+      .populate('senderId', 'name profilePicture')
+      .sort({ createdAt: 1 });
+
+    res.json(replies);
+  } catch (err) {
+    console.error('Get thread error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── @MENTIONS ──
+// Search users for mentions
+router.get('/search-users/:query', verifyUser, async (req, res) => {
+  try {
+    const { query } = req.params;
+
+    if (query.length < 2) {
+      return res.json([]);
+    }
+
+    const users = await User.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      ]
+    })
+    .select('_id name email profilePicture')
+    .limit(10);
+
+    res.json(users);
+  } catch (err) {
+    console.error('Search users error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get messages mentioning current user
+router.get('/mentions/me', verifyUser, async (req, res) => {
+  try {
+    const mentions = await Message.find({
+      'mentions.userId': req.user.id,
+      isDeleted: false
+    })
+    .populate('senderId', 'name profilePicture')
+    .sort({ createdAt: -1 })
+    .limit(50);
+
+    res.json(mentions);
+  } catch (err) {
+    console.error('Get mentions error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});

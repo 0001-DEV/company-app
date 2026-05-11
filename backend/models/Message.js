@@ -19,6 +19,13 @@ const messageSchema = new mongoose.Schema({
     senderName: String,
     text: String,
   },
+  mentions: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    userName: String,
+  }],
+  isPinned: { type: Boolean, default: false },
+  pinnedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  pinnedAt: { type: Date },
   forwardedFrom: { type: String, default: null },
   isMissedCall: { type: Boolean, default: false },
   files: [{
