@@ -14,6 +14,7 @@ import Department from './pages/Department';
 import DepartmentDetail from './pages/DepartmentDetail';
 import Home from "./pages/Home";
 import Chatbox from './pages/Chatbox';
+import ChatPage from './pages/ChatPage';
 import StaffDashboard from './pages/StaffDashboard';
 import UploadedWorks from './pages/UploadedWorks';
 import AllStaffWorks from './pages/AllStaffWorks';
@@ -148,7 +149,7 @@ function App() {
         {/* Shared authenticated routes */}
         <Route path="/chat" element={
           <ProtectedRoute>
-            <Chatbox />
+            <ChatPage />
           </ProtectedRoute>
         } />
         <Route path="/all-staff-works" element={
