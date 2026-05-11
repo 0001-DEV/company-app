@@ -650,3 +650,20 @@ router.get('/my-files', staffAuth, async (req, res) => {
 });
 
 module.exports = router;
+
+
+// Get staff's own department for chat
+router.get('/my-department', require('../middleware/auth').verifyUser, async (req, res) => {
+  try {
+    const staff = await User.findById(req.user.id).populate('department');
+    
+    if (!staff || !staff.department) {
+      return res.status(404).json({ message: 'Staff has no department assigned' });
+    }
+    
+    res.json(staff.department);
+  } catch (err) {
+    console.error('Error fetching staff department:', err);
+    res.status(500).json({ message: err.message });
+  }
+});

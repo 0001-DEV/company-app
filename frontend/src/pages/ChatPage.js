@@ -45,10 +45,27 @@ const ChatPage = () => {
   const loadConversations = async () => {
     try {
       const headers = getAuthHeader();
-      const endpoint = chatMode === 'direct' ? '/api/chat/users' : '/api/admin/departments';
+      let endpoint = '';
+      
+      if (chatMode === 'direct') {
+        endpoint = '/api/chat/users';
+      } else {
+        // For departments: admin sees all, staff sees only their own
+        if (user.role === 'admin') {
+          endpoint = '/api/admin/departments';
+        } else {
+          // Staff should see only their department
+          endpoint = '/api/staff/my-department';
+        }
+      }
+      
       const res = await fetch(endpoint, { headers });
       if (res.ok) {
-        const data = await res.json();
+        let data = await res.json();
+        // If staff gets their single department, wrap it in an array
+        if (!Array.isArray(data)) {
+          data = [data];
+        }
         setConversations(data);
       }
     } catch (err) {
@@ -199,10 +216,16 @@ const ChatPage = () => {
       setLoading(true);
       const headers = getAuthHeader();
       
+      let receiverId = '';
+      if (chatMode === 'direct') {
+        receiverId = selectedConversation._id;
+      } else if (chatMode === 'department') {
+        receiverId = `department:${selectedConversation._id}`;
+      }
+      
       const body = {
         text: messageText,
-        ...(chatMode === 'direct' && { userId: selectedConversation._id }),
-        ...(chatMode === 'department' && { departmentId: selectedConversation._id }),
+        receiverId: receiverId,
         ...(replyingTo && { replyTo: replyingTo })
       };
       
@@ -216,9 +239,14 @@ const ChatPage = () => {
         setMessageText('');
         setReplyingTo(null);
         await loadMessages();
+      } else {
+        const error = await res.json();
+        console.error('Error sending message:', error);
+        alert('Error: ' + (error.message || 'Failed to send message'));
       }
     } catch (err) {
       console.error('Error sending message:', err);
+      alert('Error sending message: ' + err.message);
     } finally {
       setLoading(false);
     }
