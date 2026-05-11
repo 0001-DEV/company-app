@@ -47,12 +47,18 @@ const ChatPage = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState({});
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [mutedConversations, setMutedConversations] = useState(() => {
+    const saved = localStorage.getItem('mutedConversations');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [lastMessageCount, setLastMessageCount] = useState(0);
   
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const recordingIntervalRef = useRef(null);
+  const notificationSoundRef = useRef(null);
 
   // Responsive handler
   useEffect(() => {
@@ -117,6 +123,98 @@ const ChatPage = () => {
     const interval = setInterval(loadMessages, 3000);
     return () => clearInterval(interval);
   }, [selectedConversation, chatMode]);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Check for new messages and show notifications
+  useEffect(() => {
+    if (messages.length > lastMessageCount && lastMessageCount > 0) {
+      const newMessages = messages.slice(lastMessageCount);
+      newMessages.forEach(msg => {
+        if (msg.senderId !== user.id) {
+          showNotification(msg);
+        }
+      });
+    }
+    setLastMessageCount(messages.length);
+  }, [messages]);
+
+  const showNotification = (message) => {
+    const conversationId = chatMode === 'direct' 
+      ? selectedConversation._id 
+      : `department:${selectedConversation._id}`;
+    
+    // Check if conversation is muted
+    if (mutedConversations.includes(conversationId)) {
+      return;
+    }
+
+    // Play notification sound
+    playNotificationSound();
+
+    // Show browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notification = new Notification(message.senderName, {
+        body: message.text || '📎 Sent an attachment',
+        icon: '/logo192.png',
+        badge: '/logo192.png',
+        tag: conversationId,
+        requireInteraction: false
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      setTimeout(() => notification.close(), 5000);
+    }
+  };
+
+  const playNotificationSound = () => {
+    // Create a simple notification beep
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  };
+
+  const toggleMuteConversation = () => {
+    const conversationId = chatMode === 'direct' 
+      ? selectedConversation._id 
+      : `department:${selectedConversation._id}`;
+    
+    const newMuted = mutedConversations.includes(conversationId)
+      ? mutedConversations.filter(id => id !== conversationId)
+      : [...mutedConversations, conversationId];
+    
+    setMutedConversations(newMuted);
+    localStorage.setItem('mutedConversations', JSON.stringify(newMuted));
+  };
+
+  const isConversationMuted = () => {
+    if (!selectedConversation) return false;
+    const conversationId = chatMode === 'direct' 
+      ? selectedConversation._id 
+      : `department:${selectedConversation._id}`;
+    return mutedConversations.includes(conversationId);
+  };
 
   const loadDepartmentMembers = async () => {
     try {
@@ -848,6 +946,15 @@ const ChatPage = () => {
                 </p>
               </div>
               <div className="chat-header-actions">
+                {selectedConversation && (
+                  <button
+                    className={`chat-action-btn ${isConversationMuted() ? 'active' : ''}`}
+                    onClick={toggleMuteConversation}
+                    title={isConversationMuted() ? 'Unmute notifications' : 'Mute notifications'}
+                  >
+                    {isConversationMuted() ? '🔕' : '🔔'}
+                  </button>
+                )}
                 {chatMode === 'department' && (
                   <button
                     className={`chat-action-btn ${showMembers ? 'active' : ''}`}
@@ -1233,30 +1340,38 @@ const ChatPage = () => {
                     )}
                   </div>
                   
-                  <button
-                    className="chat-voice-btn"
-                    onClick={startRecording}
-                    title="Record voice message"
-                  >
-                    🎤
-                  </button>
-                  
-                  <button
-                    className="chat-send-btn"
-                    onClick={selectedFiles.length > 0 ? sendFilesWithMessage : sendMessage}
-                    disabled={loading || (!messageText.trim() && selectedFiles.length === 0)}
-                  >
-                    {loading ? '⏳' : '➤'}
-                  </button>
+                  {messageText.trim() || selectedFiles.length > 0 ? (
+                    <button
+                      className="chat-send-btn"
+                      onClick={selectedFiles.length > 0 ? sendFilesWithMessage : sendMessage}
+                      disabled={loading}
+                    >
+                      {loading ? '⏳' : '➤'}
+                    </button>
+                  ) : (
+                    <button
+                      className="chat-voice-btn"
+                      onClick={startRecording}
+                      title="Record voice message"
+                    >
+                      🎤
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="chat-recording-ui">
-                  <div className="chat-recording-indicator">
+                  <button className="chat-cancel-recording" onClick={cancelRecording}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                    </svg>
+                  </button>
+                  <div className="chat-recording-waveform">
                     <span className="chat-recording-dot"></span>
-                    Recording... {formatTime(recordingTime)}
+                    <span className="chat-recording-time">{formatTime(recordingTime)}</span>
                   </div>
-                  <button className="chat-cancel-recording" onClick={cancelRecording}>✕</button>
-                  <button className="chat-stop-recording" onClick={stopRecording}>⏹ Send</button>
+                  <button className="chat-send-recording" onClick={stopRecording}>
+                    ➤
+                  </button>
                 </div>
               )}
             </div>
