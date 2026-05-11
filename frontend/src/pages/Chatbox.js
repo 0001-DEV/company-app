@@ -435,6 +435,43 @@ const ChatBox = () => {
     loadMessages(); const iv = setInterval(loadMessages, 3000); return () => clearInterval(iv);
   }, [currentUser, selectedUser, viewMode, selectedDepartment]);
 
+  // Fetch typing indicators
+  useEffect(() => {
+    if (!currentUser || viewMode === "none") return;
+    
+    const fetchTypingIndicators = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        let conversationId = "";
+        
+        if (viewMode === "private" && selectedUser) {
+          conversationId = selectedUser;
+        } else if (viewMode === "department" && selectedDepartment) {
+          conversationId = `department:${selectedDepartment._id}`;
+        } else if (viewMode === "all") {
+          conversationId = "all";
+        }
+        
+        if (!conversationId) return;
+        
+        const res = await fetch(`/api/chat/typing/${conversationId}`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        if (res.ok) {
+          const typingUsers = await res.json();
+          const names = typingUsers
+            .filter(u => u.userId !== currentUser.id)
+            .map(u => u.userName);
+          setTypingNames(names);
+        }
+      } catch (err) {}
+    };
+    
+    fetchTypingIndicators();
+    const iv = setInterval(fetchTypingIndicators, 1000);
+    return () => clearInterval(iv);
+  }, [currentUser, selectedUser, viewMode, selectedDepartment]);
+
   useEffect(() => {
     if (!currentUser) return;
     const fetchStarred = async () => {
