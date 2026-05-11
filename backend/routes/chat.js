@@ -487,8 +487,7 @@ router.post("/messages/:messageId/react", verifyUser, async (req, res) => {
   }
 });
 
-// In-memory typing & online state (resets on server restart — fine for local use)
-const typingUsers = {}; // { conversationKey: { userId: { name, expires } } }
+// Online state tracking
 const onlineUsers = {}; // { userId: lastSeen }
 
 // Heartbeat — staff/admin call this every 20s to mark themselves online
@@ -507,30 +506,6 @@ router.get("/online-status", verifyUser, async (req, res) => {
     result[id] = last ? { online: (now - last) < 30000, lastSeen: last } : { online: false, lastSeen: null };
   });
   res.json(result);
-});
-
-// Set typing indicator
-router.post("/typing", verifyUser, async (req, res) => {
-  const { conversationKey, isTyping } = req.body;
-  if (!conversationKey) return res.json({ ok: true });
-  if (!typingUsers[conversationKey]) typingUsers[conversationKey] = {};
-  if (isTyping) {
-    typingUsers[conversationKey][req.user.id] = { name: req.user.name, expires: Date.now() + 4000 };
-  } else {
-    delete typingUsers[conversationKey][req.user.id];
-  }
-  res.json({ ok: true });
-});
-
-// Get who is typing in a conversation
-router.get("/typing", verifyUser, async (req, res) => {
-  const { conversationKey } = req.query;
-  if (!conversationKey || !typingUsers[conversationKey]) return res.json([]);
-  const now = Date.now();
-  const active = Object.entries(typingUsers[conversationKey])
-    .filter(([uid, data]) => data.expires > now && uid !== req.user.id.toString())
-    .map(([, data]) => data.name);
-  res.json(active);
 });
 
 // ── Pin a message (admin or group admin only) ────────────────────────────────
@@ -803,10 +778,7 @@ router.post("/call/save-notification", verifyUser, async (req, res) => {
   }
 });
 
-module.exports = router;
-
-
-// ── TYPING INDICATORS ──
+// ── TYPING INDICATORS (MongoDB-based) ──
 // Notify when user is typing
 router.post('/typing', verifyUser, async (req, res) => {
   try {
@@ -850,11 +822,11 @@ router.post('/typing', verifyUser, async (req, res) => {
 router.get('/typing/:conversationId', verifyUser, async (req, res) => {
   try {
     const { conversationId } = req.params;
-    
-    const typingUsers = await TypingIndicator.find({ conversationId });
-    res.json(typingUsers);
+    const indicators = await TypingIndicator.find({ conversationId }).select('userName');
+    const names = indicators.map(ind => ind.userName);
+    res.json(names);
   } catch (err) {
-    console.error('Get typing error:', err);
+    console.error('Error fetching typing indicators:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -1007,3 +979,58 @@ router.get('/mentions/me', verifyUser, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// ── TYPING INDICATORS (MongoDB-based) ──
+// Notify when user is typing
+router.post('/typing', verifyUser, async (req, res) => {
+  try {
+    const { conversationId, isTyping } = req.body;
+    
+    if (!conversationId) {
+      return res.status(400).json({ message: 'conversationId is required' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (isTyping) {
+      // Create or update typing indicator
+      await TypingIndicator.findOneAndUpdate(
+        { userId: req.user.id, conversationId },
+        { 
+          userId: req.user.id,
+          userName: user.name,
+          conversationId,
+          isTyping: true,
+          createdAt: new Date()
+        },
+        { upsert: true, new: true }
+      );
+    } else {
+      // Remove typing indicator
+      await TypingIndicator.deleteOne({ userId: req.user.id, conversationId });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Typing indicator error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get typing indicators for a conversation
+router.get('/typing/:conversationId', verifyUser, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const indicators = await TypingIndicator.find({ conversationId }).select('userName');
+    const names = indicators.map(ind => ind.userName);
+    res.json(names);
+  } catch (err) {
+    console.error('Error fetching typing indicators:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+module.exports = router;

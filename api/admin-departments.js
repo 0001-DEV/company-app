@@ -1,4 +1,5 @@
 const { withMiddleware } = require('./middleware');
+const { ObjectId } = require('mongodb');
 
 const handler = async (req, res) => {
   if (req.method !== 'GET') {
@@ -11,7 +12,29 @@ const handler = async (req, res) => {
       .sort({ name: 1 })
       .toArray();
     
-    res.json(departments);
+    // Get member count for each department
+    const departmentsWithMembers = await Promise.all(
+      departments.map(async (dept) => {
+        // Try both ObjectId and string comparison
+        const memberCount = await req.db.collection('users')
+          .countDocuments({
+            $or: [
+              { department: dept._id },
+              { department: dept._id.toString() },
+              { department: new ObjectId(dept._id) }
+            ]
+          });
+        
+        console.log(`Department ${dept.name}: ${memberCount} members`);
+        
+        return {
+          ...dept,
+          memberCount
+        };
+      })
+    );
+    
+    res.json(departmentsWithMembers);
     
   } catch (error) {
     console.error('Error fetching departments:', error);

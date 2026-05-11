@@ -385,8 +385,24 @@ router.get('/staff-stats/:staffId', async (req, res) => {
 router.get("/departments", async (req, res) => {
   try {
     const departments = await Department.find();
-    res.json(departments);
+    
+    // Add member count for each department
+    const departmentsWithCount = await Promise.all(
+      departments.map(async (dept) => {
+        const memberCount = await User.countDocuments({ 
+          department: dept._id 
+        });
+        
+        return {
+          ...dept.toObject(),
+          memberCount
+        };
+      })
+    );
+    
+    res.json(departmentsWithCount);
   } catch (error) {
+    console.error('Error fetching departments:', error);
     res.status(500).json({ message: "Error fetching departments" });
   }
 });
