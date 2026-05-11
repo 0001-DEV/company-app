@@ -132,10 +132,15 @@ const ChatPage = () => {
     fetchPinned();
   }, [selectedConversation, chatMode]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom only when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > 0) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [messages.length]);
 
   // Handle typing indicator
   const notifyTyping = async (isTyping) => {
