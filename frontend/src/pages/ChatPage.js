@@ -52,6 +52,45 @@ const ChatPage = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [callRoomName, setCallRoomName] = useState('');
+  const [callState, setCallState] = useState('idle'); // 'idle', 'calling', 'ringing', 'connected', 'ended'
+  const [callType, setCallType] = useState('audio'); // 'audio' or 'video'
+  const [localStream, setLocalStream] = useState(null);
+  const [remoteStream, setRemoteStream] = useState(null);
+  const [callDuration, setCallDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const callTimerRef = useRef(null);
+  
+  // Debug lightbox state
+  useEffect(() => {
+    console.log('Lightbox state changed:', lightboxImage);
+  }, [lightboxImage]);
+
+  // Prevent image navigation globally
+  useEffect(() => {
+    const handleImageClick = (e) => {
+      const target = e.target;
+      if (target.tagName === 'IMG' && target.classList.contains('chat-file-image')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const imageUrl = target.src;
+        console.log('Global image click intercepted:', imageUrl);
+        setLightboxImage(imageUrl);
+        return false;
+      }
+    };
+    
+    document.addEventListener('click', handleImageClick, true);
+    return () => document.removeEventListener('click', handleImageClick, true);
+  }, []);
   
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -59,6 +98,24 @@ const ChatPage = () => {
   const fileInputRef = useRef(null);
   const recordingIntervalRef = useRef(null);
   const notificationSoundRef = useRef(null);
+
+  // Helper function to get full file URL
+  const getFileUrl = (filePath) => {
+    if (!filePath) return '';
+    // If already a full URL, return as is
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+      return filePath;
+    }
+    // Remove leading slash if present
+    const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    // In development, use localhost:5000
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return `http://localhost:5000/${cleanPath}`;
+    }
+    // In production, use relative path
+    return `/${cleanPath}`;
+  };
 
   // Responsive handler
   useEffect(() => {
@@ -693,41 +750,126 @@ const ChatPage = () => {
     }
   };
 
-  // Voice/Video Call
-  const startCall = async (callType) => {
+  // Voice/Video Call - WhatsApp Style
+  const startCall = async (type) => {
     if (chatMode !== 'direct') {
       alert('Calls are only available for direct messages');
       return;
     }
 
     try {
-      const headers = {
-        ...getAuthHeader(),
-        'Content-Type': 'application/json'
+      setCallType(type);
+      setCallState('calling');
+      setShowCallModal(true);
+      setCallDuration(0);
+      
+      // Get user media (camera/microphone)
+      const constraints = {
+        audio: true,
+        video: type === 'video'
       };
       
-      const roomName = `call-${user.id}-${selectedConversation._id}-${Date.now()}`;
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setLocalStream(stream);
       
-      const res = await fetch('/api/chat/call/initiate', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          receiverId: selectedConversation._id,
-          callType,
-          roomName
-        })
-      });
-      
-      if (res.ok) {
-        const { callId } = await res.json();
-        // Open Jitsi in new window
-        const jitsiUrl = `https://meet.jit.si/${roomName}`;
-        window.open(jitsiUrl, '_blank', 'width=1200,height=800');
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
       }
+      
+      // Simulate call ringing (in real app, this would use WebRTC signaling)
+      setTimeout(() => {
+        setCallState('ringing');
+      }, 1000);
+      
+      // Don't auto-answer - wait for user to manually answer or the other person to pick up
+      
     } catch (err) {
-      console.error('Error starting call:', err);
-      alert('Error starting call');
+      console.error('Error accessing media devices:', err);
+      alert('Could not access camera/microphone. Please check permissions.');
+      endCall();
     }
+  };
+
+  // Manually answer call (for testing)
+  const answerCall = () => {
+    setCallState('connected');
+    startCallTimer();
+  };
+
+  // Manually decline call
+  const declineCall = () => {
+    endCall();
+  };
+
+  const endCall = () => {
+    // Stop all media tracks
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      setLocalStream(null);
+    }
+    if (remoteStream) {
+      remoteStream.getTracks().forEach(track => track.stop());
+      setRemoteStream(null);
+    }
+    
+    // Clear timer
+    if (callTimerRef.current) {
+      clearInterval(callTimerRef.current);
+    }
+    
+    // Reset state
+    setCallState('idle');
+    setShowCallModal(false);
+    setCallDuration(0);
+    setIsMuted(false);
+    setIsVideoOff(false);
+    setIsCallMinimized(false);
+    setIsSpeakerOn(false);
+  };
+
+  const minimizeCall = () => {
+    setIsCallMinimized(true);
+  };
+
+  const maximizeCall = () => {
+    setIsCallMinimized(false);
+  };
+
+  const toggleSpeaker = () => {
+    setIsSpeakerOn(!isSpeakerOn);
+    // In a real implementation, this would change audio output device
+  };
+
+  const startCallTimer = () => {
+    callTimerRef.current = setInterval(() => {
+      setCallDuration(prev => prev + 1);
+    }, 1000);
+  };
+
+  const toggleMute = () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+      }
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsVideoOff(!videoTrack.enabled);
+      }
+    }
+  };
+
+  const formatCallDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   // ── PHASE 3 FUNCTIONS ──
@@ -860,6 +1002,25 @@ const ChatPage = () => {
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles(files);
+  };
+
+  const removeSelectedFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const isImageFile = (file) => {
+    return file && file.type && file.type.startsWith('image/');
+  };
+
+  const isVideoFile = (file) => {
+    return file && file.type && file.type.startsWith('video/');
+  };
+
+  const getFilePreviewUrl = (file) => {
+    if (file instanceof File) {
+      return URL.createObjectURL(file);
+    }
+    return getFileUrl(file.path);
   };
 
   const sendFilesWithMessage = async () => {
@@ -1034,22 +1195,21 @@ const ChatPage = () => {
       </aside>
 
       {/* Main Chat Area */}
-      <main className={`chat-main ${!selectedConversation && isMobile ? 'empty' : ''}`}>
+      <main className={`chat-main ${!selectedConversation ? 'empty' : ''}`}>
         {selectedConversation ? (
           <>
             {/* Chat Header */}
             <div className="chat-header">
-              {isMobile && (
-                <button
-                  className="chat-back-btn"
-                  onClick={() => setSelectedConversation(null)}
-                >
-                  ← Back
-                </button>
-              )}
+              <button
+                className="chat-back-btn"
+                onClick={() => setSelectedConversation(null)}
+                style={{ display: 'block' }}
+              >
+                ← 
+              </button>
               <div className="chat-header-info">
-                <h3>{selectedConversation.name || selectedConversation.email}</h3>
-                <p className="chat-header-subtitle">
+                <h3 style={{ color: '#000000' }}>{selectedConversation.name || selectedConversation.email}</h3>
+                <p className="chat-header-subtitle" style={{ color: '#000000' }}>
                   {chatMode === 'department' ? (
                     '🏢 Department'
                   ) : (
@@ -1207,28 +1367,52 @@ const ChatPage = () => {
             {showMediaGallery && (
               <div className="chat-pinned-panel">
                 <h4>🖼️ Media Gallery ({mediaMessages.length})</h4>
-                <div className="chat-media-grid">
+                <div className="chat-media-gallery-grid">
                   {mediaMessages.length === 0 ? (
                     <p>No media shared yet</p>
                   ) : (
                     mediaMessages.map(msg => (
-                      <div key={msg._id} className="chat-media-item">
-                        {msg.files.map((file, idx) => {
-                          const filePath = file.path.startsWith('/') ? file.path : `/${file.path}`;
-                          return (
-                            <div key={idx} className="chat-media-file">
-                              {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                <img src={filePath} alt={file.originalName} />
-                              ) : file.path.match(/\.(mp4|webm)$/i) ? (
-                                <video src={filePath} controls />
-                              ) : (
-                                <div className="chat-file-icon">📄 {file.originalName}</div>
-                              )}
+                      msg.files.map((file, idx) => {
+                        const fileUrl = getFileUrl(file.path);
+                        return (
+                          <div key={`${msg._id}-${idx}`} className="chat-gallery-item">
+                            {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setLightboxImage(fileUrl);
+                                }}
+                                className="chat-gallery-image-btn"
+                              >
+                                <img 
+                                  src={fileUrl} 
+                                  alt={file.originalName}
+                                  className="chat-gallery-thumbnail"
+                                />
+                              </button>
+                            ) : file.path.match(/\.(mp4|webm)$/i) ? (
+                              <div className="chat-gallery-video">
+                                <video 
+                                  src={fileUrl} 
+                                  className="chat-gallery-thumbnail"
+                                />
+                                <div className="chat-video-play-overlay">▶️</div>
+                              </div>
+                            ) : (
+                              <div className="chat-gallery-file">
+                                <div className="chat-gallery-file-icon">📄</div>
+                                <span className="chat-gallery-file-name">{file.originalName}</span>
+                              </div>
+                            )}
+                            <div className="chat-gallery-info">
+                              <small>{msg.senderName}</small>
+                              <small>{new Date(msg.createdAt).toLocaleDateString()}</small>
                             </div>
-                          );
-                        })}
-                        <small>{msg.senderName} • {new Date(msg.createdAt).toLocaleDateString()}</small>
-                      </div>
+                          </div>
+                        );
+                      })
                     ))
                   )}
                 </div>
@@ -1320,19 +1504,43 @@ const ChatPage = () => {
                               const canDownload = user.role === 'admin' || 
                                 (chatMode === 'department' && selectedConversation.groupAdmins?.includes(user.id));
                               
-                              // Ensure path starts with /
-                              const filePath = file.path.startsWith('/') ? file.path : `/${file.path}`;
+                              // Get full file URL
+                              const fileUrl = getFileUrl(file.path);
                               
                               return (
                                 <div key={idx} className="chat-file-attachment">
                                   {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                    <img src={filePath} alt={file.originalName} className="chat-file-image" />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log('Image clicked, opening lightbox:', fileUrl);
+                                        setLightboxImage(fileUrl);
+                                        return false;
+                                      }}
+                                      style={{ 
+                                        cursor: 'pointer', 
+                                        border: 'none', 
+                                        background: 'none', 
+                                        padding: 0,
+                                        display: 'block'
+                                      }}
+                                    >
+                                      <img 
+                                        src={fileUrl} 
+                                        alt={file.originalName} 
+                                        className="chat-file-image"
+                                        style={{ pointerEvents: 'none', display: 'block' }}
+                                        draggable="false"
+                                      />
+                                    </button>
                                   ) : file.path.match(/\.(mp4|webm)$/i) ? (
-                                    <video src={filePath} controls className="chat-file-video" />
+                                    <video src={fileUrl} controls className="chat-file-video" />
                                   ) : file.path.match(/\.(mp3|webm|ogg|wav)$/i) ? (
-                                    <audio src={filePath} controls className="chat-file-audio" />
+                                    <audio src={fileUrl} controls className="chat-file-audio" />
                                   ) : canDownload ? (
-                                    <a href={filePath} download={file.originalName} className="chat-file-link">
+                                    <a href={fileUrl} download={file.originalName} className="chat-file-link">
                                       📎 {file.originalName}
                                     </a>
                                   ) : (
@@ -1468,12 +1676,53 @@ const ChatPage = () => {
                   
                   <div className="chat-input-wrapper">
                     {selectedFiles.length > 0 && (
-                      <div className="chat-selected-files">
+                      <div className="chat-selected-files-preview">
                         {selectedFiles.map((file, idx) => (
-                          <span key={idx} className="chat-file-tag">
-                            {file.name}
-                            <button onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}>✕</button>
-                          </span>
+                          <div key={idx} className="chat-file-preview-item">
+                            {isImageFile(file) ? (
+                              <div className="chat-image-preview">
+                                <img 
+                                  src={getFilePreviewUrl(file)} 
+                                  alt={file.name}
+                                  className="chat-preview-thumbnail"
+                                />
+                                <button 
+                                  className="chat-remove-file"
+                                  onClick={() => removeSelectedFile(idx)}
+                                  title="Remove"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : isVideoFile(file) ? (
+                              <div className="chat-video-preview">
+                                <video 
+                                  src={getFilePreviewUrl(file)} 
+                                  className="chat-preview-thumbnail"
+                                />
+                                <div className="chat-video-overlay">📹</div>
+                                <button 
+                                  className="chat-remove-file"
+                                  onClick={() => removeSelectedFile(idx)}
+                                  title="Remove"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="chat-file-preview">
+                                <div className="chat-file-icon-preview">📄</div>
+                                <span className="chat-file-name-preview">{file.name}</span>
+                                <button 
+                                  className="chat-remove-file"
+                                  onClick={() => removeSelectedFile(idx)}
+                                  title="Remove"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     )}
@@ -1675,6 +1924,246 @@ const ChatPage = () => {
               )}
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Call Modal - WhatsApp Style */}
+      {showCallModal && (
+        <div className={`whatsapp-call-overlay ${isCallMinimized ? 'minimized' : ''}`}>
+          <div className={`whatsapp-call-container ${isCallMinimized ? 'minimized' : ''}`}>
+            
+            {!isCallMinimized ? (
+              <>
+                {/* Call Header */}
+                <div className="whatsapp-call-header">
+                  <div className="whatsapp-call-top-controls">
+                    <button 
+                      className="whatsapp-minimize-btn"
+                      onClick={minimizeCall}
+                      title="Minimize"
+                    >
+                      ─
+                    </button>
+                  </div>
+                  <div className="whatsapp-call-info">
+                    <div className="whatsapp-caller-avatar">
+                      {selectedConversation?.name?.charAt(0) || '👤'}
+                    </div>
+                    <div className="whatsapp-caller-details">
+                      <h3>{selectedConversation?.name || 'Unknown'}</h3>
+                      <p className="whatsapp-call-status">
+                        {callState === 'calling' && 'Calling...'}
+                        {callState === 'ringing' && 'Ringing...'}
+                        {callState === 'connected' && formatCallDuration(callDuration)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Video Area */}
+                <div className="whatsapp-video-area">
+                  {callType === 'video' && (
+                    <>
+                      {/* Remote Video (main) */}
+                      <video
+                        ref={remoteVideoRef}
+                        className="whatsapp-remote-video"
+                        autoPlay
+                        playsInline
+                      />
+                      
+                      {/* Local Video (small overlay) */}
+                      <video
+                        ref={localVideoRef}
+                        className="whatsapp-local-video"
+                        autoPlay
+                        playsInline
+                        muted
+                      />
+                    </>
+                  )}
+                  
+                  {callType === 'audio' && (
+                    <div className="whatsapp-audio-call">
+                      <div className="whatsapp-audio-avatar">
+                        {selectedConversation?.name?.charAt(0) || '👤'}
+                      </div>
+                      <div className="whatsapp-audio-waves">
+                        <div className="wave"></div>
+                        <div className="wave"></div>
+                        <div className="wave"></div>
+                        <div className="wave"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Call Controls */}
+                <div className="whatsapp-call-controls">
+                  {callState === 'ringing' && (
+                    <>
+                      <button
+                        className="whatsapp-answer-btn"
+                        onClick={answerCall}
+                        title="Answer call"
+                      >
+                        📞
+                      </button>
+                      <button
+                        className="whatsapp-decline-btn"
+                        onClick={declineCall}
+                        title="Decline call"
+                      >
+                        📞
+                      </button>
+                    </>
+                  )}
+                  
+                  {callState === 'connected' && (
+                    <>
+                      {callType === 'audio' && (
+                        <button
+                          className={`whatsapp-control-btn ${isSpeakerOn ? 'active' : ''}`}
+                          onClick={toggleSpeaker}
+                          title={isSpeakerOn ? 'Turn off speaker' : 'Turn on speaker'}
+                        >
+                          {isSpeakerOn ? '🔊' : '🔈'}
+                        </button>
+                      )}
+                      
+                      <button
+                        className={`whatsapp-control-btn ${isMuted ? 'muted' : ''}`}
+                        onClick={toggleMute}
+                        title={isMuted ? 'Unmute' : 'Mute'}
+                      >
+                        {isMuted ? '🔇' : '🎤'}
+                      </button>
+                      
+                      {callType === 'video' && (
+                        <button
+                          className={`whatsapp-control-btn ${isVideoOff ? 'video-off' : ''}`}
+                          onClick={toggleVideo}
+                          title={isVideoOff ? 'Turn on camera' : 'Turn off camera'}
+                        >
+                          {isVideoOff ? '📹' : '📷'}
+                        </button>
+                      )}
+                    </>
+                  )}
+                  
+                  {(callState === 'calling' || callState === 'connected') && (
+                    <button
+                      className="whatsapp-end-call-btn"
+                      onClick={endCall}
+                      title="End call"
+                    >
+                      📞
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Minimized Call Window */
+              <div className="whatsapp-minimized-call" onClick={maximizeCall}>
+                <div className="whatsapp-minimized-avatar">
+                  {selectedConversation?.name?.charAt(0) || '👤'}
+                </div>
+                <div className="whatsapp-minimized-info">
+                  <span className="whatsapp-minimized-name">{selectedConversation?.name}</span>
+                  <span className="whatsapp-minimized-duration">
+                    {callState === 'connected' ? formatCallDuration(callDuration) : 'Calling...'}
+                  </span>
+                </div>
+                <div className="whatsapp-minimized-controls">
+                  <button
+                    className="whatsapp-minimized-mute"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMute();
+                    }}
+                  >
+                    {isMuted ? '🔇' : '🎤'}
+                  </button>
+                  <button
+                    className="whatsapp-minimized-end"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      endCall();
+                    }}
+                  >
+                    📞
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <div 
+          className="chat-lightbox-overlay" 
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.92)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999
+          }}
+        >
+          {/* Close button — always visible top-right */}
+          <button 
+            onClick={(e) => { e.stopPropagation(); setLightboxImage(null); }}
+            style={{
+              position: 'fixed',
+              top: 16, right: 16,
+              background: '#dc2626',
+              border: '3px solid white',
+              width: 52, height: 52,
+              borderRadius: '50%',
+              fontSize: 24,
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 100001,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+              lineHeight: 1
+            }}
+          >✕</button>
+
+          {/* Tap-to-close hint */}
+          <div style={{ position: 'fixed', bottom: 20, left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 13, zIndex: 100000 }}>
+            Tap outside or press ✕ to close
+          </div>
+
+          <img 
+            src={lightboxImage} 
+            alt="Full size" 
+            onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              const d = document.createElement('div');
+              d.style.color = 'white';
+              d.style.textAlign = 'center';
+              d.style.padding = '40px';
+              d.innerHTML = `<div style="font-size:48px;margin-bottom:16px">🖼️</div><div>Could not load image</div><small style="opacity:0.6">${lightboxImage}</small>`;
+              e.target.parentNode.appendChild(d);
+            }}
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '85vh',
+              objectFit: 'contain',
+              borderRadius: 8,
+              boxShadow: '0 8px 40px rgba(0,0,0,0.8)',
+            }}
+          />
         </div>
       )}
     </div>

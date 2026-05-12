@@ -83,21 +83,13 @@ const Department = () => {
   const fetchDepartments = async () => {
     const token = localStorage.getItem('token');
     try {
-      const [deptRes, staffRes] = await Promise.all([
-        fetch('/api/admin/departments', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/all-staff', { headers: { Authorization: `Bearer ${token}` } }),
-      ]);
+      const deptRes = await fetch('/api/admin/departments', { headers: { Authorization: `Bearer ${token}` } });
       const depts = await deptRes.json();
       setDepartments(depts);
-      if (staffRes.ok) {
-        const staff = await staffRes.json();
-        const counts = {};
-        staff.forEach(s => {
-          const id = s.department?._id || s.department;
-          if (id) counts[id] = (counts[id] || 0) + 1;
-        });
-        setStaffCounts(counts);
-      }
+      // memberCount already comes from the API — build staffCounts from it
+      const counts = {};
+      depts.forEach(d => { counts[d._id] = d.memberCount || 0; });
+      setStaffCounts(counts);
     } catch (err) { showToast('Failed to load departments', 'error'); }
   };
 

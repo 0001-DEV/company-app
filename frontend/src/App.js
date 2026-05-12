@@ -32,8 +32,7 @@ import Mapping from './pages/Mapping';
 import StockManagement from './pages/StockManagement';
 import ClientDocumentation from './pages/ClientDocumentation';
 import CardUsageReportPublic from './pages/CardUsageReportPublic';
-import WeeklyReport from './pages/WeeklyReport';
-import AdminWeeklyReports from './pages/AdminWeeklyReports';
+import Workspace from './pages/Workspace';
 import DarkModeToggle from './components/DarkModeToggle';
 
 const Footer = () => (
@@ -128,9 +127,11 @@ function App() {
             <ClientDocumentation />
           </ProtectedRoute>
         } />
-        <Route path="/admin/weekly-reports" element={
-          <ProtectedRoute requiredRole="admin">
-            <AdminWeeklyReports />
+        
+        {/* Workspace route - accessible to both admin and staff */}
+        <Route path="/workspace" element={
+          <ProtectedRoute>
+            <Workspace />
           </ProtectedRoute>
         } />
         
@@ -138,11 +139,6 @@ function App() {
         <Route path="/staff-dashboard" element={
           <ProtectedRoute requiredRole="staff">
             <StaffDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/weekly-reports" element={
-          <ProtectedRoute requiredRole="staff">
-            <WeeklyReport />
           </ProtectedRoute>
         } />
         

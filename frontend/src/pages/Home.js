@@ -16,6 +16,8 @@ function Home() {
   const [activeNav, setActiveNav] = React.useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+  const [showWsManagerModal, setShowWsManagerModal] = React.useState(false);
+  const [allStaffForWs, setAllStaffForWs] = React.useState([]);
   const lastMessageIds = React.useRef(new Set());
 
   React.useEffect(() => {
@@ -160,7 +162,8 @@ function Home() {
     { id: "chat",          icon: "💬", label: "Chat",                   path: "/chat", badge: hasUnreadMessages },
     { id: "announcements", icon: "📢", label: "Announcements",          path: "/announcements" },
     { id: "directory",     icon: "👥", label: "Employee Directory",     path: "/employee-directory" },
-    { id: "admin-weekly",  icon: "📊", label: "Weekly Reports",         path: "/admin/weekly-reports" },
+    { id: "workspace",     icon: "🗂️", label: "Collaborative Workspace", path: "/workspace" },
+    { id: "ws-managers",   icon: "🛡️", label: "Workspace Managers",      path: null, action: 'ws-managers' },
     { id: "recycle",       icon: "🗑️", label: "Recycle Bin",            path: "/recycle-bin" },
   ];
 
@@ -217,6 +220,26 @@ function Home() {
     }
   };
 
+  const openWsManagers = async () => {
+    const authHeaders = getAuthHeader();
+    try {
+      const res = await fetch('/api/admin/all-staff', { headers: authHeaders });
+      if (res.ok) setAllStaffForWs(await res.json());
+    } catch (e) {}
+    setShowWsManagerModal(true);
+  };
+
+  const toggleWsManager = async (staffId) => {
+    const authHeaders = getAuthHeader();
+    const res = await fetch(`/api/admin/toggle-workspace-manager/${staffId}`, {
+      method: 'PUT', headers: authHeaders
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setAllStaffForWs(prev => prev.map(s => s._id === staffId ? { ...s, isWorkspaceManager: data.isWorkspaceManager } : s));
+    }
+  };
+
   return (
     <div style={styles.container}>
       <BirthdayNotification userRole="admin" />
@@ -260,7 +283,10 @@ function Home() {
                 ...styles.navBtn,
                 ...(activeNav === item.id ? styles.navBtnActive : {})
               }}
-              onClick={() => { setActiveNav(item.id); navigate(item.path); }}
+              onClick={() => { 
+                if (item.action === 'ws-managers') { openWsManagers(); return; }
+                setActiveNav(item.id); navigate(item.path); 
+              }}
             >
               <span style={styles.navIcon}>{item.icon}</span>
               <span style={styles.navLabel}>{item.label}</span>
@@ -514,6 +540,45 @@ function Home() {
 
         </div>
       </main>
+
+      {/* Workspace Manager Modal */}
+      {showWsManagerModal && (
+        <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2000,padding:20 }}
+          onClick={() => setShowWsManagerModal(false)}>
+          <div style={{ background:'var(--bg-card,white)',borderRadius:16,width:'100%',maxWidth:480,maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',overflow:'hidden' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ padding:'18px 20px',borderBottom:'1px solid var(--border-color,#e2e8f0)',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+              <div>
+                <div style={{ fontSize:16,fontWeight:700,color:'var(--text-main,#0f172a)' }}>🛡️ Workspace Managers</div>
+                <div style={{ fontSize:12,color:'var(--text-muted,#64748b)',marginTop:3 }}>Assign staff to manage the collaborative workspace</div>
+              </div>
+              <button onClick={() => setShowWsManagerModal(false)} style={{ background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8',padding:'2px 6px' }}>✕</button>
+            </div>
+            <div style={{ overflowY:'auto',flex:1,padding:16,display:'flex',flexDirection:'column',gap:6 }}>
+              {allStaffForWs.length === 0 && <div style={{ color:'#94a3b8',textAlign:'center',padding:20 }}>No staff found</div>}
+              {allStaffForWs.map(s => (
+                <div key={s._id} style={{ display:'flex',alignItems:'center',gap:12,padding:'10px 14px',borderRadius:10,border:`1.5px solid ${s.isWorkspaceManager ? '#bfdbfe' : 'var(--border-color,#e2e8f0)'}`,background:s.isWorkspaceManager ? '#eff6ff' : 'var(--bg-light,#f8fafc)',transition:'all 0.15s' }}>
+                  <div style={{ width:36,height:36,borderRadius:'50%',background:s.isWorkspaceManager ? '#3b82f6' : '#94a3b8',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:14,flexShrink:0 }}>
+                    {s.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex:1,minWidth:0 }}>
+                    <div style={{ fontWeight:600,fontSize:14,color:'var(--text-main,#0f172a)',display:'flex',alignItems:'center',gap:8 }}>
+                      {s.name}
+                      {s.isWorkspaceManager && <span style={{ fontSize:10,fontWeight:700,background:'#3b82f6',color:'white',padding:'2px 8px',borderRadius:20 }}>MANAGER</span>}
+                    </div>
+                    <div style={{ fontSize:12,color:'var(--text-muted,#64748b)' }}>{s.department?.name || s.email}</div>
+                  </div>
+                  <button
+                    onClick={() => toggleWsManager(s._id)}
+                    style={{ padding:'6px 14px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:600,fontSize:12,background:s.isWorkspaceManager ? '#fef2f2' : '#3b82f6',color:s.isWorkspaceManager ? '#dc2626' : 'white',transition:'all 0.15s',flexShrink:0 }}>
+                    {s.isWorkspaceManager ? 'Remove' : 'Assign'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

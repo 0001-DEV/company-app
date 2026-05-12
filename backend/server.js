@@ -65,8 +65,11 @@ app.use('/api/stock-manager', stockManagerRoutes);
 const clientDocumentRoutes = require('./routes/clientDocuments');
 app.use('/api/client-documents', clientDocumentRoutes);
 
-const weeklyReportRoutes = require('./routes/weeklyReports');
-app.use('/api/reports', weeklyReportRoutes);
+const workspaceRoutes = require('./routes/workspace');
+app.use('/api/workspace', workspaceRoutes);
+
+const taskBoardRoutes = require('./routes/taskBoard');
+app.use('/api/task-boards', taskBoardRoutes);
 
 const companyStaffRoutes = require('./routes/companyStaff');
 app.use('/api/company-staff', companyStaffRoutes);

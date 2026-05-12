@@ -759,6 +759,38 @@ router.put('/toggle-view-permission/:staffId', adminAuth, async (req, res) => {
 });
 
 // ----------------------
+// Toggle workspace manager role (admin only)
+// ----------------------
+router.put('/toggle-workspace-manager/:staffId', adminAuth, async (req, res) => {
+  try {
+    const staff = await User.findById(req.params.staffId);
+    if (!staff || staff.role !== 'staff') {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+    staff.isWorkspaceManager = !staff.isWorkspaceManager;
+    await staff.save();
+    res.json({
+      message: `Workspace manager ${staff.isWorkspaceManager ? 'assigned' : 'removed'}`,
+      isWorkspaceManager: staff.isWorkspaceManager
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET workspace managers list
+router.get('/workspace-managers', adminAuth, async (req, res) => {
+  try {
+    const managers = await User.find({ role: 'staff', isWorkspaceManager: true })
+      .select('name email profilePicture department isWorkspaceManager')
+      .populate('department', 'name');
+    res.json(managers);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ----------------------
 // Get staff with view permissions
 // ----------------------
 router.get('/staff-with-permissions', adminAuth, async (req, res) => {

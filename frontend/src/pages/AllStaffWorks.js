@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const FILE_ICONS = {
   pdf: '📕', doc: '📘', docx: '📘', xls: '📗', xlsx: '📗',
@@ -27,6 +28,8 @@ const isVideo = (name = '') => /\.(mp4|mov|webm)$/i.test(name);
 const isAudio = (name = '') => /\.(mp3|wav|ogg|webm)$/i.test(name);
 
 const AllStaffWorks = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
@@ -110,7 +113,7 @@ const AllStaffWorks = () => {
                 <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 14, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{viewFile.fileName}</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <a href={`/${viewFile.filePath}`} download style={S.modalDl}>⬇ Download</a>
+                {isAdmin && <a href={`/${viewFile.filePath}`} download style={S.modalDl}>⬇ Download</a>}
                 <button onClick={() => setViewFile(null)} style={S.modalClose}>✕</button>
               </div>
             </div>
@@ -129,7 +132,8 @@ const AllStaffWorks = () => {
                 <div style={{ textAlign: 'center', color: 'var(--text-lighter, #94a3b8)' }}>
                   <div style={{ fontSize: 72, marginBottom: 16 }}>{getFileIcon(viewFile.fileName)}</div>
                   <p style={{ marginBottom: 20 }}>Preview not available for this file type.</p>
-                  <a href={`/${viewFile.filePath}`} download style={S.bigDl}>⬇ Download File</a>
+                  {isAdmin && <a href={`/${viewFile.filePath}`} download style={S.bigDl}>⬇ Download File</a>}
+                  {!isAdmin && <p style={{ color: '#94a3b8', fontSize: 13 }}>🔒 Download restricted to admins</p>}
                 </div>
               )}
             </div>
@@ -346,7 +350,7 @@ const AllStaffWorks = () => {
                           {/* Card actions */}
                           <div style={S.fileCardActions}>
                             <button style={S.previewBtn} onClick={() => setViewFile(file)}>👁 Preview</button>
-                            <a href={`/${file.filePath}`} download style={S.dlBtn}>⬇ Download</a>
+                            {isAdmin && <a href={`/${file.filePath}`} download style={S.dlBtn}>⬇ Download</a>}
                             <button
                               style={S.renameBtn}
                               onClick={() => { setRenameModal({ staffId: file.staffId, fileId: file.fileId, fileName: file.fileName || '' }); setRenameValue(file.fileName || ''); }}

@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   }],
   canViewOthersWork: { type: Boolean, default: false },
+  isWorkspaceManager: { type: Boolean, default: false },
   starredMessages: [{
     messageId: { type: mongoose.Schema.Types.ObjectId },
     text: String,
