@@ -632,6 +632,91 @@ const ChatPage = () => {
     setShowForwardModal(true);
   };
 
+  // Edit message
+  const editMessage = async (messageId, newText) => {
+    try {
+      const headers = {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json'
+      };
+      
+      const res = await fetch(`/api/chat/messages/${messageId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ text: newText })
+      });
+      
+      if (res.ok) {
+        await loadMessages();
+      } else {
+        const error = await res.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (err) {
+      console.error('Error editing message:', err);
+      alert('Error editing message');
+    }
+  };
+
+  // Delete message
+  const deleteMessage = async (messageId) => {
+    try {
+      const headers = getAuthHeader();
+      
+      const res = await fetch(`/api/chat/messages/${messageId}`, {
+        method: 'DELETE',
+        headers
+      });
+      
+      if (res.ok) {
+        await loadMessages();
+      } else {
+        const error = await res.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (err) {
+      console.error('Error deleting message:', err);
+      alert('Error deleting message');
+    }
+  };
+
+  // Voice/Video Call
+  const startCall = async (callType) => {
+    if (chatMode !== 'direct') {
+      alert('Calls are only available for direct messages');
+      return;
+    }
+
+    try {
+      const headers = {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json'
+      };
+      
+      const roomName = `call-${user.id}-${selectedConversation._id}-${Date.now()}`;
+      
+      const res = await fetch('/api/chat/call/initiate', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          receiverId: selectedConversation._id,
+          callType,
+          roomName
+        })
+      });
+      
+      if (res.ok) {
+        const { callId } = await res.json();
+        // Open Jitsi in new window
+        const jitsiUrl = `https://meet.jit.si/${roomName}`;
+        window.open(jitsiUrl, '_blank', 'width=1200,height=800');
+      }
+    } catch (err) {
+      console.error('Error starting call:', err);
+      alert('Error starting call');
+    }
+  };
+
   // ── PHASE 3 FUNCTIONS ──
   
   // Online status polling
@@ -976,6 +1061,24 @@ const ChatPage = () => {
                   >
                     {isConversationMuted() ? '🔕' : '🔔'}
                   </button>
+                )}
+                {chatMode === 'direct' && selectedConversation && (
+                  <>
+                    <button
+                      className="chat-action-btn"
+                      onClick={() => startCall('audio')}
+                      title="Voice call"
+                    >
+                      📞
+                    </button>
+                    <button
+                      className="chat-action-btn"
+                      onClick={() => startCall('video')}
+                      title="Video call"
+                    >
+                      📹
+                    </button>
+                  </>
                 )}
                 {chatMode === 'department' && (
                   <button
@@ -1442,8 +1545,8 @@ const ChatPage = () => {
             <>
               <button onClick={() => {
                 const newText = prompt('Edit message:', contextMenu.message.text);
-                if (newText) {
-                  // TODO: Implement edit
+                if (newText && newText.trim()) {
+                  editMessage(contextMenu.message._id, newText);
                 }
                 setContextMenu(null);
               }}>
@@ -1451,7 +1554,7 @@ const ChatPage = () => {
               </button>
               <button onClick={() => {
                 if (window.confirm('Delete this message?')) {
-                  // TODO: Implement delete
+                  deleteMessage(contextMenu.message._id);
                 }
                 setContextMenu(null);
               }}>
