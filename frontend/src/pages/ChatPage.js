@@ -1213,17 +1213,20 @@ const ChatPage = () => {
                   ) : (
                     mediaMessages.map(msg => (
                       <div key={msg._id} className="chat-media-item">
-                        {msg.files.map((file, idx) => (
-                          <div key={idx} className="chat-media-file">
-                            {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                              <img src={`/${file.path}`} alt={file.originalName} />
-                            ) : file.path.match(/\.(mp4|webm)$/i) ? (
-                              <video src={`/${file.path}`} controls />
-                            ) : (
-                              <div className="chat-file-icon">📄 {file.originalName}</div>
-                            )}
-                          </div>
-                        ))}
+                        {msg.files.map((file, idx) => {
+                          const filePath = file.path.startsWith('/') ? file.path : `/${file.path}`;
+                          return (
+                            <div key={idx} className="chat-media-file">
+                              {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                <img src={filePath} alt={file.originalName} />
+                              ) : file.path.match(/\.(mp4|webm)$/i) ? (
+                                <video src={filePath} controls />
+                              ) : (
+                                <div className="chat-file-icon">📄 {file.originalName}</div>
+                              )}
+                            </div>
+                          );
+                        })}
                         <small>{msg.senderName} • {new Date(msg.createdAt).toLocaleDateString()}</small>
                       </div>
                     ))
@@ -1317,16 +1320,19 @@ const ChatPage = () => {
                               const canDownload = user.role === 'admin' || 
                                 (chatMode === 'department' && selectedConversation.groupAdmins?.includes(user.id));
                               
+                              // Ensure path starts with /
+                              const filePath = file.path.startsWith('/') ? file.path : `/${file.path}`;
+                              
                               return (
                                 <div key={idx} className="chat-file-attachment">
                                   {file.path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                    <img src={`/${file.path}`} alt={file.originalName} className="chat-file-image" />
+                                    <img src={filePath} alt={file.originalName} className="chat-file-image" />
                                   ) : file.path.match(/\.(mp4|webm)$/i) ? (
-                                    <video src={`/${file.path}`} controls className="chat-file-video" />
+                                    <video src={filePath} controls className="chat-file-video" />
                                   ) : file.path.match(/\.(mp3|webm|ogg|wav)$/i) ? (
-                                    <audio src={`/${file.path}`} controls className="chat-file-audio" />
+                                    <audio src={filePath} controls className="chat-file-audio" />
                                   ) : canDownload ? (
-                                    <a href={`/${file.path}`} download className="chat-file-link">
+                                    <a href={filePath} download={file.originalName} className="chat-file-link">
                                       📎 {file.originalName}
                                     </a>
                                   ) : (
