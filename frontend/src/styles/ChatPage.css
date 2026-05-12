@@ -1553,3 +1553,15 @@
     padding: 6px;
   }
 }
+
+/* Notification Prompt Button */
+.chat-notification-prompt {
+  animation: pulse-notification 2s infinite;
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+}
+
+@keyframes pulse-notification {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}

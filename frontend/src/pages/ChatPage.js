@@ -127,7 +127,20 @@ const ChatPage = () => {
   // Request notification permission on mount
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+      // Show a friendly prompt
+      setTimeout(() => {
+        if (window.confirm('Enable desktop notifications for new messages?')) {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              // Show test notification
+              new Notification('Notifications Enabled! 🎉', {
+                body: 'You will now receive notifications for new messages',
+                icon: '/logo192.png'
+              });
+            }
+          });
+        }
+      }, 2000); // Wait 2 seconds after page load
     }
   }, []);
 
@@ -1054,13 +1067,33 @@ const ChatPage = () => {
               </div>
               <div className="chat-header-actions">
                 {selectedConversation && (
-                  <button
-                    className={`chat-action-btn ${isConversationMuted() ? 'active' : ''}`}
-                    onClick={toggleMuteConversation}
-                    title={isConversationMuted() ? 'Unmute notifications' : 'Mute notifications'}
-                  >
-                    {isConversationMuted() ? '🔕' : '🔔'}
-                  </button>
+                  <>
+                    <button
+                      className={`chat-action-btn ${isConversationMuted() ? 'active' : ''}`}
+                      onClick={toggleMuteConversation}
+                      title={isConversationMuted() ? 'Unmute notifications' : 'Mute notifications'}
+                    >
+                      {isConversationMuted() ? '🔕' : '🔔'}
+                    </button>
+                    {Notification.permission !== 'granted' && (
+                      <button
+                        className="chat-action-btn chat-notification-prompt"
+                        onClick={() => {
+                          Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                              new Notification('Notifications Enabled! 🎉', {
+                                body: 'You will now receive notifications for new messages',
+                                icon: '/logo192.png'
+                              });
+                            }
+                          });
+                        }}
+                        title="Enable notifications"
+                      >
+                        🔔❗
+                      </button>
+                    )}
+                  </>
                 )}
                 {chatMode === 'direct' && selectedConversation && (
                   <>
