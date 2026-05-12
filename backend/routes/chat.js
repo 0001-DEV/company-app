@@ -260,16 +260,22 @@ router.delete("/messages/:messageId", verifyUser, async (req, res) => {
     if (!message) {
       return res.status(404).json({ message: "Message not found" });
     }
-    
-    console.log('Delete check - Message senderId:', message.senderId.toString());
-    console.log('Delete check - User id:', req.user.id.toString());
+
+    // Admin can delete any message anytime
+    if (req.user.role === 'admin') {
+      message.isDeleted = true;
+      message.text = "This message was deleted";
+      message.updatedAt = new Date();
+      await message.save();
+      return res.json({ message: "Message deleted" });
+    }
     
     if (message.senderId.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: "You can only delete your own messages" });
     }
     
-    // Check if message is older than 5 minutes
-    const messageAge = (new Date() - new Date(message.createdAt)) / (1000 * 60); // in minutes
+    // Staff: 5 minute limit
+    const messageAge = (new Date() - new Date(message.createdAt)) / (1000 * 60);
     if (messageAge > 5) {
       return res.status(403).json({ message: "You can only delete messages within 5 minutes of sending" });
     }
@@ -754,7 +760,7 @@ router.post("/call/save-notification", verifyUser, async (req, res) => {
     
     if (status === "picked") {
       const icon = callType === "video" ? "📹" : "📞";
-      text = `${icon} ${callType} call - ${duration}s`;
+      text = `${icon} ${callType} call · ${duration}`;
     } else if (status === "declined") {
       const icon = callType === "video" ? "📹" : "📞";
       text = `${icon} Declined ${callType} call`;

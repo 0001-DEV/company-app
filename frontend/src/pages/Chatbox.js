@@ -199,6 +199,7 @@ const ChatBox = () => {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [callStartTime, setCallStartTime] = useState(null);
   const [onlineNotifications, setOnlineNotifications] = useState({});
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -569,6 +570,7 @@ const ChatBox = () => {
             setCallNotification({ type: "picked", name: activeCall.receiverName, callType: activeCall.callType });
             setTimeout(() => setCallNotification(null), 3000);
             setCallStartTime(Date.now());
+            setIsCallMinimized(false);
             setJitsiRoom({ roomName: activeCall.roomName, callType: activeCall.callType, displayName: currentUser?.name });
             setActiveCall(null);
           } else if (status === "ended") {
@@ -781,6 +783,7 @@ const ChatBox = () => {
 
   const endCall = async () => {
     stopRing();
+    setIsCallMinimized(false);
     if (activeCall) {
       try {
         const token = localStorage.getItem("token");
@@ -799,7 +802,10 @@ const ChatBox = () => {
     }
     // Save call duration if call was picked up
     if (callStartTime && jitsiRoom) {
-      const duration = Math.floor((Date.now() - callStartTime) / 1000);
+      const durationSecs = Math.floor((Date.now() - callStartTime) / 1000);
+      const mins = Math.floor(durationSecs / 60);
+      const secs = durationSecs % 60;
+      const durationLabel = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
       try {
         const token = localStorage.getItem("token");
         let receiverId = "all";
@@ -812,7 +818,7 @@ const ChatBox = () => {
             receiverId: receiverId,
             callType: jitsiRoom.callType,
             status: "picked",
-            duration: duration
+            duration: durationLabel
           })
         });
       } catch (_) {}
@@ -830,6 +836,7 @@ const ChatBox = () => {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ callId: incomingCall.callId, action: "accept" })
       });
+      setIsCallMinimized(false);
       setJitsiRoom({ roomName: incomingCall.roomName, callType: incomingCall.callType, displayName: currentUser?.name });
       setIncomingCall(null);
     } catch (_) {}
@@ -1645,12 +1652,44 @@ const ChatBox = () => {
           </>
         )}
       </div>
-      {jitsiRoom && (
+      {jitsiRoom && !isCallMinimized && (
         <div style={S.jitsiOverlay}>
           <div style={S.jitsiContainer}>
             <div id="jitsi-container" ref={jitsiContainerRef} style={{ width: "100%", height: "100%" }} />
-            <button style={S.jitsiEndBtn} onClick={endCall}>End Call</button>
+            <div style={{ position: "absolute", bottom: "clamp(12px, 3vw, 20px)", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 12 }}>
+              <button
+                style={{ padding: "clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)", background: "#374151", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: "clamp(12px, 2.5vw, 14px)" }}
+                onClick={() => setIsCallMinimized(true)}
+                title="Minimize call"
+              >
+                ⬇ Minimize
+              </button>
+              <button style={S.jitsiEndBtn} onClick={endCall}>📵 End Call</button>
+            </div>
           </div>
+        </div>
+      )}
+      {jitsiRoom && isCallMinimized && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, background: "#1e1e2e", border: "1px solid #35354f", borderRadius: 12, padding: "12px 16px", zIndex: 1000, display: "flex", alignItems: "center", gap: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", minWidth: 200 }}>
+          <span style={{ fontSize: 20 }}>{jitsiRoom.callType === "video" ? "📹" : "📞"}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, color: "#e9edef", fontWeight: 600 }}>Call in progress</div>
+            <div style={{ fontSize: 11, color: "#8696a0" }}>{jitsiRoom.callType} call</div>
+          </div>
+          <button
+            onClick={() => setIsCallMinimized(false)}
+            style={{ background: "#374151", border: "none", color: "#e9edef", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}
+            title="Expand call"
+          >
+            ↑
+          </button>
+          <button
+            onClick={endCall}
+            style={{ background: "#ef4444", border: "none", color: "#fff", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+            title="End call"
+          >
+            📵
+          </button>
         </div>
       )}
     </div>
