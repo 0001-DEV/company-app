@@ -203,6 +203,7 @@ const ChatBox = () => {
   const [newMsgToasts, setNewMsgToasts] = useState([]); // [{id, senderName, text, userId}]
   const prevUnreadRef = useRef({});
   const prevLastMsgRef = useRef({});
+  const activeChatRef = useRef({ viewMode: "none", selectedUser: null, selectedDepartment: null });
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -257,6 +258,7 @@ const ChatBox = () => {
   useEffect(() => { localStorage.setItem("myStatus", JSON.stringify(myStatus)); }, [myStatus]);
   useEffect(() => { incomingCallRef.current = incomingCall; }, [incomingCall]);
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
+  useEffect(() => { activeChatRef.current = { viewMode, selectedUser, selectedDepartment }; }, [viewMode, selectedUser, selectedDepartment]);
 
   useEffect(() => {
     if (!jitsiRoom) { if (jitsiApiRef.current) { jitsiApiRef.current.dispose(); jitsiApiRef.current = null; } return; }
@@ -422,20 +424,19 @@ const ChatBox = () => {
         const data = await res.json();
 
         // Detect new messages and fire toast notifications
+        const { viewMode: vm, selectedUser: su, selectedDepartment: sd } = activeChatRef.current;
         Object.entries(data).forEach(([key, msg]) => {
           if (!msg || !msg.createdAt) return;
           const prev = prevLastMsgRef.current[key];
           const isNewMsg = !prev || new Date(msg.createdAt) > new Date(prev.createdAt);
-          // Don't toast for own messages or the currently open chat
           const isOwnMsg = msg.senderId?.toString() === currentUser.id?.toString();
           const isActiveChat =
-            (key === selectedUser && viewMode === "private") ||
-            (key === "all" && viewMode === "all") ||
-            (key.startsWith("department:") && selectedDepartment && key === `department:${selectedDepartment._id}` && viewMode === "department");
+            (key === su && vm === "private") ||
+            (key === "all" && vm === "all") ||
+            (key.startsWith("department:") && sd && key === `department:${sd._id}` && vm === "department");
 
           if (isNewMsg && !isOwnMsg && !isActiveChat && prev) {
-            // Find sender name
-            let senderName = msg.senderName || "Someone";
+            const senderName = msg.senderName || "Someone";
             const toastId = `${key}-${msg.createdAt}`;
             setNewMsgToasts(prev => {
               if (prev.find(t => t.id === toastId)) return prev;
@@ -452,7 +453,7 @@ const ChatBox = () => {
       } catch (err) {}
     };
     fetchLast(); const iv = setInterval(fetchLast, 3000); return () => clearInterval(iv);
-  }, [currentUser, selectedUser, viewMode, selectedDepartment]);
+  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser || viewMode === "none") return;
@@ -688,6 +689,18 @@ const ChatBox = () => {
     if (res.ok) setMessages(await res.json());
   };
 
+  const reloadLastMessages = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/chat/last-messages", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        prevLastMsgRef.current = data;
+        setLastMessages(data);
+      }
+    } catch (_) {}
+  };
+
   const sendMessage = async () => {
     if (!text.trim() && selectedFiles.length === 0) return;
     if (viewMode === "none") {
@@ -712,6 +725,7 @@ const ChatBox = () => {
         setSelectedFiles([]); 
         setReplyingTo(null); 
         setTimeout(() => reloadMessages(), 100);
+        setTimeout(() => reloadLastMessages(), 200);
       } else {
         console.error("Failed to send message:", res.status);
       }
