@@ -158,6 +158,7 @@ router.get('/all-staff', async (req, res) => {
   try {
     const staff = await User.find({ role: 'staff' })
       .populate('department')
+      .populate('departments')
       .sort({ createdAt: -1 }); // Sort by newest first
     res.json(staff);
   } catch (err) {

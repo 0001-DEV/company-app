@@ -155,7 +155,8 @@ const ChatPage = () => {
       if (res.ok) {
         let data = await res.json();
         
-        // If staff gets their single department, wrap it in an array
+        // Staff now gets array of departments directly from the updated endpoint,
+        // but still maintain backward compatibility for single department case
         if (!Array.isArray(data)) {
           data = [data];
         }
@@ -184,6 +185,65 @@ const ChatPage = () => {
       console.error('Error loading conversations:', err);
     }
   };
+
+  // Track all messages we've already seen to avoid duplicate notifications
+  const [processedMessageIds, setProcessedMessageIds] = useState(() => {
+    const saved = sessionStorage.getItem('processedMessageIds');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  // Background message checker - gets ALL new messages for notifications
+  const checkForNewMessages = async () => {
+    try {
+      const headers = getAuthHeader();
+      // Fetch latest unread messages
+      const res = await fetch('/api/chat/latest-messages', { headers });
+      if (res.ok) {
+        const latestMessages = await res.json();
+        latestMessages.forEach(msg => {
+          // Only show notification if:
+          // 1. It's not our own message
+          // 2. We haven't processed this message before
+          // 3. We're not currently viewing this conversation
+          const isOurMessage = msg.senderId === user.id;
+          const isProcessed = processedMessageIds.has(msg._id);
+          
+          // Check if we're in this conversation
+          let isCurrentConversation = false;
+          if (selectedConversation) {
+            if (chatMode === 'direct' && msg.senderId === selectedConversation._id) {
+              isCurrentConversation = true;
+            } else if (chatMode === 'department' && 
+                      msg.receiverId === `department:${selectedConversation._id}`) {
+              isCurrentConversation = true;
+            }
+          }
+          
+          if (!isOurMessage && !isProcessed && !isCurrentConversation) {
+            // Show notification
+            showNotification(msg);
+            // Mark as processed
+            setProcessedMessageIds(prev => {
+              const newSet = new Set(prev);
+              newSet.add(msg._id);
+              // Save to sessionStorage
+              sessionStorage.setItem('processedMessageIds', JSON.stringify([...newSet]));
+              return newSet;
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Background message check error:', err);
+    }
+  };
+
+  // Background checker interval
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(checkForNewMessages, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
+  }, [user, selectedConversation, chatMode, processedMessageIds]);
 
   // Load messages for selected conversation
   useEffect(() => {
@@ -232,10 +292,33 @@ const ChatPage = () => {
     setLastMessageCount(messages.length);
   }, [messages]);
 
+  // Register for Service Worker notifications if available
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      console.log('Service Worker and Push are supported');
+    }
+  }, []);
+
+  // Store message context for reply-from-notification
+  const [pendingReplyContext, setPendingReplyContext] = useState(null);
+
   const showNotification = (message) => {
-    const conversationId = chatMode === 'direct' 
-      ? selectedConversation._id 
-      : `department:${selectedConversation._id}`;
+    // Determine which conversation this message belongs to
+    let conversationId = null;
+    let convName = '';
+    
+    if (message.receiverId === user.id || message.receiverId?.toString() === user.id) {
+      // It's a direct message to us
+      conversationId = message.senderId.toString();
+      convName = message.senderName;
+    } else if (message.receiverId?.startsWith('department:')) {
+      // It's a department message
+      conversationId = message.receiverId;
+      convName = selectedConversation?.name || 'Department Chat';
+    }
+
+    // If we can't determine the conversation, skip notification
+    if (!conversationId) return;
     
     // Check if conversation is muted
     if (mutedConversations.includes(conversationId)) {
@@ -245,23 +328,125 @@ const ChatPage = () => {
     // Play notification sound
     playNotificationSound();
 
-    // Show browser notification
+    // Show browser notification with reply action
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification(message.senderName, {
+      const notificationOptions = {
         body: message.text || '📎 Sent an attachment',
         icon: '/logo192.png',
         badge: '/logo192.png',
         tag: conversationId,
-        requireInteraction: false
-      });
+        requireInteraction: false,
+        data: {
+          conversationId: conversationId,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          messageId: message._id,
+          chatMode: conversationId.startsWith('department:') ? 'department' : 'direct'
+        }
+      };
 
-      notification.onclick = () => {
-        window.focus();
+      // Try to use actions if browser supports it
+      if ('actions' in Notification.prototype) {
+        notificationOptions.actions = [
+          { action: 'reply', title: 'Reply', icon: '✉️' },
+          { action: 'mute', title: 'Mute', icon: '🔕' }
+        ];
+        notificationOptions.requireInteraction = true; // Keep notification visible for actions
+      }
+
+      const notification = new Notification(convName || message.senderName, notificationOptions);
+
+      // Handle notification clicks
+      notification.onclick = (event) => {
+        if (event.action === 'reply') {
+          // Handle reply action
+          handleReplyFromNotification(notificationOptions.data);
+        } else if (event.action === 'mute') {
+          // Handle mute action
+          toggleMuteConversationById(conversationId);
+        } else {
+          // Default: focus window
+          window.focus();
+          // If it's a direct message, select that conversation
+          if (notificationOptions.data.chatMode === 'direct') {
+            const conv = conversations.find(c => c._id === notificationOptions.data.conversationId);
+            if (conv) {
+              setChatMode('direct');
+              setSelectedConversation(conv);
+            }
+          }
+        }
         notification.close();
       };
 
-      setTimeout(() => notification.close(), 5000);
+      // Auto-close after 10 seconds if no interaction
+      setTimeout(() => notification.close(), 10000);
     }
+  };
+
+  const toggleMuteConversationById = (conversationId) => {
+    const newMuted = mutedConversations.includes(conversationId)
+      ? mutedConversations.filter(id => id !== conversationId)
+      : [...mutedConversations, conversationId];
+    
+    setMutedConversations(newMuted);
+    localStorage.setItem('mutedConversations', JSON.stringify(newMuted));
+    showToast(newMuted.includes(conversationId) ? 'Conversation muted' : 'Conversation unmuted');
+  };
+
+  const handleReplyFromNotification = async (data) => {
+    window.focus();
+    
+    // Find and select the conversation
+    if (data.chatMode === 'direct') {
+      setChatMode('direct');
+      const conv = conversations.find(c => c._id === data.conversationId);
+      if (conv) {
+        setSelectedConversation(conv);
+        // Focus the input after a short delay
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 300);
+      }
+    } else if (data.chatMode === 'department') {
+      setChatMode('department');
+      const deptId = data.conversationId.replace('department:', '');
+      const conv = conversations.find(c => c._id === deptId);
+      if (conv) {
+        setSelectedConversation(conv);
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 300);
+      }
+    }
+  };
+
+  // Toast notification helper
+  const showToast = (message) => {
+    // Create a simple toast
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease-out;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'slideDown 0.3s ease-out';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   };
 
   const playNotificationSound = () => {
@@ -1253,30 +1438,41 @@ const ChatPage = () => {
               {chatMode === 'direct' ? 'No users found' : 'No departments found'}
             </div>
           ) : (
-            conversations.map(conv => (
-              <button
-                key={conv._id}
-                className={`chat-conversation-item ${selectedConversation?._id === conv._id ? 'active' : ''}`}
-                onClick={() => setSelectedConversation(conv)}
-              >
-                <div className="chat-conv-avatar">
-                  {chatMode === 'direct' ? '👤' : '🏢'}
-                </div>
-                <div className="chat-conv-info">
-                  <div className="chat-conv-name">{conv.name || conv.email}</div>
-                  <div className="chat-conv-preview">
-                    {conv.lastMessageText ? (
-                      <span style={{ color: '#64748b', fontSize: '12px' }}>
-                        {conv.lastMessageSender === user.name ? 'You: ' : `${conv.lastMessageSender}: `}
-                        {conv.lastMessageText.length > 20 ? conv.lastMessageText.substring(0, 20) + '...' : conv.lastMessageText}
-                      </span>
-                    ) : chatMode === 'department' && (conv.memberCount !== undefined || conv.members)
-                      ? `${conv.memberCount || conv.members?.length || 0} members` 
-                      : 'Click to chat...'}
+            conversations.map(conv => {
+              const convId = chatMode === 'direct' 
+                ? conv._id.toString() 
+                : `department:${conv._id.toString()}`;
+              const isMuted = mutedConversations.includes(convId);
+              
+              return (
+                <button
+                  key={conv._id}
+                  className={`chat-conversation-item ${selectedConversation?._id === conv._id ? 'active' : ''}`}
+                  onClick={() => setSelectedConversation(conv)}
+                  style={{ opacity: isMuted ? 0.6 : 1 }}
+                >
+                  <div className="chat-conv-avatar">
+                    {chatMode === 'direct' ? '👤' : '🏢'}
                   </div>
-                </div>
-              </button>
-            ))
+                  <div className="chat-conv-info">
+                    <div className="chat-conv-name">
+                      {conv.name || conv.email}
+                      {isMuted && <span style={{ marginLeft: '8px', fontSize: '14px' }}>🔕</span>}
+                    </div>
+                    <div className="chat-conv-preview">
+                      {conv.lastMessageText ? (
+                        <span style={{ color: '#64748b', fontSize: '12px' }}>
+                          {conv.lastMessageSender === user.name ? 'You: ' : `${conv.lastMessageSender}: `}
+                          {conv.lastMessageText.length > 20 ? conv.lastMessageText.substring(0, 20) + '...' : conv.lastMessageText}
+                        </span>
+                      ) : chatMode === 'department' && (conv.memberCount !== undefined || conv.members)
+                        ? `${conv.memberCount || conv.members?.length || 0} members` 
+                        : 'Click to chat...'}
+                    </div>
+                  </div>
+                </button>
+              );
+            })
           )}
         </div>
       </aside>
@@ -1625,14 +1821,30 @@ const ChatPage = () => {
                           <p>{msg.replyTo.text}</p>
                         </div>
                       )}
-                      <div className="chat-message-content">
-                        <strong>{msg.senderName}</strong>
-                        <p style={{ fontStyle: msg.isDeleted ? 'italic' : 'normal', color: msg.isDeleted ? 'rgba(255,255,255,0.6)' : 'inherit' }}>
-                          {msg.isDeleted ? '🚫 This message was deleted' : msg.text}
-                        </p>
+                      <div className={`chat-message-content ${msg.isCallNotification ? 'call-notification' : ''}`}>
+                        {!msg.isCallNotification && <strong>{msg.senderName}</strong>}
+                        
+                        {msg.isCallNotification ? (
+                          <div style={{ 
+                            textAlign: 'center',
+                            padding: '12px 20px',
+                            margin: '8px 0',
+                            background: 'var(--bg-light, #f1f5f9)',
+                            borderRadius: '20px',
+                            fontSize: '14px',
+                            color: 'var(--text-muted, #64748b)',
+                            fontWeight: '500'
+                          }}>
+                            {msg.text}
+                          </div>
+                        ) : (
+                          <p style={{ fontStyle: msg.isDeleted ? 'italic' : 'normal', color: msg.isDeleted ? 'rgba(255,255,255,0.6)' : 'inherit' }}>
+                            {msg.isDeleted ? '🚫 This message was deleted' : msg.text}
+                          </p>
+                        )}
                         
                         {/* File attachments */}
-                        {!msg.isDeleted && msg.files && msg.files.length > 0 && (
+                        {!msg.isCallNotification && !msg.isDeleted && msg.files && msg.files.length > 0 && (
                           <div className="chat-message-files">
                             {msg.files.map((file, idx) => {
                               const canDownload = user.role === 'admin' || 
@@ -1699,71 +1911,75 @@ const ChatPage = () => {
                           </div>
                         )}
                         
-                        <div className="chat-message-footer">
-                          <small>{new Date(msg.createdAt).toLocaleTimeString()}</small>
-                          {msg.isEdited && <small className="chat-edited"> (edited)</small>}
-                          {msg.senderId === user.id && (
-                            <span className="chat-message-status" title="Delivered">✓✓</span>
-                          )}
-                          {chatMode === 'department' && (
+                        {!msg.isCallNotification && (
+                          <div className="chat-message-footer">
+                            <small>{new Date(msg.createdAt).toLocaleTimeString()}</small>
+                            {msg.isEdited && <small className="chat-edited"> (edited)</small>}
+                            {msg.senderId === user.id && (
+                              <span className="chat-message-status" title="Delivered">✓✓</span>
+                            )}
+                            {chatMode === 'department' && (
+                              <button
+                                className="chat-read-btn"
+                                onClick={() => getReadReceipts(msg._id)}
+                                title="See who read this"
+                              >
+                                👁️
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Message Actions - Floating on Hover (only for regular messages) */}
+                      {!msg.isCallNotification && (
+                        <div className="chat-message-actions">
+                          <button
+                            className="chat-action-icon"
+                            onClick={() => reactToMessage(msg._id, '👍')}
+                            title="Like"
+                          >
+                            👍
+                          </button>
+                          <button
+                            className="chat-action-icon"
+                            onClick={() => reactToMessage(msg._id, '❤️')}
+                            title="Love"
+                          >
+                            ❤️
+                          </button>
+                          <button
+                            className="chat-action-icon"
+                            onClick={() => reactToMessage(msg._id, '😂')}
+                            title="Laugh"
+                          >
+                            😂
+                          </button>
+                          <button
+                            className="chat-action-icon"
+                            onClick={() => toggleStarMessage(msg._id)}
+                            title={starredMessages.some(s => s.messageId === msg._id) ? 'Unstar' : 'Star'}
+                          >
+                            {starredMessages.some(s => s.messageId === msg._id) ? '⭐' : '☆'}
+                          </button>
+                          <button
+                            className="chat-action-icon"
+                            onClick={() => setReplyingTo(msg)}
+                            title="Reply"
+                          >
+                            ↩️
+                          </button>
+                          {(msg.senderId === user.id || user.role === 'admin') && (
                             <button
-                              className="chat-read-btn"
-                              onClick={() => getReadReceipts(msg._id)}
-                              title="See who read this"
+                              className="chat-action-icon"
+                              onClick={() => msg.isPinned ? unpinMessage(msg._id) : pinMessage(msg._id)}
+                              title={msg.isPinned ? 'Unpin' : 'Pin'}
                             >
-                              👁️
+                              {msg.isPinned ? '📌' : '📍'}
                             </button>
                           )}
                         </div>
-                      </div>
-                      
-                      {/* Message Actions - Floating on Hover */}
-                      <div className="chat-message-actions">
-                        <button
-                          className="chat-action-icon"
-                          onClick={() => reactToMessage(msg._id, '👍')}
-                          title="Like"
-                        >
-                          👍
-                        </button>
-                        <button
-                          className="chat-action-icon"
-                          onClick={() => reactToMessage(msg._id, '❤️')}
-                          title="Love"
-                        >
-                          ❤️
-                        </button>
-                        <button
-                          className="chat-action-icon"
-                          onClick={() => reactToMessage(msg._id, '😂')}
-                          title="Laugh"
-                        >
-                          😂
-                        </button>
-                        <button
-                          className="chat-action-icon"
-                          onClick={() => toggleStarMessage(msg._id)}
-                          title={starredMessages.some(s => s.messageId === msg._id) ? 'Unstar' : 'Star'}
-                        >
-                          {starredMessages.some(s => s.messageId === msg._id) ? '⭐' : '☆'}
-                        </button>
-                        <button
-                          className="chat-action-icon"
-                          onClick={() => setReplyingTo(msg)}
-                          title="Reply"
-                        >
-                          ↩️
-                        </button>
-                        {(msg.senderId === user.id || user.role === 'admin') && (
-                          <button
-                            className="chat-action-icon"
-                            onClick={() => msg.isPinned ? unpinMessage(msg._id) : pinMessage(msg._id)}
-                            title={msg.isPinned ? 'Unpin' : 'Pin'}
-                          >
-                            {msg.isPinned ? '📌' : '📍'}
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 ))

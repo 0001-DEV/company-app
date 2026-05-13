@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   plainPassword: { type: String, default: '' },
   role: { type: String, enum: ['admin', 'staff'], required: true },
-  department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
+  department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' }, // For backward compatibility
+  departments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Department' }], // New field for multiple departments
   profilePicture: { type: String, default: '' },
   birthday: { type: Date },
   assignedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],

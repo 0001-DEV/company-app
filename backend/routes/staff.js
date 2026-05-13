@@ -473,8 +473,14 @@ const { verifyUser } = require('../middleware/auth');
 router.get('/department-members/:deptId', verifyUser, async (req, res) => {
   try {
     const dept = await Department.findById(req.params.deptId).lean();
-    const members = await User.find({ department: req.params.deptId, role: 'staff' })
-      .select('name email _id').lean();
+    // Find staff who are in this department (either via department or departments array)
+    const members = await User.find({
+      role: 'staff',
+      $or: [
+        { department: req.params.deptId },
+        { departments: req.params.deptId }
+      ]
+    }).select('name email _id').lean();
     const groupAdmins = (dept?.groupAdmins || []).map(id => id.toString());
     res.json({ members, groupAdmins });
   } catch (err) {
@@ -652,18 +658,42 @@ router.get('/my-files', staffAuth, async (req, res) => {
 module.exports = router;
 
 
-// Get staff's own department for chat
+// Get staff's own departments for chat (supports multiple departments)
 router.get('/my-department', require('../middleware/auth').verifyUser, async (req, res) => {
   try {
-    const staff = await User.findById(req.user.id).populate('department');
+    const staff = await User.findById(req.user.id).populate('department').populate('departments');
     
-    if (!staff || !staff.department) {
-      return res.status(404).json({ message: 'Staff has no department assigned' });
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
     }
     
-    res.json(staff.department);
+    // Collect all unique department IDs
+    const allDeptIds = [];
+    if (staff.department) {
+      allDeptIds.push(staff.department._id.toString());
+    }
+    if (staff.departments && staff.departments.length > 0) {
+      staff.departments.forEach(dept => {
+        const deptId = dept._id ? dept._id.toString() : dept.toString();
+        if (!allDeptIds.includes(deptId)) {
+          allDeptIds.push(deptId);
+        }
+      });
+    }
+    
+    if (allDeptIds.length === 0) {
+      return res.status(404).json({ message: 'Staff has no departments assigned' });
+    }
+    
+    // Fetch all unique departments
+    const Department = require('../models/Department');
+    const allDepartments = await Department.find({
+      _id: { $in: allDeptIds.map(id => require('mongoose').Types.ObjectId(id)) }
+    });
+    
+    res.json(allDepartments);
   } catch (err) {
-    console.error('Error fetching staff department:', err);
+    console.error('Error fetching staff departments:', err);
     res.status(500).json({ message: err.message });
   }
 });

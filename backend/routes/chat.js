@@ -118,11 +118,16 @@ router.get("/messages", verifyUser, async (req, res) => {
           ]
         };
       } else if (departmentId) {
-        // Department messages - verify staff belongs to department
+        // Department messages - verify staff belongs to this department (check both department and departments fields)
         const staffUser = await User.findById(req.user.id);
         const staffDeptId = staffUser?.department?.toString();
-        if (staffDeptId !== departmentId) {
-          return res.status(403).json({ message: 'You can only view your own department chat' });
+        const staffDepts = staffUser?.departments?.map(d => d.toString()) || [];
+        
+        // Check if staff is in this department
+        const isInDepartment = staffDeptId === departmentId || staffDepts.includes(departmentId);
+        
+        if (!isInDepartment) {
+          return res.status(403).json({ message: 'You can only view department chats you belong to' });
         }
         query = { receiverId: `department:${departmentId}` };
       } else {
@@ -366,17 +371,32 @@ router.get("/unread-counts", verifyUser, async (req, res) => {
       unreadCounts[sid] = (unreadCounts[sid] || 0) + 1;
     }
 
-    // Department messages: only if user is member
+    // Department messages: only if user is member (check all departments)
     if (req.user.role === "staff") {
       const staffUser = await User.findById(req.user.id);
+      // Get all department IDs the user belongs to
+      const userDepartmentIds = [];
       if (staffUser?.department) {
+        userDepartmentIds.push(staffUser.department.toString());
+      }
+      if (staffUser?.departments?.length > 0) {
+        staffUser.departments.forEach(dept => {
+          const deptId = dept.toString();
+          if (!userDepartmentIds.includes(deptId)) {
+            userDepartmentIds.push(deptId);
+          }
+        });
+      }
+      
+      // Check unread messages for each department
+      for (const deptId of userDepartmentIds) {
         const deptMessages = await Message.find({
-          receiverId: `department:${staffUser.department}`,
+          receiverId: `department:${deptId}`,
           senderId: { $ne: req.user.id },
           readBy: { $ne: req.user.id }
         }).select("receiverId");
         if (deptMessages.length > 0) {
-          unreadCounts[`department:${staffUser.department}`] = deptMessages.length;
+          unreadCounts[`department:${deptId}`] = deptMessages.length;
         }
       }
     }
@@ -405,11 +425,22 @@ router.get("/last-messages", verifyUser, async (req, res) => {
     const lastMessages = {};
     const myId = req.user.id.toString();
 
-    // Get user's department for staff
-    let myDept = null;
+    // Get user's departments for staff
+    let myDepts = [];
     if (req.user.role === "staff") {
-      const me = await User.findById(req.user.id).select("department");
-      myDept = me?.department?.toString();
+      const me = await User.findById(req.user.id).select("department departments");
+      // Collect all department IDs
+      if (me?.department) {
+        myDepts.push(me.department.toString());
+      }
+      if (me?.departments?.length > 0) {
+        me.departments.forEach(dept => {
+          const deptId = dept.toString();
+          if (!myDepts.includes(deptId)) {
+            myDepts.push(deptId);
+          }
+        });
+      }
     }
 
     // Fetch all messages involving this user, sorted newest first
@@ -417,7 +448,7 @@ router.get("/last-messages", verifyUser, async (req, res) => {
       { senderId: req.user.id },
       { receiverId: myId },
       ...(req.user.role === "admin" ? [{ receiverId: "all" }] : []),
-      ...(myDept ? [{ receiverId: `department:${myDept}` }] : [])
+      ...(myDepts.map(deptId => ({ receiverId: `department:${deptId}` })))
     ];
 
     const msgs = await Message.find({ $or: orClauses }).sort({ createdAt: -1 }).limit(500);

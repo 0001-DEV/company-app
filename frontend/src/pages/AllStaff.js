@@ -18,17 +18,63 @@ const Toast = ({ message, type = 'success', onClose }) => (
 );
 
 const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) => {
-  const [name, setName] = useState(initialData?.name || '');
-  const [email, setEmail] = useState(initialData?.email || '');
-  const [phone, setPhone] = useState(initialData?.phone || '');
-  const [department, setDepartment] = useState(initialData?.department?._id || initialData?.department || '');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [department, setDepartment] = useState('');
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [password, setPassword] = useState('');
-  const [birthday, setBirthday] = useState(
-    initialData?.birthday ? initialData.birthday.split('T')[0] : ''
-  );
+  const [birthday, setBirthday] = useState('');
   const [profilePicture, setProfilePicture] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(initialData?.profilePicture || '');
+  const [previewUrl, setPreviewUrl] = useState('');
   const [showPictureModal, setShowPictureModal] = useState(false);
+
+  // Initialize all state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || '');
+      setEmail(initialData.email || '');
+      setPhone(initialData.phone || '');
+      setBirthday(initialData.birthday ? initialData.birthday.split('T')[0] : '');
+      setPreviewUrl(initialData.profilePicture || '');
+      setDepartment(initialData.department?._id || initialData.department || '');
+      
+      // Initialize selected departments with better error handling
+      let deptIds = [];
+      
+      // Try departments array first
+      if (initialData.departments && Array.isArray(initialData.departments) && initialData.departments.length > 0) {
+        deptIds = initialData.departments.map(d => {
+          if (typeof d === 'string') return d;
+          if (d && d._id) return d._id.toString();
+          if (d) return d.toString();
+          return null;
+        }).filter(Boolean);
+      }
+      
+      // If no departments array, try single department
+      if (deptIds.length === 0 && initialData.department) {
+        if (typeof initialData.department === 'string') {
+          deptIds = [initialData.department];
+        } else if (initialData.department._id) {
+          deptIds = [initialData.department._id.toString()];
+        }
+      }
+      
+      setSelectedDepartments(deptIds);
+    } else {
+      // Reset for new staff
+      setName('');
+      setEmail('');
+      setPhone('');
+      setDepartment('');
+      setSelectedDepartments([]);
+      setPassword('');
+      setBirthday('');
+      setProfilePicture(null);
+      setPreviewUrl('');
+    }
+  }, [initialData]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -45,6 +91,16 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
     }
   };
 
+  const handleDepartmentToggle = (deptId) => {
+    setSelectedDepartments(prev => {
+      if (prev.includes(deptId)) {
+        return prev.filter(id => id !== deptId);
+      } else {
+        return [...prev, deptId];
+      }
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!viewOnly) {
@@ -52,7 +108,18 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
       formData.append('name', name);
       formData.append('email', email);
       formData.append('phone', phone);
-      formData.append('departmentId', department);
+      
+      // Send departments array if multiple are selected, otherwise send departmentId
+      if (selectedDepartments.length > 0) {
+        selectedDepartments.forEach((deptId, index) => {
+          formData.append(`departments[${index}]`, deptId);
+        });
+        // Also set departmentId to the first selected department for backward compatibility
+        formData.append('departmentId', selectedDepartments[0]);
+      } else if (department) {
+        formData.append('departmentId', department);
+      }
+      
       formData.append('birthday', birthday);
       if (password) formData.append('password', password);
       if (profilePicture) formData.append('profilePicture', profilePicture);
@@ -160,12 +227,77 @@ const StaffModal = ({ onClose, onSubmit, departments, initialData, viewOnly }) =
           </div>
 
           <div style={mStyles.field}>
-            <label style={mStyles.label}>Department</label>
-            {viewOnly ? <div style={mStyles.viewValue}>{initialData?.department?.name || '—'}</div> :
-              <select value={department} onChange={e => setDepartment(e.target.value)} required style={mStyles.input}>
-                <option value="" disabled hidden>Select Department</option>
-                {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
-              </select>}
+            <label style={mStyles.label}>Departments</label>
+            {viewOnly ? (
+              <div style={mStyles.viewValue}>
+                {(() => {
+                  // Find department names from the departments array using our selected dept IDs
+                  const deptNames = selectedDepartments
+                    .map(deptId => {
+                      const dept = departments.find(d => d._id === deptId || d._id.toString() === deptId);
+                      return dept?.name;
+                    })
+                    .filter(Boolean);
+                  
+                  if (deptNames.length > 0) {
+                    return deptNames.join(', ');
+                  } else if (initialData?.department?.name) {
+                    return initialData.department.name;
+                  }
+                  return '—';
+                })()}
+              </div>
+            ) : (
+              <div style={{ 
+                maxHeight: '200px', 
+                overflowY: 'auto', 
+                border: '2px solid var(--border-light, #e5e7eb)', 
+                borderRadius: '8px',
+                padding: '8px',
+                background: 'var(--bg-card, white)'
+              }}>
+                {departments.map(d => (
+                  <div 
+                    key={d._id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderRadius: '6px',
+                      background: selectedDepartments.includes(d._id) 
+                        ? 'rgba(59, 130, 246, 0.2)' 
+                        : 'transparent',
+                      transition: 'background 0.2s',
+                      marginBottom: '4px',
+                      border: selectedDepartments.includes(d._id) 
+                        ? '1px solid var(--primary-color, #3b82f6)' 
+                        : '1px solid transparent'
+                    }}
+                    onClick={() => handleDepartmentToggle(d._id)}
+                  >
+                    <div style={{
+                      width: '18px',
+                      height: '18px',
+                      border: '2px solid var(--primary-color, #3b82f6)',
+                      borderRadius: '4px',
+                      marginRight: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: selectedDepartments.includes(d._id) 
+                        ? 'var(--primary-color, #3b82f6)' 
+                        : 'transparent'
+                    }}>
+                      {selectedDepartments.includes(d._id) && (
+                        <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '14px', color: 'var(--text-main, #1f2937)' }}>{d.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {viewOnly && (
@@ -344,10 +476,18 @@ function AllStaff() {
         };
       } else {
         const plain = {};
+        const departmentsArray = [];
         formData.forEach((value, key) => {
           if (key === 'profilePicture') return;
-          plain[key] = value;
+          if (key.startsWith('departments[')) {
+            departmentsArray.push(value);
+          } else {
+            plain[key] = value;
+          }
         });
+        if (departmentsArray.length > 0) {
+          plain.departments = departmentsArray;
+        }
         fetchOptions = {
           method: editingData ? 'PUT' : 'POST',
           headers: {

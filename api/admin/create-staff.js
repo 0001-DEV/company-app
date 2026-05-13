@@ -24,7 +24,7 @@ const handler = async (req, res) => {
   try {
     await runMiddleware(req, res, upload.single('profilePicture'));
 
-    const { name, email, phone, password, departmentId, birthday } = req.body || {};
+    const { name, email, phone, password, departmentId, departments, birthday } = req.body || {};
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email and password are required' });
@@ -50,6 +50,20 @@ const handler = async (req, res) => {
       profilePicturePath = `/uploads/${filename}`;
     }
 
+    // Process departments - handle both single departmentId and departments array
+    let primaryDepartment = null;
+    let departmentsArray = [];
+    
+    if (departments && Array.isArray(departments) && departments.length > 0) {
+      // Use departments array if provided
+      departmentsArray = departments.map(d => new ObjectId(d));
+      primaryDepartment = departmentsArray[0]; // Set first as primary for backward compatibility
+    } else if (departmentId) {
+      // Fall back to single departmentId
+      primaryDepartment = new ObjectId(departmentId);
+      departmentsArray = [primaryDepartment];
+    }
+
     const newUser = {
       _id: userId,
       name: name.trim(),
@@ -58,7 +72,8 @@ const handler = async (req, res) => {
       password: hashedPassword,
       plainPassword: password,
       role: 'staff',
-      department: departmentId ? new ObjectId(departmentId) : null,
+      department: primaryDepartment,
+      departments: departmentsArray,
       profilePicture: profilePicturePath,
       birthday: birthday && birthday !== '' ? new Date(birthday) : undefined,
       createdAt: new Date(),
@@ -75,6 +90,14 @@ const handler = async (req, res) => {
           localField: 'department',
           foreignField: '_id',
           as: 'department'
+        }
+      },
+      {
+        $lookup: {
+          from: 'departments',
+          localField: 'departments',
+          foreignField: '_id',
+          as: 'departments'
         }
       },
       {

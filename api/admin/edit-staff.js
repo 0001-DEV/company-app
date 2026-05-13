@@ -8,7 +8,7 @@ const handler = async (req, res) => {
   }
 
   const { id } = req.query || {};
-  const { name, email, phone, password, departmentId, birthday } = req.body || {};
+  const { name, email, phone, password, departmentId, departments, birthday } = req.body || {};
 
   if (!id) {
     return res.status(400).json({ message: 'Staff ID is required' });
@@ -32,8 +32,16 @@ const handler = async (req, res) => {
       update.plainPassword = password;
     }
 
-    if (departmentId) {
+    // Process departments - handle both single departmentId and departments array
+    if (departments && Array.isArray(departments) && departments.length > 0) {
+      // Use departments array if provided
+      const departmentsArray = departments.map(d => new ObjectId(d));
+      update.departments = departmentsArray;
+      update.department = departmentsArray[0]; // Set first as primary for backward compatibility
+    } else if (departmentId) {
+      // Fall back to single departmentId
       update.department = new ObjectId(departmentId);
+      update.departments = [update.department];
     }
 
     if (birthday) {
@@ -58,6 +66,14 @@ const handler = async (req, res) => {
           localField: 'department',
           foreignField: '_id',
           as: 'department'
+        }
+      },
+      {
+        $lookup: {
+          from: 'departments',
+          localField: 'departments',
+          foreignField: '_id',
+          as: 'departments'
         }
       },
       {
