@@ -388,48 +388,60 @@ router.get("/last-messages", verifyUser, async (req, res) => {
     const lastMessages = {};
     const myId = req.user.id.toString();
 
+    // Get user's department for staff
+    let myDept = null;
+    if (req.user.role === "staff") {
+      const me = await User.findById(req.user.id).select("department");
+      myDept = me?.department?.toString();
+    }
+
     // Fetch all messages involving this user, sorted newest first
-    const msgs = await Message.find({
-      $or: [
-        { senderId: req.user.id, receiverId: { $ne: "all", $not: /^department:/ } },
-        { receiverId: myId },
-        ...(req.user.role === "admin" ? [{ receiverId: "all" }] : []),
-        ...(req.user.role === "staff" ? [{ receiverId: `department:${(await User.findById(req.user.id)).department}` }] : [])
-      ]
-    }).sort({ createdAt: -1 }).limit(500);
+    const orClauses = [
+      { senderId: req.user.id },
+      { receiverId: myId },
+      ...(req.user.role === "admin" ? [{ receiverId: "all" }] : []),
+      ...(myDept ? [{ receiverId: `department:${myDept}` }] : [])
+    ];
+
+    const msgs = await Message.find({ $or: orClauses }).sort({ createdAt: -1 }).limit(500);
 
     for (const msg of msgs) {
       const sid = msg.senderId?.toString();
       const rid = msg.receiverId?.toString();
-      
-      // Handle private messages - only if I'm the receiver
-      if (rid === myId) {
-        if (!lastMessages[sid]) {
-          lastMessages[sid] = {
-            text: msg.text,
+      const isFromMe = sid === myId;
+
+      // Private DM
+      if (rid === myId || (isFromMe && rid !== "all" && !rid.startsWith("department:"))) {
+        const peerKey = isFromMe ? rid : sid;
+        if (peerKey && !lastMessages[peerKey]) {
+          lastMessages[peerKey] = {
+            text: msg.text || (msg.files?.length ? "📎 Attachment" : ""),
             createdAt: msg.createdAt,
-            senderId: sid
+            senderId: sid,
+            senderName: msg.senderName
           };
         }
       }
-      // Handle team chat messages
-      else if (rid === "all" && req.user.role === "admin") {
+      // Team chat
+      else if (rid === "all") {
         if (!lastMessages["all"]) {
           lastMessages["all"] = {
-            text: msg.text,
+            text: msg.text || (msg.files?.length ? "📎 Attachment" : ""),
             createdAt: msg.createdAt,
-            senderId: sid
+            senderId: sid,
+            senderName: msg.senderName
           };
         }
       }
-      // Handle department messages
+      // Department chat
       else if (rid && rid.startsWith("department:")) {
         const deptId = rid.replace("department:", "");
         if (!lastMessages[`department:${deptId}`]) {
           lastMessages[`department:${deptId}`] = {
-            text: msg.text,
+            text: msg.text || (msg.files?.length ? "📎 Attachment" : ""),
             createdAt: msg.createdAt,
-            senderId: sid
+            senderId: sid,
+            senderName: msg.senderName
           };
         }
       }

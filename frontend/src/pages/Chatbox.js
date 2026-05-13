@@ -200,6 +200,9 @@ const ChatBox = () => {
   const [callStartTime, setCallStartTime] = useState(null);
   const [onlineNotifications, setOnlineNotifications] = useState({});
   const [isCallMinimized, setIsCallMinimized] = useState(false);
+  const [newMsgToasts, setNewMsgToasts] = useState([]); // [{id, senderName, text, userId}]
+  const prevUnreadRef = useRef({});
+  const prevLastMsgRef = useRef({});
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -415,11 +418,41 @@ const ChatBox = () => {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch("/api/chat/last-messages", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setLastMessages(await res.json());
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Detect new messages and fire toast notifications
+        Object.entries(data).forEach(([key, msg]) => {
+          if (!msg || !msg.createdAt) return;
+          const prev = prevLastMsgRef.current[key];
+          const isNewMsg = !prev || new Date(msg.createdAt) > new Date(prev.createdAt);
+          // Don't toast for own messages or the currently open chat
+          const isOwnMsg = msg.senderId?.toString() === currentUser.id?.toString();
+          const isActiveChat =
+            (key === selectedUser && viewMode === "private") ||
+            (key === "all" && viewMode === "all") ||
+            (key.startsWith("department:") && selectedDepartment && key === `department:${selectedDepartment._id}` && viewMode === "department");
+
+          if (isNewMsg && !isOwnMsg && !isActiveChat && prev) {
+            // Find sender name
+            let senderName = msg.senderName || "Someone";
+            const toastId = `${key}-${msg.createdAt}`;
+            setNewMsgToasts(prev => {
+              if (prev.find(t => t.id === toastId)) return prev;
+              return [...prev, { id: toastId, senderName, text: msg.text || "📎 Attachment", chatKey: key }];
+            });
+            setTimeout(() => {
+              setNewMsgToasts(prev => prev.filter(t => t.id !== toastId));
+            }, 5000);
+          }
+        });
+
+        prevLastMsgRef.current = data;
+        setLastMessages(data);
       } catch (err) {}
     };
-    fetchLast(); const iv = setInterval(fetchLast, 5000); return () => clearInterval(iv);
-  }, [currentUser]);
+    fetchLast(); const iv = setInterval(fetchLast, 3000); return () => clearInterval(iv);
+  }, [currentUser, selectedUser, viewMode, selectedDepartment]);
 
   useEffect(() => {
     if (!currentUser || viewMode === "none") return;
@@ -1212,34 +1245,56 @@ const ChatBox = () => {
           }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#8696a0" }}>Departments</span>
           </div>
-          {deptSectionOpen && filteredDepts.map(dept => (
-            <div key={dept._id} style={{ ...S.sidebarItem, ...(selectedDepartment?._id === dept._id ? S.sidebarItemActive : {}) }}
+          {deptSectionOpen && [...filteredDepts].sort((a, b) => {
+            const aTime = lastMessages[`department:${a._id}`]?.createdAt ? new Date(lastMessages[`department:${a._id}`].createdAt) : new Date(0);
+            const bTime = lastMessages[`department:${b._id}`]?.createdAt ? new Date(lastMessages[`department:${b._id}`].createdAt) : new Date(0);
+            return bTime - aTime;
+          }).map(dept => {
+            const hasUnread = (unreadCounts[`department:${dept._id}`] || 0) > 0;
+            return (
+            <div key={dept._id} style={{ ...S.sidebarItem, ...(selectedDepartment?._id === dept._id ? S.sidebarItemActive : {}), ...(hasUnread ? { background: "rgba(0,168,132,0.07)" } : {}) }}
               onClick={() => { setViewMode("department"); setSelectedDepartment(dept); setSelectedUser(null); loadGroupInfo(dept); markAsRead(null, { departmentId: dept._id }); }}>
               <div style={{ ...S.avatar, background: "linear-gradient(135deg, #8b5cf6, #6d28d9)", width: 44, height: 44, fontSize: 16 }}>{getInitials(dept.name)}</div>
               <div style={S.sidebarItemInfo}>
-                <div style={S.sidebarItemName}>{dept.name}</div>
-                <div style={S.sidebarItemPreview}>{typeof lastMessages[`department:${dept._id}`] === "string" ? lastMessages[`department:${dept._id}`].substring(0, 40) : "No messages yet"}</div>
+                <div style={{ ...S.sidebarItemName, fontWeight: hasUnread ? 700 : 500 }}>{dept.name}</div>
+                <div style={{ ...S.sidebarItemPreview, display: "flex", alignItems: "center", gap: 4 }}>
+                  {hasUnread && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0, display: "inline-block" }} />}
+                  <span style={{ color: hasUnread ? "#e9edef" : undefined, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {typeof lastMessages[`department:${dept._id}`]?.text === "string" ? lastMessages[`department:${dept._id}`].text.substring(0, 40) : typeof lastMessages[`department:${dept._id}`] === "string" ? lastMessages[`department:${dept._id}`].substring(0, 40) : "No messages yet"}
+                  </span>
+                </div>
               </div>
-              {(unreadCounts[`department:${dept._id}`] || 0) > 0 && <div style={S.badge}>{unreadCounts[`department:${dept._id}`]}</div>}
+              {hasUnread && <div style={S.badge}>{unreadCounts[`department:${dept._id}`]}</div>}
             </div>
-          ))}
+          )})}
           <div style={S.sectionHeader} onClick={() => setDmSectionOpen(v => !v)}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#8696a0" }}>Direct Messages</span>
           </div>
-          {dmSectionOpen && filteredStaff.map(staff => (
-            <div key={staff._id} style={{ ...S.sidebarItem, ...(selectedUser === staff._id ? S.sidebarItemActive : {}) }}
+          {dmSectionOpen && [...filteredStaff].sort((a, b) => {
+            const aTime = lastMessages[a._id]?.createdAt ? new Date(lastMessages[a._id].createdAt) : new Date(0);
+            const bTime = lastMessages[b._id]?.createdAt ? new Date(lastMessages[b._id].createdAt) : new Date(0);
+            return bTime - aTime;
+          }).map(staff => {
+            const hasUnread = (unreadCounts[staff._id] || 0) > 0;
+            return (
+            <div key={staff._id} style={{ ...S.sidebarItem, ...(selectedUser === staff._id ? S.sidebarItemActive : {}), ...(hasUnread ? { background: "rgba(0,168,132,0.07)" } : {}) }}
               onClick={() => { setViewMode("private"); setSelectedUser(staff._id); setSelectedDepartment(null); markAsRead(staff._id); }}>
               <div style={S.avatarWrap}>
                 <div style={{ ...S.avatar, background: "linear-gradient(135deg, #3b82f6, #1d4ed8)", width: 44, height: 44, fontSize: 16 }}>{getInitials(staff.name)}</div>
                 <div style={{ ...S.onlineDot, background: onlineStatus[staff._id]?.online ? "#31a24c" : "#64748b" }} />
               </div>
               <div style={S.sidebarItemInfo}>
-                <div style={S.sidebarItemName}>{staff.name}</div>
-                <div style={S.sidebarItemPreview}>{typeof lastMessages[staff._id] === "string" ? lastMessages[staff._id].substring(0, 40) : "No messages yet"}</div>
+                <div style={{ ...S.sidebarItemName, fontWeight: hasUnread ? 700 : 500 }}>{staff.name}</div>
+                <div style={{ ...S.sidebarItemPreview, display: "flex", alignItems: "center", gap: 4 }}>
+                  {hasUnread && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0, display: "inline-block" }} />}
+                  <span style={{ color: hasUnread ? "#e9edef" : undefined, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {typeof lastMessages[staff._id]?.text === "string" ? lastMessages[staff._id].text.substring(0, 40) : typeof lastMessages[staff._id] === "string" ? lastMessages[staff._id].substring(0, 40) : "No messages yet"}
+                  </span>
+                </div>
               </div>
-              {(unreadCounts[staff._id] || 0) > 0 && <div style={S.badge}>{unreadCounts[staff._id]}</div>}
+              {hasUnread && <div style={S.badge}>{unreadCounts[staff._id]}</div>}
             </div>
-          ))}
+          )})}
         </div>
       </div>
 
@@ -1568,6 +1623,41 @@ const ChatBox = () => {
                   }
                 `}</style>
                 🟢 {message}
+              </div>
+            ))}
+            {newMsgToasts.map((toast, idx) => (
+              <div key={toast.id} style={{ position: "fixed", top: 20 + (idx * 70), right: 20, background: "linear-gradient(135deg, #3b82f6, #1e40af)", color: "#fff", padding: "12px 16px", borderRadius: 12, zIndex: 200, fontSize: 13, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", minWidth: 280, maxWidth: 320, animation: "slideInRight 0.3s ease", cursor: "pointer" }}
+                onClick={() => {
+                  // Navigate to the chat
+                  const key = toast.chatKey;
+                  if (key === "all") {
+                    setViewMode("all");
+                    setSelectedUser(null);
+                    setSelectedDepartment(null);
+                  } else if (key.startsWith("department:")) {
+                    const deptId = key.replace("department:", "");
+                    const dept = departments.find(d => d._id === deptId);
+                    if (dept) {
+                      setViewMode("department");
+                      setSelectedDepartment(dept);
+                      setSelectedUser(null);
+                      loadGroupInfo(dept);
+                    }
+                  } else {
+                    setViewMode("private");
+                    setSelectedUser(key);
+                    setSelectedDepartment(null);
+                  }
+                  setNewMsgToasts(prev => prev.filter(t => t.id !== toast.id));
+                }}>
+                <style>{`
+                  @keyframes slideInRight {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                  }
+                `}</style>
+                <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 14 }}>💬 {toast.senderName}</div>
+                <div style={{ fontSize: 12, opacity: 0.9, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{toast.text}</div>
               </div>
             ))}
             {activeCall && (
