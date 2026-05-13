@@ -44,6 +44,8 @@ const handler = async (req, res) => {
     await req.db.collection('recyclebin').insertOne({
       ...file,
       originalStaffId: sId,
+      staffName: staffMember.name,
+      staffEmail: staffMember.email,
       deletedBy: adminId,
       deletedByName: req.user.name,
       deletedAt: new Date(),

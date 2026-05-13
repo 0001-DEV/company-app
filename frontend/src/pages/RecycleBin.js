@@ -125,7 +125,7 @@ const RecycleBin = () => {
                       Uploaded: {new Date(item.file.uploadedAt).toLocaleString()}
                     </div>
                     <div style={styles.deleteDate}>
-                      Deleted: {new Date(item.file.deletedAt).toLocaleString()}
+                      Deleted: {new Date(item.deletedAt).toLocaleString()}
                     </div>
                     {item.file.comment && (
                       <div style={styles.comment}>

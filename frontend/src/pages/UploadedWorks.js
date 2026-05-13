@@ -283,7 +283,6 @@ const UploadedWorks = () => {
   };
 
   const handleDelete = async (staffId, fileId, fileName) => {
-    if (!window.confirm(`Move "${fileName}" to recycle bin?`)) return;
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`/api/admin/delete-staff-file/${staffId}/${fileId}`, {

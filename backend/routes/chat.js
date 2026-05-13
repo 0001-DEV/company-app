@@ -265,12 +265,28 @@ router.delete("/messages/:messageId", verifyUser, async (req, res) => {
     if (req.user.role === 'admin') {
       message.isDeleted = true;
       message.text = "This message was deleted";
+      message.files = []; // Remove files so they aren't rendered anymore
       message.updatedAt = new Date();
       await message.save();
       return res.json({ message: "Message deleted" });
     }
     
     if (message.senderId.toString() !== req.user.id.toString()) {
+      if (message.receiverId && message.receiverId.startsWith('department:')) {
+        const deptId = message.receiverId.replace('department:', '');
+        const Department = require('../models/Department');
+        const dept = await Department.findById(deptId);
+        const isGroupAdmin = dept && (dept.groupAdmins || []).map(id => id.toString()).includes(req.user.id.toString());
+        
+        if (isGroupAdmin) {
+          message.isDeleted = true;
+          message.text = "This message was deleted by a group admin";
+          message.files = [];
+          message.updatedAt = new Date();
+          await message.save();
+          return res.json({ message: "Message deleted by group admin" });
+        }
+      }
       return res.status(403).json({ message: "You can only delete your own messages" });
     }
     
@@ -282,6 +298,7 @@ router.delete("/messages/:messageId", verifyUser, async (req, res) => {
     
     message.isDeleted = true;
     message.text = "This message was deleted";
+    message.files = [];
     message.updatedAt = new Date();
     await message.save();
     
@@ -670,8 +687,14 @@ router.put("/department-settings/:deptId", verifyUser, async (req, res) => {
     if (req.body.disappearAfterDays !== undefined) {
       dept.disappearAfterDays = req.body.disappearAfterDays;
     }
+    if (req.body.onlyAdminsCanSend !== undefined) {
+      dept.onlyAdminsCanSend = req.body.onlyAdminsCanSend;
+    }
     await dept.save();
-    res.json({ disappearAfterDays: dept.disappearAfterDays });
+    res.json({ 
+      disappearAfterDays: dept.disappearAfterDays,
+      onlyAdminsCanSend: dept.onlyAdminsCanSend 
+    });
   } catch (err) {
     res.status(500).json({ message: "Error updating settings" });
   }
@@ -764,7 +787,7 @@ router.post("/call/end", verifyUser, async (req, res) => {
   res.json({ ok: true });
 });
 
-// Save call notification (picked up or declined)
+// Save call notification (picked up or declined or missed)
 router.post("/call/save-notification", verifyUser, async (req, res) => {
   try {
     const { receiverId, callType, status, duration } = req.body;
@@ -776,6 +799,9 @@ router.post("/call/save-notification", verifyUser, async (req, res) => {
     } else if (status === "declined") {
       const icon = callType === "video" ? "📹" : "📞";
       text = `${icon} Declined ${callType} call`;
+    } else if (status === "missed") {
+      const icon = callType === "video" ? "📹" : "📞";
+      text = `${icon} Missed ${callType} call`;
     }
     
     if (text) {

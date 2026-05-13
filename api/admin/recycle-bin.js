@@ -16,14 +16,16 @@ const handler = async (req, res) => {
       _id: item._id,
       staffId: item.originalStaffId,
       staffName: item.staffName || 'Unknown Staff',
+      staffEmail: item.staffEmail || '',
       deletedAt: item.deletedAt,
       deletedByName: item.deletedByName,
       file: {
         _id: item._id, // Original file ID
-        originalName: item.originalName || 'Unknown File',
-        displayName: item.displayName,
-        path: item.path,
-        uploadedAt: item.uploadedAt
+        originalName: item.originalName || item.fileName || 'Unknown File',
+        displayName: item.displayName || item.fileName,
+        path: item.path || item.filePath,
+        uploadedAt: item.uploadedAt,
+        comment: item.comment
       }
     }));
 

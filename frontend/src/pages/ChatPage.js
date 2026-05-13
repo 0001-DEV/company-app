@@ -146,21 +146,39 @@ const ChatPage = () => {
         }
       }
       
-      console.log('Loading conversations from:', endpoint);
-      const res = await fetch(endpoint, { headers });
+      // Also fetch last messages to sort conversations
+      const [res, lastMsgsRes] = await Promise.all([
+        fetch(endpoint, { headers }),
+        fetch('/api/chat/last-messages', { headers })
+      ]);
+
       if (res.ok) {
         let data = await res.json();
-        console.log('Conversations loaded:', data);
-        if (data.length > 0) {
-          console.log('First item details:', JSON.stringify(data[0], null, 2));
-        }
+        
         // If staff gets their single department, wrap it in an array
         if (!Array.isArray(data)) {
           data = [data];
         }
+
+        if (lastMsgsRes.ok) {
+          const lastMessages = await lastMsgsRes.json();
+          // Map latest message details into the conversation array and sort
+          data = data.map(conv => {
+            const key = chatMode === 'direct' ? conv._id : `department:${conv._id}`;
+            const lastMsg = lastMessages[key];
+            return {
+              ...conv,
+              lastMessageText: lastMsg ? lastMsg.text : null,
+              lastMessageTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0,
+              lastMessageSender: lastMsg ? lastMsg.senderName : null
+            };
+          }).sort((a, b) => {
+            // Sort descending by last message time
+            return b.lastMessageTime - a.lastMessageTime;
+          });
+        }
+        
         setConversations(data);
-      } else {
-        console.error('Failed to load conversations:', res.status);
       }
     } catch (err) {
       console.error('Error loading conversations:', err);
@@ -468,6 +486,8 @@ const ChatPage = () => {
         setMessageText('');
         setReplyingTo(null);
         await loadMessages();
+        // Update conversation list to bump the chat to the top
+        loadConversations();
       } else {
         const error = await res.json();
         console.error('Error sending message:', error);
@@ -718,6 +738,8 @@ const ChatPage = () => {
       
       if (res.ok) {
         await loadMessages();
+        // Update conversation list to bump the chat to the top
+        loadConversations();
       } else {
         const error = await res.json();
         alert('Error: ' + error.message);
@@ -794,14 +816,72 @@ const ChatPage = () => {
   const answerCall = () => {
     setCallState('connected');
     startCallTimer();
+    
+    // Save call status via backend
+    if (chatMode === 'direct') {
+      const authHeaders = getAuthHeader();
+      fetch('/api/chat/call/save-notification', {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiverId: selectedConversation._id,
+          callType,
+          status: 'picked',
+          duration: formatCallDuration(0)
+        })
+      }).catch(err => console.error(err));
+    }
   };
 
   // Manually decline call
   const declineCall = () => {
+    // Save declined status via backend
+    if (chatMode === 'direct') {
+      const authHeaders = getAuthHeader();
+      fetch('/api/chat/call/save-notification', {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiverId: selectedConversation._id,
+          callType,
+          status: 'declined',
+          duration: '0:00'
+        })
+      }).catch(err => console.error(err));
+    }
+    
     endCall();
   };
 
   const endCall = () => {
+    // If it was connected, update the notification with final duration
+    if (callState === 'connected' && chatMode === 'direct') {
+      const authHeaders = getAuthHeader();
+      fetch('/api/chat/call/save-notification', {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiverId: selectedConversation._id,
+          callType,
+          status: 'picked',
+          duration: formatCallDuration(callDuration)
+        })
+      }).catch(err => console.error(err));
+    } else if (callState === 'calling' && chatMode === 'direct') {
+      // It was ringing and caller ended it (Missed call)
+      const authHeaders = getAuthHeader();
+      fetch('/api/chat/call/save-notification', {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiverId: selectedConversation._id,
+          callType,
+          status: 'missed',
+          duration: '0:00'
+        })
+      }).catch(err => console.error(err));
+    }
+
     // Stop all media tracks
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
@@ -1069,6 +1149,8 @@ const ChatPage = () => {
         setReplyingTo(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         await loadMessages();
+        // Update conversation list to bump the chat to the top
+        loadConversations();
       } else {
         const error = await res.json();
         console.error('Upload error:', error);
@@ -1183,7 +1265,12 @@ const ChatPage = () => {
                 <div className="chat-conv-info">
                   <div className="chat-conv-name">{conv.name || conv.email}</div>
                   <div className="chat-conv-preview">
-                    {chatMode === 'department' && (conv.memberCount !== undefined || conv.members)
+                    {conv.lastMessageText ? (
+                      <span style={{ color: '#64748b', fontSize: '12px' }}>
+                        {conv.lastMessageSender === user.name ? 'You: ' : `${conv.lastMessageSender}: `}
+                        {conv.lastMessageText.length > 20 ? conv.lastMessageText.substring(0, 20) + '...' : conv.lastMessageText}
+                      </span>
+                    ) : chatMode === 'department' && (conv.memberCount !== undefined || conv.members)
                       ? `${conv.memberCount || conv.members?.length || 0} members` 
                       : 'Click to chat...'}
                   </div>
@@ -1409,6 +1496,21 @@ const ChatPage = () => {
                             <div className="chat-gallery-info">
                               <small>{msg.senderName}</small>
                               <small>{new Date(msg.createdAt).toLocaleDateString()}</small>
+                              {(msg.senderId === user.id || user.role === 'admin' || (chatMode === 'department' && selectedConversation?.groupAdmins?.includes(user.id))) && (
+                                <button 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if(window.confirm('Delete this media?')) {
+                                      await deleteMessage(msg._id);
+                                      loadMediaGallery();
+                                    }
+                                  }}
+                                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '14px', padding: '2px 6px', float: 'right' }}
+                                  title="Delete Media"
+                                >
+                                  🗑️
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
@@ -1423,6 +1525,36 @@ const ChatPage = () => {
             {showMembers && chatMode === 'department' && (
               <div className="chat-pinned-panel">
                 <h4>👥 Department Members ({departmentMembers.length})</h4>
+                
+                {(user.role === 'admin' || selectedConversation?.groupAdmins?.includes(user.id)) && (
+                  <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                    <h5 style={{ marginTop: 0, marginBottom: '8px', fontSize: '13px' }}>⚙️ Group Settings</h5>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedConversation.onlyAdminsCanSend || false}
+                        onChange={async (e) => {
+                          const checked = e.target.checked;
+                          try {
+                            const res = await fetch(`/api/chat/department-settings/${selectedConversation._id}`, {
+                              method: 'PUT',
+                              headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ onlyAdminsCanSend: checked })
+                            });
+                            if(res.ok) {
+                              setSelectedConversation({ ...selectedConversation, onlyAdminsCanSend: checked });
+                              loadConversations();
+                            }
+                          } catch(err) {
+                            console.error(err);
+                          }
+                        }}
+                      />
+                      Only admins can send messages
+                    </label>
+                  </div>
+                )}
+
                 <div className="chat-members-list">
                   {departmentMembers.length === 0 ? (
                     <p>No members in this department</p>
@@ -1495,10 +1627,12 @@ const ChatPage = () => {
                       )}
                       <div className="chat-message-content">
                         <strong>{msg.senderName}</strong>
-                        <p>{msg.text}</p>
+                        <p style={{ fontStyle: msg.isDeleted ? 'italic' : 'normal', color: msg.isDeleted ? 'rgba(255,255,255,0.6)' : 'inherit' }}>
+                          {msg.isDeleted ? '🚫 This message was deleted' : msg.text}
+                        </p>
                         
                         {/* File attachments */}
-                        {msg.files && msg.files.length > 0 && (
+                        {!msg.isDeleted && msg.files && msg.files.length > 0 && (
                           <div className="chat-message-files">
                             {msg.files.map((file, idx) => {
                               const canDownload = user.role === 'admin' || 
@@ -1656,8 +1790,13 @@ const ChatPage = () => {
             )}
 
             {/* Input Area */}
-            <div className="chat-input-area">
-              {!isRecording ? (
+            {chatMode === 'department' && selectedConversation?.onlyAdminsCanSend && user.role !== 'admin' && !selectedConversation?.groupAdmins?.includes(user.id) ? (
+              <div className="chat-input-area" style={{ justifyContent: 'center', color: '#94a3b8', padding: '16px', background: 'rgba(0,0,0,0.02)' }}>
+                🔒 Only group admins can send messages in this department
+              </div>
+            ) : (
+              <div className="chat-input-area">
+                {!isRecording ? (
                 <>
                   <input
                     type="file"
@@ -1672,6 +1811,14 @@ const ChatPage = () => {
                     title="Attach files"
                   >
                     📎
+                  </button>
+                  <button
+                    className="chat-voice-btn"
+                    onClick={startRecording}
+                    title="Record voice message"
+                    style={{ margin: '0 8px', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}
+                  >
+                    🎙️
                   </button>
                   
                   <div className="chat-input-wrapper">
@@ -1770,15 +1917,7 @@ const ChatPage = () => {
                     >
                       {loading ? '⏳' : '➤'}
                     </button>
-                  ) : (
-                    <button
-                      className="chat-voice-btn"
-                      onClick={startRecording}
-                      title="Record voice message"
-                    >
-                      🎤
-                    </button>
-                  )}
+                  ) : null}
                 </>
               ) : (
                 <div className="chat-recording-ui">
@@ -1797,6 +1936,7 @@ const ChatPage = () => {
                 </div>
               )}
             </div>
+            )}
           </>
         ) : (
           <div className="chat-empty-state">
@@ -2051,7 +2191,7 @@ const ChatPage = () => {
                     </>
                   )}
                   
-                  {(callState === 'calling' || callState === 'connected') && (
+                  {(callState === 'calling' || callState === 'ringing' || callState === 'connected') && (
                     <button
                       className="whatsapp-end-call-btn"
                       onClick={endCall}
