@@ -247,6 +247,28 @@ const ChatBox = () => {
     } catch (_) {}
   };
 
+  const handleDeleteMedia = async (msgId) => {
+    if (!window.confirm("Delete this media message?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`/api/chat/messages/${msgId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      setMediaMessages(prev => prev.filter(m => m._id !== msgId));
+    } catch (_) {}
+  };
+
+  const handleUpdateGroupSettings = async (settings) => {
+    if (!selectedDepartment) return;
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`/api/admin/department/${selectedDepartment._id}/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(settings)
+      });
+      if (settings.onlyAdminsCanSend !== undefined) setOnlyAdminsCanSend(settings.onlyAdminsCanSend);
+    } catch (_) {}
+  };
+
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", onResize);
@@ -1507,6 +1529,9 @@ const ChatBox = () => {
                 <div style={{ display: "flex", gap: 8, padding: "12px", borderBottom: "1px solid #35354f" }}>
                   <button onClick={() => setGroupInfoTab("members")} style={{ flex: 1, padding: "8px", background: groupInfoTab === "members" ? "#6366f1" : "#35354f", border: "none", color: "#e9edef", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Members</button>
                   <button onClick={() => setGroupInfoTab("media")} style={{ flex: 1, padding: "8px", background: groupInfoTab === "media" ? "#6366f1" : "#35354f", border: "none", color: "#e9edef", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Media</button>
+                  {(currentUser?.role === "admin" || groupAdmins.some(a => a._id?.toString() === currentUser?.id?.toString())) && (
+                    <button onClick={() => setGroupInfoTab("settings")} style={{ flex: 1, padding: "8px", background: groupInfoTab === "settings" ? "#6366f1" : "#35354f", border: "none", color: "#e9edef", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Settings</button>
+                  )}
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
                   {groupInfoTab === "members" ? (
@@ -1517,13 +1542,18 @@ const ChatBox = () => {
                           <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>{getInitials(admin.name)}</div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13, color: "#e9edef", fontWeight: 600 }}>{admin.name}</div>
-                            <div style={{ fontSize: 11, color: "#8888aa" }}>Admin</div>
+                            <div style={{ fontSize: 11, color: "#8888aa" }}>Group Admin</div>
                           </div>
+                          {currentUser?.role === "admin" && (
+                            <button onClick={() => handleRemoveGroupAdmin(admin._id)} style={{ background: "rgba(220,38,38,0.2)", color: "#f87171", border: "1px solid rgba(220,38,38,0.4)", borderRadius: 4, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600 }}>Remove</button>
+                          )}
                         </div>
                       ))}
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#8888aa", marginBottom: 8, marginTop: 16 }}>Members ({groupMembers.length})</div>
                       {groupMembers.map((member, idx) => {
-                        const isAdmin = groupAdmins.some(a => a._id === member._id);
+                        const isGroupAdm = groupAdmins.some(a => a._id?.toString() === member._id?.toString());
+                        const iAmAdmin = currentUser?.role === "admin";
+                        const iAmGroupAdmin = groupAdmins.some(a => a._id?.toString() === currentUser?.id?.toString());
                         return (
                           <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "#2a2a3e", borderRadius: 6, marginBottom: 6 }}>
                             <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>{getInitials(member.name)}</div>
@@ -1531,31 +1561,50 @@ const ChatBox = () => {
                               <div style={{ fontSize: 13, color: "#e9edef", fontWeight: 600 }}>{member.name}</div>
                               <div style={{ fontSize: 11, color: "#8888aa" }}>{onlineStatus[member._id]?.online ? "🟢 Online" : "⚫ Offline"}</div>
                             </div>
-                            {currentUser?.role === "admin" && (
-                              <div style={{ display: "flex", gap: 4 }}>
-                                {!isAdmin ? (
-                                  <button onClick={() => handleMakeGroupAdmin(member._id)} style={{ background: "rgba(79, 70, 229, 0.2)", color: "#a5b4fc", border: "1px solid rgba(79, 70, 229, 0.4)", borderRadius: 4, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600 }}>Make Admin</button>
-                                ) : (
-                                  <button onClick={() => handleRemoveGroupAdmin(member._id)} style={{ background: "rgba(220, 38, 38, 0.2)", color: "#f87171", border: "1px solid rgba(220, 38, 38, 0.4)", borderRadius: 4, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600 }}>Remove Admin</button>
-                                )}
-                              </div>
+                            {(iAmAdmin || iAmGroupAdmin) && !isGroupAdm && (
+                              <button onClick={() => handleMakeGroupAdmin(member._id)} style={{ background: "rgba(79,70,229,0.2)", color: "#a5b4fc", border: "1px solid rgba(79,70,229,0.4)", borderRadius: 4, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600 }}>Make Admin</button>
                             )}
                           </div>
                         );
                       })}
                     </>
-                  ) : (
+                  ) : groupInfoTab === "media" ? (
                     <div>
                       {mediaMessages.length === 0 ? (
                         <div style={{ textAlign: "center", color: "#8888aa", padding: "40px 20px" }}>No media shared</div>
                       ) : (
-                        mediaMessages.map((msg, idx) => (
-                          <div key={idx} style={{ marginBottom: 12 }}>
-                            {isImageFile(msg.fileName) && <img src={`/${msg.fileName}`} alt="media" style={{ width: "100%", borderRadius: 8 }} />}
-                            {isVideoFile(msg.fileName) && <video src={`/${msg.fileName}`} style={{ width: "100%", borderRadius: 8 }} controls />}
-                          </div>
-                        ))
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          {mediaMessages.map((msg, idx) => {
+                            const canDeleteMedia = currentUser?.role === "admin" || groupAdmins.some(a => a._id?.toString() === currentUser?.id?.toString());
+                            return (
+                              <div key={idx} style={{ position: "relative", borderRadius: 8, overflow: "hidden" }}>
+                                {isImageFile(msg.fileName) && <img src={`/${msg.fileName}`} alt="media" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block" }} />}
+                                {isVideoFile(msg.fileName) && <video src={`/${msg.fileName}`} style={{ width: "100%", aspectRatio: "1", objectFit: "cover" }} />}
+                                {canDeleteMedia && (
+                                  <button onClick={() => handleDeleteMedia(msg._id)} style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", border: "none", color: "#fff", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
+                    </div>
+                  ) : (
+                    /* Settings tab */
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#8888aa", marginBottom: 4 }}>Group Permissions</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", background: "#2a2a3e", borderRadius: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 13, color: "#e9edef", fontWeight: 600 }}>Only admins can send</div>
+                          <div style={{ fontSize: 11, color: "#8888aa", marginTop: 2 }}>Members can only read messages</div>
+                        </div>
+                        <button
+                          onClick={() => handleUpdateGroupSettings({ onlyAdminsCanSend: !onlyAdminsCanSend })}
+                          style={{ width: 44, height: 24, borderRadius: 12, background: onlyAdminsCanSend ? "#6366f1" : "#35354f", border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}
+                        >
+                          <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: onlyAdminsCanSend ? 23 : 3, transition: "left 0.2s" }} />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1698,22 +1747,33 @@ const ChatBox = () => {
               </div>
             ))}
             {activeCall && (
-              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", padding: "32px", borderRadius: 16, zIndex: 200, fontSize: 14, display: "flex", flexDirection: "column", gap: 20, alignItems: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", minWidth: 320 }}>
+              <div style={{ position: "fixed", inset: 0, background: "linear-gradient(135deg, #1a6b4a, #0d4a32)", color: "#fff", zIndex: 500, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", padding: "48px 32px 56px" }}>
                 <style>{`
-                  @keyframes pulse-call {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.6; }
-                  }
-                  .calling-icon {
-                    animation: pulse-call 1s infinite;
-                  }
+                  @keyframes pulse-call { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.04); } }
+                  .calling-icon { animation: pulse-call 1.5s infinite; }
                 `}</style>
-                <div style={{ fontSize: 56 }} className="calling-icon">📞</div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Calling {activeCall.receiverName}</div>
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>Waiting for response...</div>
+                {/* Top: receiver info */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, marginTop: 32 }}>
+                  <div className="calling-icon" style={{ width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 700, border: "3px solid rgba(255,255,255,0.3)" }}>
+                    {getInitials(activeCall.receiverName)}
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 700 }}>{activeCall.receiverName}</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>Ringing...</div>
                 </div>
-                <button onClick={endCall} style={{ background: "#ef4444", border: "none", color: "#fff", padding: "12px 32px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseOver={e => e.target.style.background = "#dc2626"} onMouseOut={e => e.target.style.background = "#ef4444"}>✕ End Call</button>
+                {/* Middle: caller avatar */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, border: "2px solid rgba(255,255,255,0.2)" }}>
+                    {getInitials(currentUser?.name || "")}
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {[1,2,3,4].map(i => <div key={i} style={{ width: 3, height: 16 + i * 4, background: "rgba(255,255,255,0.5)", borderRadius: 2 }} />)}
+                  </div>
+                </div>
+                {/* Bottom: end call button */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                  <button onClick={endCall} style={{ width: 64, height: 64, borderRadius: "50%", background: "#ef4444", border: "none", color: "#fff", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(239,68,68,0.5)" }}>📵</button>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>End Call</span>
+                </div>
               </div>
             )}
             {incomingCall && (
