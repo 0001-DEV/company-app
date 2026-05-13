@@ -43,6 +43,7 @@ export default function Workspace() {
   const [showAddMember, setShowAddMember] = useState(false);
   const [addingTask, setAddingTask] = useState(null);
   const [taskText, setTaskText] = useState('');
+  const [copyToAllDays, setCopyToAllDays] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [snapshots, setSnapshots] = useState([]);
   const [activeSnapshot, setActiveSnapshot] = useState(null);
@@ -184,17 +185,21 @@ export default function Workspace() {
 
   const addTask = async () => {
     if (!taskText.trim() || !addingTask) return;
-    const res = await fetch(`/api/task-boards/${activeBoard._id}/task`, {
-      method: 'POST',
-      headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ memberId: addingTask.memberId, day: addingTask.day, text: taskText })
-    });
-    if (res.ok) {
-      const updated = await res.json();
+    const daysToAdd = copyToAllDays ? boardDays : [addingTask.day];
+    let updated;
+    for (const day of daysToAdd) {
+      const res = await fetch(`/api/task-boards/${activeBoard._id}/task`, {
+        method: 'POST',
+        headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId: addingTask.memberId, day, text: taskText })
+      });
+      if (res.ok) updated = await res.json();
+    }
+    if (updated) {
       setActiveBoard(updated);
       setBoards(prev => prev.map(b => b._id === updated._id ? updated : b));
     }
-    setTaskText(''); setAddingTask(null);
+    setTaskText(''); setAddingTask(null); setCopyToAllDays(false);
   };
 
   const toggleTask = async (memberId, day, taskId) => {
@@ -395,15 +400,21 @@ export default function Workspace() {
                                 isAddingHere ? (
                                   <div className="wb-add-task-form">
                                     <input autoFocus value={taskText} onChange={e => setTaskText(e.target.value)}
-                                      onKeyDown={e => { if (e.key === 'Enter') addTask(); if (e.key === 'Escape') setAddingTask(null); }}
+                                      onKeyDown={e => { if (e.key === 'Enter') addTask(); if (e.key === 'Escape') { setAddingTask(null); setCopyToAllDays(false); } }}
                                       placeholder="Type task, press Enter..." className="wb-task-input" />
+                                    <label className="wb-copy-all-label">
+                                      <input type="checkbox" checked={copyToAllDays} onChange={e => setCopyToAllDays(e.target.checked)} />
+                                      <span>📋 Add to all days</span>
+                                    </label>
                                     <div className="wb-add-task-btns">
-                                      <button onClick={addTask} className="wb-save-task">Add</button>
-                                      <button onClick={() => { setAddingTask(null); setTaskText(''); }} className="wb-cancel-task">Cancel</button>
+                                      <button onClick={addTask} className="wb-save-task">
+                                        {copyToAllDays ? `Add to all ${boardDays.length} days` : 'Add'}
+                                      </button>
+                                      <button onClick={() => { setAddingTask(null); setTaskText(''); setCopyToAllDays(false); }} className="wb-cancel-task">Cancel</button>
                                     </div>
                                   </div>
                                 ) : (
-                                  <button className="wb-add-task-btn" onClick={() => { setAddingTask({ memberId: member._id, day }); setTaskText(''); }}>
+                                  <button className="wb-add-task-btn" onClick={() => { setAddingTask({ memberId: member._id, day }); setTaskText(''); setCopyToAllDays(false); }}>
                                     + Add a task
                                   </button>
                                 )

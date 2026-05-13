@@ -1115,3 +1115,24 @@ html.dark-theme .wb-history-day-label { color: #4b5563; }
 html.dark-theme .wb-history-task { color: #d1d5db; }
 html.dark-theme .wb-history-task.done { color: #4b5563; }
 html.dark-theme .wb-history-task:not(.done) .wb-history-task-check { color: #374151; }
+
+/* ── Copy to all days toggle ── */
+.wb-copy-all-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6366f1;
+  cursor: pointer;
+  margin: 5px 0 2px;
+  user-select: none;
+}
+.wb-copy-all-label input[type="checkbox"] {
+  accent-color: #6366f1;
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+
+html.dark-theme .wb-copy-all-label { color: #818cf8; }
