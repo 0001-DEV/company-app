@@ -43,6 +43,10 @@ export default function Workspace() {
   const [showAddMember, setShowAddMember] = useState(false);
   const [addingTask, setAddingTask] = useState(null);
   const [taskText, setTaskText] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
+  const [snapshots, setSnapshots] = useState([]);
+  const [activeSnapshot, setActiveSnapshot] = useState(null);
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false);
 
   const [boardForm, setBoardForm] = useState({ name: '', weekLabel: '', selectedDays: [...DAYS], memberIds: [] });
   const [createFilter, setCreateFilter] = useState('all');
@@ -90,6 +94,17 @@ export default function Workspace() {
       const res = await fetch('/api/admin/departments', { headers: getAuthHeader() });
       if (res.ok) setDepartments(await res.json());
     } catch (e) {}
+  };
+
+  const loadSnapshots = async (boardId) => {
+    setSnapshotsLoading(true);
+    setActiveSnapshot(null);
+    try {
+      const res = await fetch(`/api/task-boards/${boardId}/snapshots`, { headers: getAuthHeader() });
+      if (res.ok) setSnapshots(await res.json());
+      else setSnapshots([]);
+    } catch (e) { setSnapshots([]); }
+    setSnapshotsLoading(false);
   };
 
   const filterStaff = (deptFilter, search, list) => list.filter(s => {
@@ -336,6 +351,7 @@ export default function Workspace() {
                 <div className="wb-board-actions">
                   <button className="wb-action-btn" onClick={() => setShowAddMember(true)}>+ Add Person</button>
                   <button className="wb-action-btn reset" onClick={resetWeek}>🔄 New Week</button>
+                  {isAdmin && <button className="wb-action-btn" onClick={() => { setShowHistory(true); loadSnapshots(activeBoard._id); }}>📚 History</button>}
                   <button className="wb-action-btn danger" onClick={() => deleteBoard(activeBoard._id)}>Delete</button>
                 </div>
               )}
@@ -486,6 +502,86 @@ export default function Workspace() {
               {addFilteredStaff.length === 0 && (
                 <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '8px 0' }}>All staff already added</div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Panel */}
+      {showHistory && (
+        <div className="wb-modal-overlay" onClick={() => { setShowHistory(false); setActiveSnapshot(null); }}>
+          <div className="wb-modal wb-history-modal" onClick={e => e.stopPropagation()}>
+            <div className="wb-modal-header">
+              <h3>📚 Week History — {activeBoard?.name}</h3>
+              <button onClick={() => { setShowHistory(false); setActiveSnapshot(null); }}>✕</button>
+            </div>
+            <div className="wb-history-body">
+              {/* Snapshot list */}
+              <div className="wb-history-sidebar">
+                <div className="wb-history-sidebar-title">Past Weeks</div>
+                {snapshotsLoading && <div style={{ color: '#94a3b8', padding: 16, fontSize: 13 }}>Loading...</div>}
+                {!snapshotsLoading && snapshots.length === 0 && (
+                  <div style={{ color: '#94a3b8', padding: 16, fontSize: 13 }}>No history yet. History is saved when you click "New Week".</div>
+                )}
+                {snapshots.map(snap => (
+                  <div key={snap._id}
+                    className={`wb-history-item ${activeSnapshot?._id === snap._id ? 'active' : ''}`}
+                    onClick={() => setActiveSnapshot(snap)}>
+                    <div className="wb-history-item-label">{snap.weekLabel || 'Unlabelled week'}</div>
+                    <div className="wb-history-item-date">{new Date(snap.snapshotAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Snapshot detail */}
+              <div className="wb-history-detail">
+                {!activeSnapshot ? (
+                  <div className="wb-history-empty">← Select a week to view its report</div>
+                ) : (
+                  <>
+                    <div className="wb-history-detail-header">
+                      <div>
+                        <div className="wb-history-detail-title">{activeSnapshot.weekLabel || 'Unlabelled week'}</div>
+                        <div className="wb-history-detail-date">Saved on {new Date(activeSnapshot.snapshotAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                      </div>
+                    </div>
+                    <div className="wb-history-members">
+                      {(activeSnapshot.members || []).map((member, mi) => {
+                        const allTasks = member.days.flatMap(d => d.tasks);
+                        const done = allTasks.filter(t => t.completed).length;
+                        const total = allTasks.length;
+                        const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+                        const color = pct === 100 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#e53e3e';
+                        return (
+                          <div key={mi} className="wb-history-member-card">
+                            <div className="wb-history-member-header" style={{ borderLeft: `4px solid ${member.color || COLORS[mi % COLORS.length]}` }}>
+                              <span className="wb-history-member-avatar" style={{ background: member.color || COLORS[mi % COLORS.length] }}>{member.name.charAt(0)}</span>
+                              <span className="wb-history-member-name">{member.name}</span>
+                              <span className="wb-history-member-pct" style={{ color }}>{pct}% · {done}/{total} tasks</span>
+                            </div>
+                            <div className="wb-history-days">
+                              {member.days.filter(d => d.tasks.length > 0).map((dayCol, di) => (
+                                <div key={di} className="wb-history-day">
+                                  <div className="wb-history-day-label">{dayCol.day}</div>
+                                  {dayCol.tasks.map((task, ti) => (
+                                    <div key={ti} className={`wb-history-task ${task.completed ? 'done' : ''}`}>
+                                      <span className="wb-history-task-check">{task.completed ? '✓' : '○'}</span>
+                                      <span>{task.text}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                              {member.days.every(d => d.tasks.length === 0) && (
+                                <div style={{ color: '#64748b', fontSize: 12, padding: '8px 0' }}>No tasks recorded</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

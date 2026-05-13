@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyUser } = require('../middleware/auth');
 const TaskBoard = require('../models/TaskBoard');
+const WeeklySnapshot = require('../models/WeeklySnapshot');
 const User = require('../models/User');
 
 // Helper: check if user has workspace admin powers
@@ -76,15 +77,29 @@ router.post('/', verifyUser, attachWsManager, async (req, res) => {
   }
 });
 
-// POST reset week
+// POST reset week — saves a snapshot before wiping tasks
 router.post('/:id/reset-week', verifyUser, attachWsManager, async (req, res) => {
   try {
     if (!isWorkspaceAdmin(req)) return res.status(403).json({ message: 'Not authorized' });
     const { weekLabel } = req.body;
     const board = await TaskBoard.findById(req.params.id);
     if (!board) return res.status(404).json({ message: 'Board not found' });
+
+    // Save snapshot of current week before clearing
+    const hasAnyTask = board.members.some(m => m.days.some(d => d.tasks.length > 0));
+    if (hasAnyTask) {
+      await WeeklySnapshot.create({
+        boardId: board._id,
+        boardName: board.name,
+        weekLabel: board.weekLabel || 'Unlabelled week',
+        days: board.days,
+        members: JSON.parse(JSON.stringify(board.members)), // deep copy
+        createdBy: req.user.id
+      });
+    }
+
     board.members.forEach(m => m.days.forEach(d => { d.tasks = []; }));
-    if (weekLabel) board.weekLabel = weekLabel;
+    if (weekLabel !== undefined) board.weekLabel = weekLabel;
     await board.save();
     res.json(board);
   } catch (err) {
@@ -204,6 +219,19 @@ router.delete('/:boardId/member/:memberId', verifyUser, attachWsManager, async (
     res.json(board);
   } catch (err) {
     res.status(500).json({ message: 'Error removing member' });
+  }
+});
+
+// GET snapshots for a board (admin only)
+router.get('/:id/snapshots', verifyUser, attachWsManager, async (req, res) => {
+  try {
+    if (!isWorkspaceAdmin(req)) return res.status(403).json({ message: 'Not authorized' });
+    const snapshots = await WeeklySnapshot.find({ boardId: req.params.id })
+      .sort({ snapshotAt: -1 })
+      .lean();
+    res.json(snapshots);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching snapshots' });
   }
 });
 
