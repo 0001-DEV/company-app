@@ -395,6 +395,12 @@ const ChatBox = () => {
     fetchStaffList(); fetchDepartments();
   }, [currentUser]);
 
+  // Re-fetch lastMessages once staffList is ready so sort works immediately on load
+  useEffect(() => {
+    if (!staffList.length) return;
+    reloadLastMessages();
+  }, [staffList]);
+
   useEffect(() => {
     if (!staffList.length) return;
     const params = new URLSearchParams(location.search);
@@ -1294,28 +1300,36 @@ const ChatBox = () => {
             <span style={{ fontSize: 12, fontWeight: 700, color: "#8696a0" }}>Direct Messages</span>
           </div>
           {dmSectionOpen && [...filteredStaff].sort((a, b) => {
-            const aTime = lastMessages[a._id]?.createdAt ? new Date(lastMessages[a._id].createdAt) : new Date(0);
-            const bTime = lastMessages[b._id]?.createdAt ? new Date(lastMessages[b._id].createdAt) : new Date(0);
+            const aId = a._id?.toString();
+            const bId = b._id?.toString();
+            // Unread chats always float above read ones
+            const aUnread = (unreadCounts[aId] || 0) > 0 ? 1 : 0;
+            const bUnread = (unreadCounts[bId] || 0) > 0 ? 1 : 0;
+            if (bUnread !== aUnread) return bUnread - aUnread;
+            // Then sort by most recent message
+            const aTime = lastMessages[aId]?.createdAt ? new Date(lastMessages[aId].createdAt).getTime() : 0;
+            const bTime = lastMessages[bId]?.createdAt ? new Date(lastMessages[bId].createdAt).getTime() : 0;
             return bTime - aTime;
           }).map(staff => {
-            const hasUnread = (unreadCounts[staff._id] || 0) > 0;
+            const staffId = staff._id?.toString();
+            const hasUnread = (unreadCounts[staffId] || 0) > 0;
             return (
-            <div key={staff._id} style={{ ...S.sidebarItem, ...(selectedUser === staff._id ? S.sidebarItemActive : {}), ...(hasUnread ? { background: "rgba(0,168,132,0.07)" } : {}) }}
-              onClick={() => { setViewMode("private"); setSelectedUser(staff._id); setSelectedDepartment(null); markAsRead(staff._id); }}>
+            <div key={staffId} style={{ ...S.sidebarItem, ...(selectedUser === staffId ? S.sidebarItemActive : {}), ...(hasUnread ? { background: "rgba(0,168,132,0.07)" } : {}) }}
+              onClick={() => { setViewMode("private"); setSelectedUser(staffId); setSelectedDepartment(null); markAsRead(staffId); }}>
               <div style={S.avatarWrap}>
                 <div style={{ ...S.avatar, background: "linear-gradient(135deg, #3b82f6, #1d4ed8)", width: 44, height: 44, fontSize: 16 }}>{getInitials(staff.name)}</div>
-                <div style={{ ...S.onlineDot, background: onlineStatus[staff._id]?.online ? "#31a24c" : "#64748b" }} />
+                <div style={{ ...S.onlineDot, background: onlineStatus[staffId]?.online ? "#31a24c" : "#64748b" }} />
               </div>
               <div style={S.sidebarItemInfo}>
                 <div style={{ ...S.sidebarItemName, fontWeight: hasUnread ? 700 : 500 }}>{staff.name}</div>
                 <div style={{ ...S.sidebarItemPreview, display: "flex", alignItems: "center", gap: 4 }}>
                   {hasUnread && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0, display: "inline-block" }} />}
                   <span style={{ color: hasUnread ? "#e9edef" : undefined, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {typeof lastMessages[staff._id]?.text === "string" ? lastMessages[staff._id].text.substring(0, 40) : typeof lastMessages[staff._id] === "string" ? lastMessages[staff._id].substring(0, 40) : "No messages yet"}
+                    {typeof lastMessages[staffId]?.text === "string" ? lastMessages[staffId].text.substring(0, 40) : "No messages yet"}
                   </span>
                 </div>
               </div>
-              {hasUnread && <div style={S.badge}>{unreadCounts[staff._id]}</div>}
+              {hasUnread && <div style={S.badge}>{unreadCounts[staffId]}</div>}
             </div>
           )})}
         </div>
