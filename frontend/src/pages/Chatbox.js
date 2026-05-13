@@ -408,10 +408,45 @@ const ChatBox = () => {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch("/api/chat/unread-counts", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setUnreadCounts(await res.json());
+        if (res.ok) {
+          const data = await res.json();
+          const prev = prevUnreadRef.current;
+          const { viewMode: vm, selectedUser: su, selectedDepartment: sd } = activeChatRef.current;
+
+          // Fire toast when unread count increases for a non-active chat
+          Object.entries(data).forEach(([key, count]) => {
+            if (!count || count === 0) return;
+            const prevCount = prev[key] || 0;
+            if (count <= prevCount) return; // no increase
+
+            const isActiveChat =
+              (key === su && vm === "private") ||
+              (key === "all" && vm === "all") ||
+              (key.startsWith("department:") && sd && key === `department:${sd._id}` && vm === "department");
+            if (isActiveChat) return;
+
+            // Get preview from lastMessages
+            const lastMsg = prevLastMsgRef.current[key];
+            const senderName = lastMsg?.senderName || "New message";
+            const preview = lastMsg?.text || "📎 Attachment";
+            const toastId = `unread-${key}-${Date.now()}`;
+
+            setNewMsgToasts(t => {
+              // Replace existing toast for same chat key
+              const filtered = t.filter(x => x.chatKey !== key);
+              return [...filtered, { id: toastId, senderName, text: preview, chatKey: key }];
+            });
+            setTimeout(() => {
+              setNewMsgToasts(t => t.filter(x => x.id !== toastId));
+            }, 5000);
+          });
+
+          prevUnreadRef.current = data;
+          setUnreadCounts(data);
+        }
       } catch (err) {}
     };
-    fetchUnread(); const iv = setInterval(fetchUnread, 5000); return () => clearInterval(iv);
+    fetchUnread(); const iv = setInterval(fetchUnread, 2000); return () => clearInterval(iv);
   }, [currentUser]);
 
   useEffect(() => {
@@ -422,32 +457,6 @@ const ChatBox = () => {
         const res = await fetch("/api/chat/last-messages", { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) return;
         const data = await res.json();
-
-        // Detect new messages and fire toast notifications
-        const { viewMode: vm, selectedUser: su, selectedDepartment: sd } = activeChatRef.current;
-        Object.entries(data).forEach(([key, msg]) => {
-          if (!msg || !msg.createdAt) return;
-          const prev = prevLastMsgRef.current[key];
-          const isNewMsg = !prev || new Date(msg.createdAt) > new Date(prev.createdAt);
-          const isOwnMsg = msg.senderId?.toString() === currentUser.id?.toString();
-          const isActiveChat =
-            (key === su && vm === "private") ||
-            (key === "all" && vm === "all") ||
-            (key.startsWith("department:") && sd && key === `department:${sd._id}` && vm === "department");
-
-          if (isNewMsg && !isOwnMsg && !isActiveChat && prev) {
-            const senderName = msg.senderName || "Someone";
-            const toastId = `${key}-${msg.createdAt}`;
-            setNewMsgToasts(prev => {
-              if (prev.find(t => t.id === toastId)) return prev;
-              return [...prev, { id: toastId, senderName, text: msg.text || "📎 Attachment", chatKey: key }];
-            });
-            setTimeout(() => {
-              setNewMsgToasts(prev => prev.filter(t => t.id !== toastId));
-            }, 5000);
-          }
-        });
-
         prevLastMsgRef.current = data;
         setLastMessages(data);
       } catch (err) {}
