@@ -878,3 +878,240 @@
 .wb-action-btn.reset:hover { background: #eff6ff; }
 .wb-action-btn.danger { border-color: #fecaca; color: #dc2626; }
 .wb-action-btn.danger:hover { background: #fef2f2; }
+
+/* ══════════════════════════════════════════
+   DARK MODE — html.dark-theme
+   ══════════════════════════════════════════ */
+
+html.dark-theme .wb-container {
+  background: #0f1117;
+}
+
+/* ── Sidebar (already dark, just tweak) ── */
+html.dark-theme .wb-sidebar {
+  background: #111827;
+  border-right: 1px solid #1f2937;
+}
+html.dark-theme .wb-sidebar-top {
+  border-bottom-color: rgba(255,255,255,0.06);
+}
+html.dark-theme .wb-back-btn { color: #6b7280; }
+html.dark-theme .wb-back-btn:hover { color: #e5e7eb; }
+html.dark-theme .wb-sidebar-title { color: #4b5563; }
+html.dark-theme .wb-board-item-name { color: #d1d5db; }
+html.dark-theme .wb-board-item-week { color: #4b5563; }
+html.dark-theme .wb-board-item:hover { background: rgba(255,255,255,0.05); }
+html.dark-theme .wb-board-item.active { background: rgba(59,130,246,0.25); }
+html.dark-theme .wb-empty-sidebar { color: #374151; }
+
+/* ── Main area ── */
+html.dark-theme .wb-main { background: #0f1117; }
+
+html.dark-theme .wb-loading,
+html.dark-theme .wb-empty-main { color: #6b7280; }
+html.dark-theme .wb-empty-main h2 { color: #d1d5db; }
+html.dark-theme .wb-empty-main p { color: #6b7280; }
+
+/* ── Board header ── */
+html.dark-theme .wb-board-header {
+  background: #1a1f2e;
+  border-bottom-color: #1f2937;
+}
+html.dark-theme .wb-board-title { color: #f1f5f9; }
+html.dark-theme .wb-board-week { color: #6b7280; }
+
+/* ── Action buttons ── */
+html.dark-theme .wb-action-btn {
+  background: #1f2937;
+  border-color: #374151;
+  color: #d1d5db;
+}
+html.dark-theme .wb-action-btn:hover {
+  background: #273244;
+  border-color: #4b5563;
+  color: #f1f5f9;
+}
+html.dark-theme .wb-action-btn.reset {
+  border-color: #065f46;
+  color: #34d399;
+}
+html.dark-theme .wb-action-btn.reset:hover { background: #064e3b; }
+html.dark-theme .wb-action-btn.danger {
+  border-color: #7f1d1d;
+  color: #f87171;
+}
+html.dark-theme .wb-action-btn.danger:hover { background: #450a0a; }
+
+/* ── Columns scroll area ── */
+html.dark-theme .wb-columns-scroll { background: #0f1117; }
+
+/* ── Individual column ── */
+html.dark-theme .wb-column {
+  background: #1a1f2e;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+html.dark-theme .wb-col-header { background: #1a1f2e; }
+html.dark-theme .wb-col-name { color: #e2e8f0; }
+html.dark-theme .wb-col-count { color: #4b5563; }
+html.dark-theme .wb-col-remove { color: #374151; }
+html.dark-theme .wb-col-remove:hover { background: #450a0a; color: #f87171; }
+
+/* ── Progress bar ── */
+html.dark-theme .wb-progress-wrap {
+  background: #151b27;
+  border-bottom-color: #1f2937;
+}
+html.dark-theme .wb-progress-bar-track { background: #1f2937; }
+
+/* ── Day section ── */
+html.dark-theme .wb-day-section { border-bottom-color: #1f2937; }
+html.dark-theme .wb-day-label { color: #4b5563; }
+
+/* ── Tasks ── */
+html.dark-theme .wb-task-text { color: #d1d5db; }
+html.dark-theme .wb-task.done .wb-task-text { color: #4b5563; }
+html.dark-theme .wb-task-del { color: #374151; }
+html.dark-theme .wb-task-del:hover { background: #450a0a; color: #f87171; }
+html.dark-theme .wb-add-task-btn { color: #4b5563; }
+html.dark-theme .wb-add-task-btn:hover { color: #60a5fa; }
+
+html.dark-theme .wb-task-input {
+  background: #111827;
+  border-color: #3b82f6;
+  color: #e2e8f0;
+}
+html.dark-theme .wb-cancel-task {
+  background: #1f2937;
+  color: #9ca3af;
+}
+html.dark-theme .wb-no-members { color: #4b5563; }
+
+/* ── Modal ── */
+html.dark-theme .wb-modal {
+  background: #1a1f2e;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+html.dark-theme .wb-modal-header {
+  border-bottom-color: #1f2937;
+}
+html.dark-theme .wb-modal-header h3 { color: #f1f5f9; }
+html.dark-theme .wb-modal-header button { color: #6b7280; }
+html.dark-theme .wb-modal-header button:hover {
+  background: #273244;
+  color: #e2e8f0;
+}
+html.dark-theme .wb-modal-body label { color: #9ca3af; }
+html.dark-theme .wb-modal-body input[type="text"],
+html.dark-theme .wb-modal-body input:not([type="checkbox"]) {
+  background: #111827;
+  border-color: #374151;
+  color: #e2e8f0;
+}
+html.dark-theme .wb-modal-body input:focus { border-color: #3b82f6; }
+html.dark-theme .wb-modal-footer {
+  border-top-color: #1f2937;
+}
+html.dark-theme .wb-btn-cancel {
+  background: #1f2937;
+  border-color: #374151;
+  color: #9ca3af;
+}
+html.dark-theme .wb-btn-cancel:hover { background: #273244; color: #e2e8f0; }
+
+/* ── Day checkboxes ── */
+html.dark-theme .wb-day-check {
+  border-color: #374151;
+  color: #9ca3af;
+}
+html.dark-theme .wb-day-check:has(input:checked) {
+  border-color: #3b82f6;
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
+/* ── Staff list / picker ── */
+html.dark-theme .wb-staff-list {
+  background: #111827;
+  border-color: #1f2937;
+}
+html.dark-theme .wb-staff-check {
+  color: #d1d5db;
+}
+html.dark-theme .wb-staff-check:hover { background: #1e3a5f; }
+html.dark-theme .wb-staff-check.selected,
+html.dark-theme .wb-staff-check:has(input:checked) {
+  background: #1e3a5f;
+  border-color: #1d4ed8;
+}
+
+/* ── Dept tabs ── */
+html.dark-theme .wb-dept-tab {
+  background: #1f2937;
+  border-color: #374151;
+  color: #9ca3af;
+}
+html.dark-theme .wb-dept-tab:hover { border-color: #3b82f6; color: #93c5fd; }
+html.dark-theme .wb-dept-tab.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+/* ── Picker toolbar ── */
+html.dark-theme .wb-picker-search {
+  background: #111827;
+  border-color: #374151;
+  color: #e2e8f0;
+}
+html.dark-theme .wb-picker-search:focus { border-color: #3b82f6; }
+html.dark-theme .wb-picker-action {
+  background: #1f2937;
+  border-color: #374151;
+  color: #d1d5db;
+}
+html.dark-theme .wb-picker-action:hover {
+  background: #1e3a5f;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+html.dark-theme .wb-picker-action.dept { color: #34d399; border-color: #065f46; }
+html.dark-theme .wb-picker-action.dept:hover { background: #064e3b; }
+html.dark-theme .wb-picker-action.clear { color: #f87171; border-color: #7f1d1d; }
+html.dark-theme .wb-picker-action.clear:hover { background: #450a0a; }
+
+/* ── History modal ── */
+html.dark-theme .wb-history-sidebar {
+  background: #111827;
+  border-right-color: #1f2937;
+}
+html.dark-theme .wb-history-sidebar-title { color: #4b5563; }
+html.dark-theme .wb-history-item:hover {
+  background: #1e3a5f;
+  border-left-color: #3b82f6;
+}
+html.dark-theme .wb-history-item.active {
+  background: #1e3a5f;
+  border-left-color: #60a5fa;
+}
+html.dark-theme .wb-history-item-label { color: #e2e8f0; }
+html.dark-theme .wb-history-item-date { color: #4b5563; }
+
+html.dark-theme .wb-history-detail { background: #0f1117; }
+html.dark-theme .wb-history-empty { color: #4b5563; }
+html.dark-theme .wb-history-detail-header { border-bottom-color: #1f2937; }
+html.dark-theme .wb-history-detail-title { color: #f1f5f9; }
+html.dark-theme .wb-history-detail-date { color: #6b7280; }
+
+html.dark-theme .wb-history-member-card {
+  background: #151b27;
+  border-color: #1f2937;
+}
+html.dark-theme .wb-history-member-header {
+  background: #1a1f2e;
+  border-bottom-color: #1f2937;
+}
+html.dark-theme .wb-history-member-name { color: #e2e8f0; }
+html.dark-theme .wb-history-day-label { color: #4b5563; }
+html.dark-theme .wb-history-task { color: #d1d5db; }
+html.dark-theme .wb-history-task.done { color: #4b5563; }
+html.dark-theme .wb-history-task:not(.done) .wb-history-task-check { color: #374151; }
